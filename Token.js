@@ -974,6 +974,13 @@ function token_button(e, tokenIndex = null, tokenTotal = null) {
 				options.color = "#" + TOKEN_COLORS[(count - 1) % 54];
 			}
 		}
+
+		// if there are custom images defined, use those instead of the default DDB image
+		let customImgs = window.CUSTOM_TOKEN_IMAGE_MAP[$(e.target).attr('data-stat')];
+		if (customImgs != undefined && customImgs.length > 0) {
+			let randomIndex = getRandomInt(0, customImgs.length);
+			options.imgsrc = customImgs[randomIndex];
+		}
 	}
 
 	if (typeof $(e.target).attr('data-color') !== "undefined") {
@@ -1664,4 +1671,147 @@ function setTokenAuras (token, options) {
 		const tokenId = token.attr("data-id").replaceAll("/", "");
 		token.parent().find("#aura_" + tokenId).remove();
 	}
+}
+
+
+function build_token_image_map_menu() {
+	// setup context menu for custom token image mapping
+	$.contextMenu({
+		selector: '#custom-img-src-anchor', 
+		build: function($trigger, e) {
+
+			// $trigger is our "#custom-img-src-anchor" element that we injected in MonsterPanel.js
+			// grab the monsterId from that element, and any custom images that may have already been defined
+			let monsterId = $trigger.data('monster-id');
+			let customImages = window.CUSTOM_TOKEN_IMAGE_MAP[monsterId];
+			// imageItems will be the contextMenu items after we build them up below
+			var imageItems = { };
+
+			if (customImages != undefined && customImages.length > 0) {
+				
+				// the user has custom token images defined. Add them all as separate menu items with a "remove" button
+				for (let i = 0; i < customImages.length; i++) { 
+					let iconUrl = customImages[i];
+					let imgTag = '<img class="custom-token-image-menu-item-img" src="' + iconUrl + '" />';
+					let removeButton = '<button class="custom-token-image-menu-item-remove-button" onclick="remove_custom_token_image('+monsterId+','+i+');">Remove</button>'
+					let iconName = '<span>' + imgTag + removeButton + '</span>';
+					imageItems[i] = { 
+						name: iconName, 
+						type: 'text', 
+						value: iconUrl, 
+						isHtmlName: true,
+						events: {
+							keyup: function(e) {
+								if (e.key === "Enter") {
+									remove_custom_token_image(monsterId, i);
+									add_custom_token_image(monsterId, e.target.value);
+								}
+							}
+						}
+					};
+				}
+
+				// add a way to add more images. If there are more than 1 image defined, they will be chosen at random when placing them on the scene
+				imageItems["addNew"] = {
+					name: "Add Another Default Image",
+					type: "text",
+					events: {
+						keyup: function(e) {
+							if (e.key === "Enter") {
+								add_custom_token_image(monsterId, e.target.value);
+							}
+						}
+					}
+				};
+
+				// also add an easy way to reset to the default DDB image
+				imageItems["reset"] = { 
+					name: "Reset to Default",
+					callback: function(key, opt){
+						// clear all custom images from the mapping for this monster
+						remove_all_custom_token_image(monsterId);
+					}
+				};
+
+			} else {
+
+				// There are no custom images defined. Add a way to replace the default DDB image
+				imageItems["addNew"] = {
+					name: "Replace The Default Image",
+					type: "text",
+					events: {
+						keyup: function(e) {
+							if (e.key === "Enter") {
+								add_custom_token_image(monsterId, e.target.value);
+							}
+						}
+					}
+				};
+
+			}
+
+			return {
+				className: 'custom-token-image-menu',
+				items: imageItems
+			};
+		}
+	});
+}
+
+function remove_custom_token_image(monsterId, index) {
+	var customImages = window.CUSTOM_TOKEN_IMAGE_MAP[monsterId];
+	if (customImages != undefined || customImages.length > index) {
+		window.CUSTOM_TOKEN_IMAGE_MAP[monsterId].splice(index, 1);
+	}
+	reload_custom_image_context_menu();
+}
+
+function remove_all_custom_token_image(monsterId) {
+	delete window.CUSTOM_TOKEN_IMAGE_MAP[monsterId];
+	reload_custom_image_context_menu();
+	save_custom_image_mapping();
+}
+
+function add_custom_token_image(monsterId, imgSrc) {
+	if (imgSrc == undefined || imgSrc == null || imgSrc == "") {
+		return;
+	}
+	var customImages = window.CUSTOM_TOKEN_IMAGE_MAP[monsterId];
+	if (customImages == undefined) {
+		customImages = [];
+	}
+	customImages.push(imgSrc);
+	window.CUSTOM_TOKEN_IMAGE_MAP[monsterId] = customImages;
+	reload_custom_image_context_menu();
+	save_custom_image_mapping();
+}
+
+function replace_custom_token_image(monsterId, index, imgSrc) {
+	var customImages = window.CUSTOM_TOKEN_IMAGE_MAP[monsterId];
+	if (customImages != undefined || customImages.length > index) {
+		window.CUSTOM_TOKEN_IMAGE_MAP[monsterId][index] = imgSrc;
+	} else {
+		window.CUSTOM_TOKEN_IMAGE_MAP[monsterId].push(imgSrc);
+	}
+	reload_custom_image_context_menu();
+	save_custom_image_mapping();
+}
+
+function reload_custom_image_context_menu() {
+	$('#custom-img-src-anchor').contextMenu('hide');
+	$('#custom-img-src-anchor').contextMenu();	
+}
+
+function load_custom_image_mapping() {
+	window.CUSTOM_TOKEN_IMAGE_MAP = {};
+	let customMappingData = localStorage.getItem('CustomDefaultTokenMapping');
+	if(customMappingData != null){
+		window.CUSTOM_TOKEN_IMAGE_MAP = $.parseJSON(customMappingData);
+	}
+}
+
+function save_custom_image_mapping() {
+	let customMappingData = JSON.stringify(window.CUSTOM_TOKEN_IMAGE_MAP);
+	localStorage.setItem("CustomDefaultTokenMapping", customMappingData);
+	// The JSON structure for CUSTOM_TOKEN_IMAGE_MAP looks like this { "17100": [ "some.url.com/img1.png", "some.url.com/img2.png" ] }	
 }
