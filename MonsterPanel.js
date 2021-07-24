@@ -39,23 +39,18 @@ function init_monster_panel() {
 			let monsterid = monsterImage.parent().parent().attr('id').replace("monster-row-", "");
 			let ogImgSrc = monsterImage.find('img').attr('src');
 
-			// contextMenu doesn't seem to be able to use elements inside the monster panel iframe so
-			// inject an element outside of the monster panel iframe
-			// then display a contextMenu from that point.
-			var overlayAnchorString = '<span id="custom-img-src-anchor"';
-			overlayAnchorString += 'style="position:absolute; top:' + e.pageY + 'px;" ';
-			overlayAnchorString += 'data-monster-id="' + monsterid + '" ';
-			overlayAnchorString += 'data-monster-og-img-src="' + ogImgSrc + '" ';
-			overlayAnchorString += '/>';
+			if ($.find("#custom-img-src-anchor").length == 0) {
+				// contextMenu doesn't seem to be able to use elements inside the monster panel iframe so
+				// inject an element outside of the monster panel iframe
+				// then display a contextMenu from that point.
+				$('<span id="custom-img-src-anchor" style="position:absolute;" />').insertBefore(panel);
+			}
+			$("#custom-img-src-anchor").css("top", e.pageY + "px");
+			$("#custom-img-src-anchor").data("monster-id", monsterid);
+			$("#custom-img-src-anchor").data("monster-og-img-src", ogImgSrc);
 
-			// remove the previous anchor before adding a new one
-			$("#custom-img-src-anchor").remove();
-			// add our new anchor where we want our contextMenu to be placed
-			var overlayAnchor = $(overlayAnchorString);
-			overlayAnchor.insertBefore(panel);
 			// open our context menu
-			$('#custom-img-src-anchor').contextMenu();
-
+			$("#custom-img-src-anchor").contextMenu();
 		});
 
 		list.on("contextmenu", "button.monster-row__add-button", function(e) {
