@@ -77,6 +77,16 @@ class Token {
 	rotate(newRotation) {
 		this.update_from_page();
 		this.options.rotation = newRotation;
+		// this is copied from the place() function. Rather than calling place() every time the draggable.drag function executes, 
+		// this just rotates locally to help with performance.
+		// draggable.stop will call place_sync_persist to finalize the rotation. 
+		// If we ever want this to send to all players in real time, simply comment out the rest of this function and call place_sync_persist() instead.
+		const scale = (((this.options.size - 15) * 100) / this.options.size) / 100;
+		var selector = "div[data-id='" + this.options.id + "']";
+		var tokenElement = $("#tokens").find(selector);
+		tokenElement.find("img").css("transform", "scale(" + scale + ") rotate(" + newRotation + "deg)");		
+	}
+	place_sync_persist() {
 		this.place();
 		this.sync();
 		if (this.persist != null)
@@ -1958,9 +1968,9 @@ function draw_selected_token_bounding_box() {
 		let id = window.CURRENTLY_SELECTED_TOKENS[i];
 		let token = window.TOKEN_OBJECTS[id];
 		let tokenTop = parseFloat(token.options.top);
-		let tokenBottom = tokenTop + token.options.size;
+		let tokenBottom = tokenTop + parseFloat(token.options.size);
 		let tokenLeft = parseFloat(token.options.left);
-		let tokenRight = tokenLeft + token.options.size;
+		let tokenRight = tokenLeft + parseFloat(token.options.size);
 		if (top == undefined) {
 			top = tokenTop;
 		} else {
@@ -1993,7 +2003,7 @@ function draw_selected_token_bounding_box() {
 	let height = bottom - top;
 	let centerHorizontal = left + Math.ceil(width / 2);
 	let zIndex = 29; // token z-index is calculated as 30+someDiff. Put this at 29 to ensure it's always below the tokens
-	let gridSize = window.CURRENT_SCENE_DATA.hpps; // one grid square
+	let gridSize = parseFloat(window.CURRENT_SCENE_DATA.hpps); // one grid square
 	let grabberDistance = Math.ceil(gridSize / 3) - borderOffset;
 	let grabberSize = Math.ceil(gridSize / 3);
 	let grabberTop = top - grabberDistance - grabberSize + 2;
@@ -2045,6 +2055,7 @@ function draw_selected_token_bounding_box() {
 	grabber.css('background', '#ced9e0')
 	grabber.css('border-radius', `${Math.ceil(grabberSize / 2)}px`); // make it round
 	grabber.css('padding', '1px');
+	grabber.css('cursor', 'move');
 	$("#tokens").append(grabber);
 
 	// handle eye grabber dragging
@@ -2074,14 +2085,22 @@ function draw_selected_token_bounding_box() {
 				top: Math.round((event.clientY - click.y + original.top) / zoom)
 			};
 
-			// rotate all selected tokens to face the grabber
+			// rotate all selected tokens to face the grabber, but only for this user while dragging
 			for (let i = 0; i < window.CURRENTLY_SELECTED_TOKENS.length; i++) {
 				let id = window.CURRENTLY_SELECTED_TOKENS[i];
 				let token = window.TOKEN_OBJECTS[id];
 				let angle = rotation_towards_cursor(token, ui.position.left, ui.position.top, event.shiftKey);
 				token.rotate(angle);
 			}
-		}
+		},
+		stop: function (event) { 
+			// rotate for all players
+			for (let i = 0; i < window.CURRENTLY_SELECTED_TOKENS.length; i++) {
+				let id = window.CURRENTLY_SELECTED_TOKENS[i];
+				let token = window.TOKEN_OBJECTS[id];
+				token.place_sync_persist();
+			}
+		},
 	});
 }
 
