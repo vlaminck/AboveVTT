@@ -1090,6 +1090,7 @@ function menu_callback(key, options, event) {
 		ct_persist();
 		window.ScenesHandler.persist();
 		window.ScenesHandler.sync();
+		draw_selected_token_bounding_box(); // clean up the rotation if needed
 	}
 	if (key == "token_medium") {
 		id = $(this).attr('data-id'); window.TOKEN_OBJECTS[id].size(Math.round(window.CURRENT_SCENE_DATA.hpps));
@@ -1333,6 +1334,7 @@ function multiple_callback(key, options, event) {
 			$("#aura_" + id.replaceAll("/", "")).remove();
 			
 			$("#combat_area tr[data-target='"+id+"']").remove(); // delete token from the combat tracker if it's there
+			draw_selected_token_bounding_box(); // clean up the rotation if needed
 		});
 		ct_persist();
 		
