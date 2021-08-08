@@ -905,6 +905,8 @@ class Token {
 				}
 
 				window.MULTIPLE_TOKEN_SELECTED = (count > 1);
+
+				draw_selected_token_bounding_box();
 			});
 
 			check_token_visibility(); // CHECK FOG OF WAR VISIBILITY OF TOKEN
