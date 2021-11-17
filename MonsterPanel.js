@@ -32,6 +32,9 @@ function init_monster_panel() {
 			e.preventDefault();
 		});
 
+		var popupContainer = $(event.target).contents().find("#ddbeb-popup-container");
+		init_monster_customization_modal(list, popupContainer);
+
 		// present our own custom monster image menu
 		list.on("mousedown", ".monster-row__cell--avatar", function(e) {
 
@@ -135,3 +138,122 @@ function init_monster_panel() {
 	iframe.attr("src", "/encounter-builder");
 }
 
+var currentlyCustomizingMonster = {};
+function init_monster_customization_modal(list, popupContainer) {
+	list.on("click", ".monster-row__cell--drag-handle", function(event) {
+		event.preventDefault();
+		event.stopPropagation();
+		console.log(`popupContainer = ${popupContainer}`);
+		let monsterRow = event.target.closest(".monster-row");
+		currentlyCustomizingMonster = {
+			monsterId: monsterRow.id.replace("monster-row-", ""),
+			monsterName: $(monsterRow).find(".monster-row__name").text(),
+			defaultImg: parse_img($(monsterRow).find(".monster-row__cell--avatar img").attr("src"))
+		};
+		display_monster_customization_modal(popupContainer);
+	});
+	// Allow the user to close thhe modal
+	popupContainer.on("click", ".monster-customization-modal .ddbeb-modal__overlay", function() {
+		popupContainer.empty();
+		currentlyCustomizingMonster = {};
+	});	
+	popupContainer.on("click", ".monster-customization-modal .ddbeb-modal__close-button", function() {
+		popupContainer.empty();
+		currentlyCustomizingMonster = {};
+	});
+	// add the custom url when the user hits the enter key in the add image input
+	popupContainer.on("keyup", "input[name='addCustomImage']", function(event) {
+		let monsterId = $(event.target).data("monster-id");
+		let imgUrl = event.target.value;
+		if (event.key == "Enter" && monsterId != undefined && imgUrl != undefined && imgUrl.length > 0) {
+			add_custom_image_mapping(monsterId, imgUrl);
+			display_monster_customization_modal(popupContainer);
+		}
+	});
+	// add the custom url when the user clicks the add button
+	popupContainer.on("click", ".monster-customization-modal button.add-custom-image-button", function(event) {
+		console.log(event);
+		let monsterId = $(event.target).data("monster-id");
+		let urlInputs = $(event.target).closest(".add-monster-modal__footer").find("input");
+		if (urlInputs.length == 1) {
+			let imgUrl = urlInputs[0].value;
+			if (monsterId != undefined && imgUrl != undefined && imgUrl.length > 0) {
+				add_custom_image_mapping(monsterId, imgUrl);
+				display_monster_customization_modal(popupContainer);
+			}
+		} else {
+			console.warn("failed to find custom image input");
+		}
+	});
+	// remove all custom urls when the user clicks the remove all button
+	popupContainer.on("click", ".monster-customization-modal button.remove-all-custom-image-button", function(event) {
+		console.log(event);
+		if (window.confirm("Are you sure you want to remove all custom images for this monster?")) {
+			let monsterId = $(event.target).data("monster-id")
+			remove_all_custom_token_images(monsterId);
+			display_monster_customization_modal(popupContainer);
+		}
+	});
+}
+
+function display_monster_customization_modal(popupContainer) {
+	let monsterId = currentlyCustomizingMonster.monsterId;
+	let monsterName = currentlyCustomizingMonster.monsterName;
+	let defaultImg = currentlyCustomizingMonster.defaultImg;
+	if (monsterId == undefined || monsterName == undefined || defaultImg == undefined) {
+		console.warn(`Failed to display monster customization modal; monsterId = ${monsterId}, monsterName = ${monsterName}, defaultImg = ${defaultImg}`)
+		return
+	}
+	
+	var imageElements = ``;
+	let customImages = get_custom_monster_images(monsterId);
+	let footerLabel = "";
+	let removeButton = "";
+	if (customImages != undefined && customImages.length > 0) {
+		for (let i = 0; i < customImages.length; i++) { 
+			let imageUrl = parse_img(customImages[i]);
+			imageElements += `<div class="custom-token-image-item" data-monster="${monsterId}" data-name="${monsterName}" style="float: left; width:30%"><img style="transform: scale(0.75); display: inline-block; overflow: hidden; width:100%; height:100%" class="token-image token-round" src="${imageUrl}"></div>`;
+		}
+		footerLabel = "Add More Custom Images"
+		removeButton = `<div style="width:100%;height:50px;padding:10px"><button class="add-monster-modal__add-button remove-all-custom-image-button" data-monster-id="${monsterId}" style="width:100%;height:100%;background:#e40712">Remove All Custom Images</button></div>`;
+	} else {
+		imageElements += `<div class="custom-token-image-item" data-monster="${monsterId}" data-name="${monsterName}" style="float: left; width:30%"><img style="transform: scale(0.75); display: inline-block; overflow: hidden; width:100%; height:100%" class="token-image token-round" src="${defaultImg}"></div>`;
+		footerLabel = "Replace The Default Image"
+	}
+
+	let modalHtml = `
+		<div class="ddbeb-modal monster-customization-modal">
+			<div class="ddbeb-modal__overlay">
+			</div>
+			<div class="add-monster-modal ddbeb-modal__content" aria-modal="true" role="dialog" style="width:100%; height:80%">				
+				<button class="ddbeb-modal__close-button qa-modal_close" title="Close Modal"><svg class="" xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><g transform="rotate(-45 50 50)"><rect x="0" y="45" width="100" height="10"></rect></g><g transform="rotate(45 50 50)"><rect x="0" y="45" width="100" height="10"></rect></g></svg></button>
+				<div class="add-monster-modal__header">
+					<div class="add-monster-modal__header-text">
+						<div class="add-monster-modal__header-text--name">${monsterName}</div>
+						<div class="add-monster-modal__header-text--source">Monster Manual</div>
+					</div>
+				</div>
+
+				<div class="add-monster-modal__body">
+					<div class="add-monster-modal__header-text--name">Token Images</div>
+					<div class="custom-token-image-list" style="position: relative; width:100%; height: 90%">
+						${imageElements}
+					</div>
+				</div>
+				
+				${removeButton}
+				<div class="add-monster-modal__footer">
+					<div style="width:90%">
+						<div role="presentation" class="add-monster-modal__quantity-label"  style="width:100%; padding-left:0px">${footerLabel}</div>
+						<input title="${footerLabel}" placeholder="https://..." name="addCustomImage" type="text" style="width:100%" data-monster-id="${monsterId}">
+					</div>
+					<button class="add-monster-modal__add-button add-custom-image-button" data-monster-id="${monsterId}">Add</button>
+				</div>
+			</div>
+		</div>
+	`;
+	
+	popupContainer.empty();
+	popupContainer.append(modalHtml);
+		
+}
