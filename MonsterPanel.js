@@ -198,6 +198,53 @@ function init_monster_customization_modal(list, popupContainer) {
 			display_token_customization_modal();
 		}
 	});
+
+
+	$.contextMenu({
+		selector: ".custom-token-image-item",
+		items: {
+			place: {
+				name: "Place Token",
+				callback: function(itemKey, opt, originalEvent) {
+					let selectedItem = $(opt.$trigger[0]);
+					let monsterId = selectedItem.data("monster");
+					let monsterName = selectedItem.data("name");
+					let imgSrc = selectedItem.find("img").attr("src");
+					originalEvent.target = selectedItem;
+					place_monster(originalEvent, monsterId, monsterName, imgSrc, false)
+				}
+			},
+			placeHidden: {
+				name: "Place Hidden Token",
+				callback: function(itemKey, opt, originalEvent) {
+					let selectedItem = $(opt.$trigger[0]);
+					let monsterId = selectedItem.data("monster");
+					let monsterName = selectedItem.data("name");
+					let imgSrc = selectedItem.find("img").attr("src");
+					originalEvent.target = selectedItem;
+					place_monster(originalEvent, monsterId, monsterName, imgSrc, true)
+				}
+			},
+			copy: {
+				name: "Copy Url",
+				callback: function(itemKey, opt, e) {
+					let selectedItem = $(opt.$trigger[0]);
+					let imgSrc = selectedItem.find("img").attr("src");
+					copy_to_clipboard(imgSrc);
+				}
+			},
+			remove: { 
+				name: "Remove",
+				callback: function(itemKey, opt, originalEvent) {
+					let selectedItem = $(opt.$trigger[0]);
+					let monsterId = selectedItem.data("monster");
+					let imgIndex = parseInt(selectedItem.data("custom-img-index"));
+					remove_custom_token_image(monsterId, imgIndex);
+					selectedItem.remove();
+				}
+			}
+		}
+	});
 }
 
 function display_monster_customization_modal(popupContainer) {
@@ -298,7 +345,7 @@ function display_token_customization_modal() {
 	if (customImages != undefined && customImages.length > 0) {
 		for (let i = 0; i < customImages.length; i++) { 
 			let imageUrl = parse_img(customImages[i]);
-			let tokenDiv = $(`<div class="custom-token-image-item" data-monster="${monsterId}" data-name="${monsterName}" style="float: left; width:30%"><img alt="token-img" style="transform: scale(0.75); display: inline-block; overflow: hidden; width:100%; height:100%" class="token-image token-round" src="${imageUrl}" /></div>`);
+			let tokenDiv = $(`<div class="custom-token-image-item" data-monster="${monsterId}" data-name="${monsterName}" data-custom-img-index="${i}" style="float: left; width:30%"><img alt="token-img" style="transform: scale(0.75); display: inline-block; overflow: hidden; width:100%; height:100%" class="token-image token-round" src="${imageUrl}" /></div>`);
 			tokenDiv.click(function() {
 				console.log("token click");
 			})
@@ -348,4 +395,31 @@ function display_token_customization_modal() {
 	modal.draggable();
 
 	$("#VTTWRAPPER").append(modal);
+}
+
+function place_monster(e, monsterId, monsterName, imgSrc, hidden) {
+	let button = e.target;
+	button.attr('data-stat', monsterId);
+	button.attr("data-name", monsterName);
+	button.attr('data-img', imgSrc);
+
+	if (hidden) {
+		button.attr('data-hidden', 1)
+	} else {
+		button.removeAttr('data-hidden');
+	}
+
+	window.StatHandler.getStat(monsterId, function(stat) {
+		if (stat.data.sizeId == 5)
+			button.attr("data-size", Math.round(window.CURRENT_SCENE_DATA.hpps) * 2);
+		if (stat.data.sizeId == 6)
+			button.attr("data-size", Math.round(window.CURRENT_SCENE_DATA.hpps) * 3);
+		if (stat.data.sizeId == 7)
+			button.attr("data-size", Math.round(window.CURRENT_SCENE_DATA.hpps) * 4);
+		button.attr('data-hp', stat.data.averageHitPoints);
+		button.attr('data-maxhp', stat.data.averageHitPoints);
+		button.attr('data-ac', stat.data.armorClass);
+		token_button(e);
+	})
+
 }
