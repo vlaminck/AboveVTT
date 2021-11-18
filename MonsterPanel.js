@@ -150,6 +150,7 @@ function init_monster_customization_modal(list, popupContainer) {
 			monsterName: $(monsterRow).find(".monster-row__name").text(),
 			defaultImg: parse_img($(monsterRow).find(".monster-row__cell--avatar img").attr("src"))
 		};
+		display_token_customization_modal();
 		display_monster_customization_modal(popupContainer);
 	});
 	// Allow the user to close thhe modal
@@ -168,6 +169,7 @@ function init_monster_customization_modal(list, popupContainer) {
 		if (event.key == "Enter" && monsterId != undefined && imgUrl != undefined && imgUrl.length > 0) {
 			add_custom_image_mapping(monsterId, imgUrl);
 			display_monster_customization_modal(popupContainer);
+			display_token_customization_modal();
 		}
 	});
 	// add the custom url when the user clicks the add button
@@ -180,6 +182,7 @@ function init_monster_customization_modal(list, popupContainer) {
 			if (monsterId != undefined && imgUrl != undefined && imgUrl.length > 0) {
 				add_custom_image_mapping(monsterId, imgUrl);
 				display_monster_customization_modal(popupContainer);
+				display_token_customization_modal();
 			}
 		} else {
 			console.warn("failed to find custom image input");
@@ -192,6 +195,7 @@ function init_monster_customization_modal(list, popupContainer) {
 			let monsterId = $(event.target).data("monster-id")
 			remove_all_custom_token_images(monsterId);
 			display_monster_customization_modal(popupContainer);
+			display_token_customization_modal();
 		}
 	});
 }
@@ -212,20 +216,19 @@ function display_monster_customization_modal(popupContainer) {
 	if (customImages != undefined && customImages.length > 0) {
 		for (let i = 0; i < customImages.length; i++) { 
 			let imageUrl = parse_img(customImages[i]);
-			imageElements += `<div class="custom-token-image-item" data-monster="${monsterId}" data-name="${monsterName}" style="float: left; width:30%"><img style="transform: scale(0.75); display: inline-block; overflow: hidden; width:100%; height:100%" class="token-image token-round" src="${imageUrl}"></div>`;
+			imageElements += `<div class="custom-token-image-item" data-monster="${monsterId}" data-name="${monsterName}" style="float: left; width:30%"><img alt="token-img" style="transform: scale(0.75); display: inline-block; overflow: hidden; width:100%; height:100%" class="token-image token-round" src="${imageUrl}" /></div>`;
 		}
 		footerLabel = "Add More Custom Images"
 		removeButton = `<div style="width:100%;height:50px;padding:10px"><button class="add-monster-modal__add-button remove-all-custom-image-button" data-monster-id="${monsterId}" style="width:100%;height:100%;background:#e40712">Remove All Custom Images</button></div>`;
 	} else {
-		imageElements += `<div class="custom-token-image-item" data-monster="${monsterId}" data-name="${monsterName}" style="float: left; width:30%"><img style="transform: scale(0.75); display: inline-block; overflow: hidden; width:100%; height:100%" class="token-image token-round" src="${defaultImg}"></div>`;
+		imageElements += `<div class="custom-token-image-item" data-monster="${monsterId}" data-name="${monsterName}" style="float: left; width:30%"><img alt="token-img" style="transform: scale(0.75); display: inline-block; overflow: hidden; width:100%; height:100%" class="token-image token-round" src="${defaultImg}" /></div>`;
 		footerLabel = "Replace The Default Image"
 	}
 
 	let modalHtml = `
 		<div class="ddbeb-modal monster-customization-modal">
-			<div class="ddbeb-modal__overlay">
-			</div>
-			<div class="add-monster-modal ddbeb-modal__content" aria-modal="true" role="dialog" style="width:100%; height:80%">				
+			<div class="ddbeb-modal__overlay"></div>
+			<div class="add-monster-modal ddbeb-modal__content" aria-modal="true" role="dialog" style="width:100%; height:80%">
 				<button class="ddbeb-modal__close-button qa-modal_close" title="Close Modal"><svg class="" xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><g transform="rotate(-45 50 50)"><rect x="0" y="45" width="100" height="10"></rect></g><g transform="rotate(45 50 50)"><rect x="0" y="45" width="100" height="10"></rect></g></svg></button>
 				<div class="add-monster-modal__header">
 					<div class="add-monster-modal__header-text">
@@ -245,7 +248,7 @@ function display_monster_customization_modal(popupContainer) {
 				<div class="add-monster-modal__footer">
 					<div style="width:90%">
 						<div role="presentation" class="add-monster-modal__quantity-label"  style="width:100%; padding-left:0px">${footerLabel}</div>
-						<input title="${footerLabel}" placeholder="https://..." name="addCustomImage" type="text" style="width:100%" data-monster-id="${monsterId}">
+						<input title="${footerLabel}" placeholder="https://..." name="addCustomImage" type="text" style="width:100%" data-monster-id="${monsterId}" />
 					</div>
 					<button class="add-monster-modal__add-button add-custom-image-button" data-monster-id="${monsterId}">Add</button>
 				</div>
@@ -255,5 +258,94 @@ function display_monster_customization_modal(popupContainer) {
 	
 	popupContainer.empty();
 	popupContainer.append(modalHtml);
-		
+}
+
+function close_token_customization_modal() {
+	$(".token-image-modal").remove();
+}
+
+function display_token_customization_modal() {
+
+	close_token_customization_modal();
+
+	let sidebarContent = $(".sidebar__pane-content");
+	let width = parseInt(sidebarContent.width());
+	let top = parseInt(sidebarContent.position().top) + 10;
+	console.log(`top: ${top}, width: ${width}`);
+
+	let monsterId = currentlyCustomizingMonster.monsterId;
+	let monsterName = currentlyCustomizingMonster.monsterName;
+	let defaultImg = currentlyCustomizingMonster.defaultImg;
+	if (monsterId == undefined || monsterName == undefined || defaultImg == undefined) {
+		console.warn(`Failed to display monster customization modal; monsterId = ${monsterId}, monsterName = ${monsterName}, defaultImg = ${defaultImg}`)
+		return
+	}
+
+	let footerLabel = "";
+
+	let closeButton = $(`<button class="ddbeb-modal__close-button qa-modal_close" title="Close Modal"><svg class="" xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><g transform="rotate(-45 50 50)"><rect x="0" y="45" width="100" height="10"></rect></g><g transform="rotate(45 50 50)"><rect x="0" y="45" width="100" height="10"></rect></g></svg></button>`); 
+	closeButton.click(close_token_customization_modal);
+	let modalHeader = $(`
+		<div class="token-image-modal-header">
+			<div class="token-image-modal-header-title">${monsterName}</div>
+			<div class="token-image-modal-header-subtitle">Token Images</div>
+		</div>
+	`);
+
+	let modalBody = $(`<div class="token-image-modal-body"></div>`);
+
+	let customImages = get_custom_monster_images(monsterId);
+	if (customImages != undefined && customImages.length > 0) {
+		for (let i = 0; i < customImages.length; i++) { 
+			let imageUrl = parse_img(customImages[i]);
+			let tokenDiv = $(`<div class="custom-token-image-item" data-monster="${monsterId}" data-name="${monsterName}" style="float: left; width:30%"><img alt="token-img" style="transform: scale(0.75); display: inline-block; overflow: hidden; width:100%; height:100%" class="token-image token-round" src="${imageUrl}" /></div>`);
+			tokenDiv.click(function() {
+				console.log("token click");
+			})
+			tokenDiv.draggable({
+				start: function (event) { 
+					console.log("custom-token-image-item drag start")
+				},
+				drag: function(event, ui) {
+					console.log("custom-token-image-item drag drag")
+				},
+				stop: function (event) { 
+					console.log("custom-token-image-item drag stop")
+				}
+			});
+			modalBody.append(tokenDiv)
+		}
+		footerLabel = "Add More Custom Images"		
+	} else {
+		let tokenDiv = $(`<div class="custom-token-image-item" data-monster="${monsterId}" data-name="${monsterName}" style="float: left; width:30%"><img alt="token-img" style="transform: scale(0.75); display: inline-block; overflow: hidden; width:100%; height:100%" class="token-image token-round" src="${defaultImg}" /></div>`);
+		modalBody.append(tokenDiv)
+		footerLabel = "Replace The Default Image"
+	}
+
+	let removeAllButton = $(`<button class="token-image-modal-remove-all-button" data-monster-id="${monsterId}"">Remove All Custom Images</button><`);
+	let modalFooter = $(`
+		<div class="token-image-modal-footer">
+			<div style="width:90%">
+				<div role="presentation" class="token-image-modal-footer-title" style="width:100%; padding-left:0px">${footerLabel}</div>
+				<input title="${footerLabel}" placeholder="https://..." name="addCustomImage" type="text" style="width:100%" data-monster-id="${monsterId}" />
+			</div>
+			<button class="token-image-modal-add-button" data-monster-id="${monsterId}">Add</button>
+		</div>
+	`);
+
+	let modalContent = $(`<div class="token-image-modal-content" aria-modal="true" role="dialog"></div>`);
+	modalContent.append(closeButton);
+	modalContent.append(modalHeader);
+	modalContent.append(modalBody);
+	modalContent.append(removeAllButton);
+	modalContent.append(modalFooter);
+
+	let modal = $(`<div class="token-image-modal" style="width:${width}px;top:${top}px;right:${width}px;left:auto;position:fixed;"></div>`);
+	let overlay = $(`<div class="token-image-modal-overlay"></div>`)
+	// overlay.click(close_token_customization_modal);
+	modal.append(overlay);
+	modal.append(modalContent);
+	modal.draggable();
+
+	$("#VTTWRAPPER").append(modal);
 }
