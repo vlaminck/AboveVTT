@@ -1201,11 +1201,17 @@ function token_button(e, tokenIndex = null, tokenTotal = null) {
 			}
 		}
 
-		// if there are custom images defined, use those instead of the default DDB image
-		let customImgs = get_custom_monster_images($(e.target).attr('data-stat'));
-		if (customImgs != undefined && customImgs.length > 0) {
-			let randomIndex = getRandomInt(0, customImgs.length);
-			options.imgsrc = customImgs[randomIndex];
+		let specifiedCustomImg = $(e.target).data('custom-img');
+		if (specifiedCustomImg != undefined && specifiedCustomImg.length > 0) {
+			// the user has specifically chosen a custom image so use it
+			options.imgsrc = specifiedCustomImg;
+		} else {
+			// if there are custom images defined, use those instead of the default DDB image
+			let customImgs = get_custom_monster_images($(e.target).attr('data-stat'));
+			if (customImgs != undefined && customImgs.length > 0) {
+				let randomIndex = getRandomInt(0, customImgs.length);
+				options.imgsrc = customImgs[randomIndex];
+			}
 		}
 	}
 

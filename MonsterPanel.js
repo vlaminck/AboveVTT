@@ -36,9 +36,19 @@ function init_monster_panel() {
 		init_monster_customization_modal(list, popupContainer);
 
 		// present our own custom monster image menu
-		list.on("mousedown", ".monster-row__cell--avatar", function(e) {
+		list.on("mousedown", ".monster-row__cell--avatar", function(event) {
+			event.preventDefault();
+			event.stopPropagation();
+			console.log(`popupContainer = ${popupContainer}`);
+			let monsterRow = event.target.closest(".monster-row");
+			currentlyCustomizingMonster = {
+				monsterId: monsterRow.id.replace("monster-row-", ""),
+				monsterName: $(monsterRow).find(".monster-row__name").text(),
+				defaultImg: parse_img($(monsterRow).find(".monster-row__cell--avatar img").attr("src"))
+			};
+			display_token_customization_modal();
+			return;
 
-			e.stopPropagation();
 			e.target = this; // hack per passarlo a token_button
 
 			let monsterImage = $(this);
@@ -211,7 +221,7 @@ function init_monster_customization_modal(list, popupContainer) {
 					let monsterName = selectedItem.data("name");
 					let imgSrc = selectedItem.find("img").attr("src");
 					originalEvent.target = selectedItem;
-					place_monster(originalEvent, monsterId, monsterName, imgSrc, false)
+					place_custom_monster_img(originalEvent, monsterId, monsterName, imgSrc, false)
 				}
 			},
 			placeHidden: {
@@ -222,7 +232,7 @@ function init_monster_customization_modal(list, popupContainer) {
 					let monsterName = selectedItem.data("name");
 					let imgSrc = selectedItem.find("img").attr("src");
 					originalEvent.target = selectedItem;
-					place_monster(originalEvent, monsterId, monsterName, imgSrc, true)
+					place_custom_monster_img(originalEvent, monsterId, monsterName, imgSrc, true)
 				}
 			},
 			copy: {
@@ -432,11 +442,12 @@ function build_token_customization_item(monsterId, monsterName, imageUrl, custom
 	return tokenDiv;
 }
 
-function place_monster(e, monsterId, monsterName, imgSrc, hidden) {
+function place_custom_monster_img(e, monsterId, monsterName, imgSrc, hidden) {
 	let button = e.target;
 	button.attr('data-stat', monsterId);
 	button.attr("data-name", monsterName);
 	button.attr('data-img', imgSrc);
+	button.attr('data-custom-img', imgSrc);
 
 	if (hidden) {
 		button.attr('data-hidden', 1)
