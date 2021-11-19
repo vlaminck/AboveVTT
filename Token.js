@@ -1357,6 +1357,23 @@ function menu_callback(key, options, event) {
 		if(window.DM)
 			window.TOKEN_OBJECTS[id].persist();
 	}
+
+	if (key === "imgsrcSelect") {
+		id = $(this).attr("data-id");
+		if (!(id in window.TOKEN_OBJECTS)) 
+			return;
+		let tok = window.TOKEN_OBJECTS[id];
+		let monsterId = $(options.$trigger).data("monster");
+		let monsterName = $(options.$trigger).data("name");
+		window.StatHandler.getStat(monsterId, function(stat) {
+			currentlyCustomizingMonster = {
+				monsterId: monsterId,
+				monsterName: monsterName,
+				defaultImg: stat.data.avatarUrl
+			};					
+			display_token_customization_modal(tok);
+		});
+	}
 	
 }
 
@@ -1366,6 +1383,10 @@ function token_inputs(opt) {
 	// export states to data store
 
 	if (opt.$selected && opt.$selected.hasClass("aura-preset")) {
+		return;
+	}
+	if (opt.$selected && opt.$selected.hasClass("imgsrcSelect")) {
+		// this is handled in menu_callback
 		return;
 	}
 
@@ -1875,7 +1896,7 @@ function token_menu() {
 						},
 						imgsrcSelect: {
 							name: "Change Image",
-							items: customImageSelectorOptions
+							className: "imgsrcSelect"
 						},
 						sep4: '----------',
 						helptext: {

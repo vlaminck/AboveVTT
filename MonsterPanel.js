@@ -115,7 +115,7 @@ function init_monster_panel() {
 				button.attr('data-maxhp', stat.data.averageHitPoints);
 				button.attr('data-ac', stat.data.armorClass);
 				token_button(e);
-			})
+			});
 
 
 
@@ -321,7 +321,7 @@ function close_token_customization_modal() {
 	$(".token-image-modal").remove();
 }
 
-function display_token_customization_modal() {
+function display_token_customization_modal(replacingIconOfToken) {
 
 	close_token_customization_modal();
 
@@ -356,13 +356,13 @@ function display_token_customization_modal() {
 	if (customImages != undefined && customImages.length > 0) {
 		for (let i = 0; i < customImages.length; i++) { 
 			let imageUrl = parse_img(customImages[i]);
-			let tokenDiv = build_token_customization_item(monsterId, monsterName, imageUrl, i);
+			let tokenDiv = build_token_customization_item(monsterId, monsterName, imageUrl, i, replacingIconOfToken);
 			modalBody.append(tokenDiv);
 		}
 		footerLabel = "Add More Custom Images";
 		hasCustomImages = true;
 	} else {
-		let tokenDiv = build_token_customization_item(monsterId, monsterName, defaultImg, -1);
+		let tokenDiv = build_token_customization_item(monsterId, monsterName, defaultImg, -1, replacingIconOfToken);
 		modalBody.append(tokenDiv);
 		footerLabel = "Replace The Default Image";
 	}
@@ -385,7 +385,7 @@ function display_token_customization_modal() {
 			// this is the first custom image so rerender the whole thing
 			display_token_customization_modal();
 		} else {
-			let tokenDiv = build_token_customization_item(monsterId, monsterName, imageUrl, imgIndex);
+			let tokenDiv = build_token_customization_item(monsterId, monsterName, imageUrl, imgIndex, replacingIconOfToken);
 			modalBody.append(tokenDiv);	
 		}
 	}
@@ -426,7 +426,7 @@ function display_token_customization_modal() {
 	$("#VTTWRAPPER").append(modal);
 }
 
-function build_token_customization_item(monsterId, monsterName, imageUrl, customImgIndex) {
+function build_token_customization_item(monsterId, monsterName, imageUrl, customImgIndex, replacingIconOfToken) {
 	let tokenDiv = $(`<div class="custom-token-image-item" data-monster="${monsterId}" data-name="${monsterName}" data-custom-img-index="${customImgIndex}" style="float: left; width:30%"><img alt="token-img" style="transform: scale(0.75); display: inline-block; overflow: hidden; width:100%; height:100%" class="token-image token-round" src="${imageUrl}" /></div>`);
 	tokenDiv.draggable({
 		start: function (event) { 
@@ -439,6 +439,13 @@ function build_token_customization_item(monsterId, monsterName, imageUrl, custom
 			console.log("custom-token-image-item drag stop");
 		}
 	});
+	if (replacingIconOfToken != undefined) {
+		tokenDiv.click(function() {
+			replacingIconOfToken.options.imgsrc = parse_img(imageUrl);
+			close_token_customization_modal();
+			replacingIconOfToken.place_sync_persist();
+		});
+	}
 	return tokenDiv;
 }
 
