@@ -1500,7 +1500,7 @@ function init_ui() {
 	init_combat_tracker();
 
 	token_menu();
-	load_custom_image_mapping();
+	load_custom_monster_image_mapping();
 
 
 	window.WaypointManager=new WaypointManagerClass();
