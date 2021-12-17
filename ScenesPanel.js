@@ -860,10 +860,12 @@ function init_scene_selector() {
 			toggle.addClass("menu_opened");
 			refresh_scenes();
 		}
+
+		close_monster_stat_block();
+
 	});
 	$(window.document.body).append(ss);
 	$(window.document.body).append(toggle);
-
 
 }
 

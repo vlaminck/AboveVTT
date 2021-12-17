@@ -31,6 +31,7 @@ body > button,
     padding: 2px 8px;
     transition: color 0.3s ease-in-out, background 0.3s ease-in-out, background-color 0.3s ease-in-out, background-image 0.1s ease-in-out;
     border: 1px solid lightgray;
+    font-size: 12px;
 }
 
 #cpick{
@@ -145,6 +146,21 @@ button.gamelog-to-everyone-button {
     max-height: 420px;
 }
 
+div.ct-sidebar__controls {
+    margin: 4px 0px 0px 0px !important;
+}
+div.ct-sidebar__pane-content--is-dark-mode #chat-text {
+    color: #bfccd6;
+    background: #313739;
+}
+div.ct-sidebar__pane-content--is-dark-mode .dice-roller img {
+    filter: invert(0.6) sepia(1) saturate(0.5) hue-rotate(175deg);
+}
+div.ct-sidebar__pane-content--is-dark-mode .sidebar-panel-content {
+    color: black;
+}
+
+
 .sidebar__controls > div button {
     width: 30px;
     font-size: 20px;
@@ -184,7 +200,7 @@ button[id$='-button'].button-enabled:hover {
 .scene {
     border-radius: 5px;
     border: 1px solid #3d3d3d;
-    width: 171px;
+    width: 172px;
     height: 50px;
     float: left;
     overflow: hidden;
@@ -242,7 +258,8 @@ div#scene_selector,
 }
 
 #combat_area button {
-    padding: 2px 4px;
+    padding: 2px;
+
 }
 
 #combat_area tr[data-current] {
@@ -264,6 +281,7 @@ div#scene_selector,
 
 #combat_footer button {
     width: 50px;
+    font-size: 10px;
 }
 
 #round_number_label {
@@ -526,7 +544,7 @@ div#scene_properties form > div {
     height: 450px;
     left: 5px;
     top: 40px;
-    z-index: 99999000;
+    z-index: 56000;
 }
 
 .tracker-dm {
@@ -836,6 +854,7 @@ div#scene_properties form > div {
     position: relative;
 }
 
+/* .ct-sidebar__controls, */
 .sidebar__controls {
     position: relative;
     margin: 0 !important;
@@ -847,12 +866,14 @@ div#scene_properties form > div {
     left: -206px;
 }*/
 
+/* .ct-sidebar__pane-content, */
 .sidebar__pane-content {
     position: absolute;
     right: 0;
     top: 22px;
 }
 
+.ct-sidebar__controls .tab-btn,
 .sidebar__controls .tab-btn {
     background-color: #e3e3e3;
     margin: 0 2px;
@@ -867,26 +888,38 @@ div#scene_properties form > div {
     flex-grow: 1;
 }
 
+.ct-sidebar__controls .tab-btn.selected-tab,
 .sidebar__controls .tab-btn.selected-tab {
     background-color: #fff;
 }
 
+.ct-sidebar__controls .tab-btn.selected-tab.blue-tab,
 .sidebar__controls .tab-btn.selected-tab.blue-tab {
     background-color: rgb(235, 241, 245);
 }
 
+.ct-sidebar__controls .tab-btn.notification,
+.sidebar__controls .tab-btn.notification {
+    background-color: red;
+}
+
+.ct-sidebar__controls .tab-btn.leading-edge,
 .sidebar__controls .tab-btn.leading-edge {
     margin-left: 0px;
 }
 
+.ct-sidebar__controls .tab-btn.trailing-edge,
 .sidebar__controls .tab-btn.trailing-edge {
     margin-right: 0px;
 }
 
+.chat-text-wrapper{
+    width:100%;
+    padding: 0px 20px;
+}
 #chat-text {
-    width:260px;
+    width:100%;
     height:30px;
-    margin-bottom:10px;
 }
 
 .highlight-gamelog {
@@ -1019,19 +1052,25 @@ div#scene_properties form > div {
     margin-bottom: 10px;
 }
 
+.ct-sidebar__controls button,
 .sidebar__controls button{
 	font-size: 10px;
 }
 
 #splash {
     position: fixed;
-    left: 45%;
-    transform: translate(-50%, 0);
-    top: 27px;
-    height: 670px;
+    transform: translate(0%, -4%);
+    top: 0px;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+    margin: auto;
+    height: 740px;
     width: 700px;
-    z-index: 999;
+    z-index: 70001;
     border: 3px solid black;
+    border-radius: 8px;
+    padding: 10px;
 }
 
 .splashLinkRow div{
@@ -1104,7 +1143,7 @@ div#scene_properties form > div {
 
 #hide_rightpanel{
 	position: absolute;
-	left: -34px;
+	left: -35px;
 }
 
 
@@ -1346,6 +1385,15 @@ body {
     bottom: 0;
 }
 
+/* the characters page renders over the top of the sidebar to allow the character sheet sidebar actions to properly display */
+.ct-sidebar__pane-content .sidebar-panel-content {
+    position: fixed;
+    top: 26px;
+    right: 0px;
+    width: 340px;
+    z-index: 21;
+}
+
 /* Make a few adjustments for when it's a modal because we nest it inside or .sidebar-modal and change the UI slightly  */
 .sidebar-modal .sidebar-panel-content,
 .sidebar-modal .sidebar-panel-content .sidebar-panel-header,
@@ -1355,7 +1403,7 @@ body {
 }
 .sidebar-modal .sidebar-panel-content .sidebar-panel-header,
 .sidebar-modal .sidebar-panel-content .sidebar-panel-footer {
-    padding: 4px;
+    padding: 0px;
 }
 
 .sidebar-panel-content {
@@ -1368,7 +1416,6 @@ body {
     background-color: #fff;
 }
 .sidebar-panel-header {
-    padding: 4px;
     width: 100%;
 }
 .sidebar-panel-header-title {
@@ -1378,26 +1425,30 @@ body {
     letter-spacing: .5px;
     display: flex;
     align-items: center;
+    margin: 8px 0px 8px 8px;
+}
+.sidebar-panel-header-title:empty{
+    margin: 0px;
 }
 .sidebar-panel-header-subtitle {
     font-size: 12px;
     font-weight: 700;
     color: #738694;
     line-height: 1.4;
+    margin: 8px 0px 8px 8px;
 }
-.sidebar-panel-body {
-    position: relative; 
-    width:100%; 
-    overflow-y: auto;
-    flex: auto;
-    padding: 8px;
+.sidebar-panel-header-subtitle:empty{
+    margin: 0px;
 }
-.sidebar-panel-footer {
-    border-top: 1px solid #d8e1e8;
-    display: flex;
-    align-items: center;
-    padding: 4px;
-    width: 100%;
+.sidebar-panel-header-explanation {
+    font-size: 14px;
+    color: #979AA4;
+    font-family: "Roboto Condensed",Roboto,Helvetica,sans-serif;
+    margin: 8px 0px 8px 8px;
+    padding: 0px;
+}
+.sidebar-panel-header-explanation:empty{
+    margin: 0px;
 }
 .token-image-modal-footer-title {
     font-weight: 700;
@@ -1406,7 +1457,7 @@ body {
     flex-grow: 1;
     color: #738694;
     line-height: 1.4;
-    margin-top: 6px;
+    margin: 4px 6px 2px 2px;
 }
 div.token-image-modal-footer-title {
     font-size: 13px;
@@ -1444,6 +1495,8 @@ h5.token-image-modal-footer-title:after {
 }
 .footer-input-wrapper {
     width: 100%;
+    padding: 4px;
+    border-top: 1px solid #d8e1e8;
 }
 .token-image-modal-url-label-wrapper {
     display: flex;
@@ -1484,11 +1537,6 @@ h5.token-image-modal-footer-title:after {
 .token-image-modal-add-button {
     margin: 0px 4px 0px 4px;
     width: auto;
-}
-.sidebar-panel-header-explanation {
-    font-size: 14px;
-    color: #979AA4;
-    font-family: "Roboto Condensed",Roboto,Helvetica,sans-serif;
 }
 .custom-token-image-item {
     float: left; 
@@ -1631,6 +1679,13 @@ h5.token-image-modal-footer-title:after {
 }
 .sidebar-panel-content .sidebar-panel-body {
     height: 100%;
+    padding: 8px;
+}
+#monsters-panel .sidebar-panel-body {
+    padding: 0px;
+}
+#players-panel .sidebar-panel-body {
+    padding: 0px;
 }
 .sidebar-panel-content .sidebar-panel-body {
     background-color: rgb(235, 241, 245);
@@ -1645,6 +1700,7 @@ h5.token-image-modal-footer-title:after {
     background-position: left;
     padding: 4px;
     cursor: pointer;
+    margin: 0px 12px;
 }
 .tokens-panel-back-button div {
     padding-left: 20px;
@@ -1655,12 +1711,12 @@ h5.token-image-modal-footer-title:after {
 }
 .sidebar-panel-content .sidebar-panel-header {
     background-color: rgb(235, 241, 245);
-    padding: 8px;
+    padding: 0px;
 }
 .sidebar-panel-content .sidebar-panel-footer {
     display: flex;
     flex-direction: column;
-    padding: 8px;
+    padding: 0px;
     background-color: rgb(235, 241, 245);
     width: 100%;
     align-items: center;
@@ -1765,4 +1821,74 @@ h5.token-image-modal-footer-title:after {
 .sidebar-hovertext:hover:before {
     opacity: 1;
     visibility: visible;
+}
+.sidebar-panel-content .sidebar-panel-footer .footer-input-wrapper:empty {
+    padding: 0px;
+    border-top: 0px solid #d8e1e8;
+}
+.sidebar-panel-loading-indicator {
+    padding: 40px;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    right: 0px;
+    bottom: 0px;
+    background: rgb(235, 241, 245);
+    /* easy debugging */
+    /* opacity: 0.5; */
+}
+.loading-status-indicator__subtext {
+    font-size: 14px;
+    color: #738694;
+    margin-bottom: 8px;
+    text-align: center;
+}
+.beholder-dm-screen__beholder {
+    animation-duration: 6s;
+    animation-timing-function: ease-in-out;
+    animation-delay: 0s;
+    animation-iteration-count: infinite;
+    animation-direction: normal;
+    animation-fill-mode: none;
+    animation-play-state: running;
+    animation-name: beholder-float;
+}
+@keyframes beholder-float {
+    0% { transform: translate(0,  0px); }
+    50%  { transform: translate(0, -20px); }
+    100%   { transform: translate(0, -0px); }   
+}
+
+div.sidebar__pane-content div.tooltip::after {
+    background: none !important;
+}
+
+button.avtt-roll-button {
+    /* lifted from DDB encounter stat blocks  */
+    color: #b43c35;
+    border: 1px solid #b43c35;
+    border-radius: 4px;
+    background-color: #fff;
+    white-space: nowrap;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: Roboto Condensed,Open Sans,Helvetica,sans-serif;
+    line-height: 18px;
+    letter-spacing: 1px;
+    padding: 1px 4px 0;
+}			
+.MuiPaper-root {
+    padding: 0px 16px;
+    width: 100px;
+}
+.MuiListItemText-root {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin-top: 4px;
+    margin-bottom: 4px;
+}
+.MuiButtonBase-root {
+    width: 100%;
 }

@@ -122,7 +122,7 @@ function init_settings(){
 	for(let i = 0; i < token_settings.length; i++) {
 		let setting = token_settings[i];
 		let currentValue = window.TOKEN_SETTINGS[setting.name];
-		let inputWrapper = settingsPanel.build_toggle_input(setting.name, setting.label, currentValue, setting.enabledDescription, setting.disabledDescription, function(name, newValue) {
+		let inputWrapper = build_toggle_input(setting.name, setting.label, currentValue, setting.enabledDescription, setting.disabledDescription, function(name, newValue) {
 			console.log(`${name} setting is now ${newValue}`);
 			window.TOKEN_SETTINGS[name] = newValue;
 			persist_token_settings(window.TOKEN_SETTINGS);
@@ -189,7 +189,7 @@ function init_settings(){
 		for(let i = 0; i < experimental_features.length; i++) {
 			let setting = experimental_features[i];
 			let currentValue = window.TOKEN_SETTINGS[setting.name];
-			let inputWrapper = settingsPanel.build_toggle_input(setting.name, setting.label, currentValue, setting.enabledDescription, setting.disabledDescription, function(name, newValue) {
+			let inputWrapper = build_toggle_input(setting.name, setting.label, currentValue, setting.enabledDescription, setting.disabledDescription, function(name, newValue) {
 				console.log(`${name} setting is now ${newValue}`);
 				// TODO: store this setting somewhere?
 			});
@@ -290,8 +290,13 @@ function redraw_settings_panel_token_examples() {
 }
 
 function persist_token_settings(settings){
-	const gameid = $("#message-broker-client").attr("data-gameId");
+	const gameid = find_game_id();
 	localStorage.setItem("TokenSettings" + gameid, JSON.stringify(settings));
+}
+
+function persist_experimental_settings(settings) {
+	const gameid = find_game_id();
+	localStorage.setItem("ExperimentalSettings" + gameid, JSON.stringify(settings));
 }
 
 function export_file(){
