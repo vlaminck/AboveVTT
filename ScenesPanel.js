@@ -551,7 +551,7 @@ function edit_scene_dialog(scene_id) {
 				wizard_popup.append("Set the green square to roughly the size of a medium token! <button id='step2btn'>Press when it's good enough</button>");
 
 
-			$("body").append(wizard_popup);
+				window.EncounterHandler.body.append(wizard_popup);
 
 			regrid();
 
@@ -622,7 +622,7 @@ function edit_scene_dialog(scene_id) {
 			prewiz.css("z-index", "200px");
 			prewiz.css("background", "rgba(254,215,62,1)");
 			prewiz.css("font-size", "20px");
-			$("body").append(prewiz);
+			window.EncounterHandler.body.append(prewiz);
 
 			$("#align_grid").click(function() {
 				$("#prewiz").remove();
@@ -1104,7 +1104,7 @@ function mega_importer(DDB = false) {
 	container.append(area);
 	bottom = $("<div id='importer_footer'/>").css({ height: "30px", width: "100%" });
 	container.append(bottom);
-	$("body").append(container);
+	window.EncounterHandler.body.append(container);
 	if (!DDB)
 		first.click();
 }

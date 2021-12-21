@@ -1,3 +1,10 @@
+
+// let iframe = document.createElement('iframe');
+// iframe.setAttribute("src", "https://www.dndbeyond.com/encounters/4c32031e-fd20-4aad-8161-9ab23b7ed679");
+// iframe.setAttribute("style", "position:fixed;width:100%;height:100%;top:0px;left:0px;display:none;");
+// (document.body || document.documentElement).appendChild(iframe);
+
+
 var l = document.createElement('div');
 l.setAttribute("style", "display:none;");
 l.setAttribute("id", "extensionpath");

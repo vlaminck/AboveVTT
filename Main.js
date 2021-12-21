@@ -1183,6 +1183,18 @@ function check_versions_match() {
 }
 
 function init_ui() {
+	if (DM) {
+		window.EncounterHandler = new EncounterHandler(function() {
+			init_encounter_iframe(function() {
+				init_game_ui()
+			});
+		});
+	} else {
+		init_game_ui()
+	}
+}
+
+function init_game_ui() {	
 	window.STARTING = true;
 	var gameid = $("#message-broker-client").attr("data-gameId");
 	init_splash();
@@ -1215,7 +1227,6 @@ function init_ui() {
 		window.CONNECTED_PLAYERS['0'] = abovevtt_version; // ID==0 is DM
 		window.ScenesHandler = new ScenesHandler(gameid);
 		init_scene_selector();
-		window.EncounterHandler = new EncounterHandler();
 	}
 	// ATTIVA GAMELOG
 	$(".gamelog-button").click();
@@ -1291,7 +1302,7 @@ function init_ui() {
 	});
 
 	const rollButton = $(`<button class="roll-button">Roll</button>`);
-	$("body").append(rollButton);
+	window.EncounterHandler.body.append(rollButton);
 	rollButton.on("click", function (e) {
 		const rollExpression = [];
 		$(".dice-roller > div img[data-count]").each(function() {
@@ -1478,7 +1489,7 @@ function init_ui() {
 
 
 	wrapper.append(VTT);
-	$("body").append(wrapper);
+	window.EncounterHandler.body.append(wrapper);
 
 	black_layer = $("<div id='black_layer'/>");
 	black_layer.width(window.width);
@@ -1488,7 +1499,7 @@ function init_ui() {
 	black_layer.css("left", "0px");
 	black_layer.css("background", "black");
 	black_layer.css("opacity", "0");
-	$("body").append(black_layer);
+	window.EncounterHandler.body.append(black_layer);
 	black_layer.animate({ opacity: "1" }, 5000);
 	black_layer.css("z-index", "-1");
 
@@ -1735,7 +1746,7 @@ function init_buttons() {
 	fog_menu.css("top", "25px");
 	fog_menu.css("width", "75px");
 	fog_menu.css('background', "url('/content/1-0-1487-0/skins/waterdeep/images/mon-summary/paper-texture.png')")
-	$("body").append(fog_menu);
+	window.EncounterHandler.body.append(fog_menu);
 	fog_menu.find("#fog_undo").click(function(){
 		window.REVEALED.pop();
 		redraw_canvas();
@@ -1745,7 +1756,7 @@ function init_buttons() {
 
 
 	buttons = $("<div/>")
-	$("body").append(buttons);
+	window.EncounterHandler.body.append(buttons);
 
 	
 	buttons.append($("<button style='display:inline; width:75px;' id='select-button' class='drawbutton hideable' data-shape='select'><u>S</u>ELECT</button>"));

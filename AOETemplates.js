@@ -43,7 +43,7 @@ function setup_aoe_button() {
     aoe_menu.css("width", "75px");
     aoe_menu.css('background', "url('/content/1-0-1487-0/skins/waterdeep/images/mon-summary/paper-texture.png')");
 
-    $("body").append(aoe_menu);
+    window.EncounterHandler.body.append(aoe_menu);
 
 
     buttons.append(aoe_button);

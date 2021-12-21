@@ -9,7 +9,7 @@ function create_jitsi_button() {
 	b.css("gap", "6px");
 	b.css("display", "inline-flex");
 	b.css("z-index", 9999);
-	$("body").append(b);
+	window.EncounterHandler.body.append(b);
 
 	b.click(function () {
 		$(this).remove();

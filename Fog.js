@@ -273,9 +273,9 @@ class WaypointManagerClass {
 
 
 function check_token_visibility() {
-	if (window.DM || $("#fog_overlay").is(":hidden"))
+	if (window.DM || f("#fog_overlay").is(":hidden"))
 		return;
-	var canvas = document.getElementById("fog_overlay");
+	var canvas = gamedoc.getElementById("fog_overlay");
 	var ctx = canvas.getContext("2d");
 
 
@@ -286,10 +286,10 @@ function check_token_visibility() {
 
 		var selector = "div[data-id='" + id + "']";
 		if (pixeldata[3] == 255) {
-			$(selector).hide();
+			f(selector).hide();
 		}
 		else if (!window.TOKEN_OBJECTS[id].options.hidden) {
-			$(selector).show();
+			f(selector).show();
 			//console.log('SHOW '+id);
 		}
 	}
@@ -374,18 +374,18 @@ function midPointBtw(p1, p2) {
 }
 
 function reset_canvas() {
-	$('#fog_overlay').width($("#scene_map").width());
-	$('#fog_overlay').height($("#scene_map").height());
+	f('#fog_overlay').width(f("#scene_map").width());
+	f('#fog_overlay').height(f("#scene_map").height());
 
-	$('#grid_overlay').width($("#scene_map").width());
-	$('#grid_overlay').height($("#scene_map").height());
+	f('#grid_overlay').width(f("#scene_map").width());
+	f('#grid_overlay').height(f("#scene_map").height());
 
-	$('#draw_overlay').width($("#scene_map").width());
-	$('#draw_overlay').height($("#scene_map").height());
+	f('#draw_overlay').width(f("#scene_map").width());
+	f('#draw_overlay').height(f("#scene_map").height());
 
-	$('#draw_overlay').get(0).width = $("#scene_map").width();
-	$('#draw_overlay').get(0).height = $("#scene_map").height();
-	var canvas = document.getElementById("fog_overlay");
+	f('#draw_overlay').get(0).width = f("#scene_map").width();
+	f('#draw_overlay').get(0).height = f("#scene_map").height();
+	var canvas = gamedoc.getElementById("fog_overlay");
 	var ctx = canvas.getContext("2d");
 
 	if (!window.FOG_OF_WAR) {
@@ -394,8 +394,8 @@ function reset_canvas() {
 	}
 
 
-	canvas.width = $("#scene_map").width();
-	canvas.height = $("#scene_map").height();
+	canvas.width = f("#scene_map").width();
+	canvas.height = f("#scene_map").height();
 	if (window.DM) {
 		ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
 		ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -406,12 +406,12 @@ function reset_canvas() {
 	}
 
 
-	var canvas_grid = document.getElementById("grid_overlay");
+	var canvas_grid = gamedoc.getElementById("grid_overlay");
 	var ctx_grid = canvas_grid.getContext("2d");
 	if (window.CURRENT_SCENE_DATA && (window.CURRENT_SCENE_DATA.grid == "1" || window.WIZARDING) && window.CURRENT_SCENE_DATA.hpps > 10 && window.CURRENT_SCENE_DATA.vpps > 10) {
 		//alert(window.CURRENT_SCENE_DATA.hpps + " "+ window.CURRENT_SCENE_DATA.vpps);
-		canvas_grid.width = $("#scene_map").width();
-		canvas_grid.height = $("#scene_map").height();
+		canvas_grid.width = f("#scene_map").width();
+		canvas_grid.height = f("#scene_map").height();
 
 		startX = Math.round(window.CURRENT_SCENE_DATA.offsetx);
 		startY = Math.round(window.CURRENT_SCENE_DATA.offsety);
@@ -419,13 +419,13 @@ function reset_canvas() {
 		//alert(startX+ " "+startY);
 		if (window.WIZARDING) {
 			let al1 = {
-				x: parseInt($("#aligner1").css("left")) + 29,
-				y: parseInt($("#aligner1").css("top")) + 29,
+				x: parseInt(f("#aligner1").css("left")) + 29,
+				y: parseInt(f("#aligner1").css("top")) + 29,
 			};
 
 			let al2 = {
-				x: parseInt($("#aligner2").css("left")) + 29,
-				y: parseInt($("#aligner2").css("top")) + 29,
+				x: parseInt(f("#aligner2").css("left")) + 29,
+				y: parseInt(f("#aligner2").css("top")) + 29,
 			};
 			ctx_grid.setLineDash([30, 5]);
 
@@ -467,7 +467,7 @@ function reset_canvas() {
 			var increment = window.CURRENT_SCENE_DATA.hpps;
 			ctx_grid.lineWidth = 1;
 			var skip = true;
-			for (var i = startX; i < $("#scene_map").width(); i = i + increment) {
+			for (var i = startX; i < f("#scene_map").width(); i = i + increment) {
 				if (window.CURRENT_SCENE_DATA.grid_subdivided == "1" && skip) {
 					skip = false;
 					continue;
@@ -478,13 +478,13 @@ function reset_canvas() {
 
 				ctx_grid.beginPath();
 				ctx_grid.moveTo(i, 0);
-				ctx_grid.lineTo(i, $("#scene_map").height());
+				ctx_grid.lineTo(i, f("#scene_map").height());
 				ctx_grid.stroke();
 
 			}
 			var increment = window.CURRENT_SCENE_DATA.vpps;
 			skip = true;
-			for (var i = startY; i < $("#scene_map").height(); i = i + increment) {
+			for (var i = startY; i < f("#scene_map").height(); i = i + increment) {
 				if (window.CURRENT_SCENE_DATA.grid_subdivided == "1" && skip) {
 					skip = false;
 					continue;
@@ -494,7 +494,7 @@ function reset_canvas() {
 				}
 				ctx_grid.beginPath();
 				ctx_grid.moveTo(0, i);
-				ctx_grid.lineTo($("#scene_map").width(), i);
+				ctx_grid.lineTo(f("#scene_map").width(), i);
 				ctx_grid.stroke();
 			}
 		}
@@ -508,7 +508,7 @@ function reset_canvas() {
 function redraw_canvas() {
 	if (!window.FOG_OF_WAR)
 		return;
-	var canvas = document.getElementById("fog_overlay");
+	var canvas = gamedoc.getElementById("fog_overlay");
 	var ctx = canvas.getContext("2d");
 
 	if (window.DM)
@@ -536,7 +536,7 @@ function redraw_canvas() {
 			}
 			if (d[4] == 2) {
 				// reveal ALL!!!!!!!!!!
-				ctx.clearRect(0, 0, $("#scene_map").width(), $("#scene_map").height());
+				ctx.clearRect(0, 0, f("#scene_map").width(), f("#scene_map").height());
 			}
 			if (d[4] == 3) {
 				// REVEAL POLYGON
@@ -562,7 +562,7 @@ function redraw_canvas() {
 }
 
 function redraw_drawings() {
-	var canvas = document.getElementById("draw_overlay");
+	var canvas = gamedoc.getElementById("draw_overlay");
 	var ctx = canvas.getContext("2d");
 	var lineWidth = 6;
 	var style = "#FF0000";
@@ -641,15 +641,15 @@ function redraw_drawings() {
 }
 
 function stop_drawing() {
-	$("#reveal").css("background-color", "");
+	f("#reveal").css("background-color", "");
 	window.MOUSEDOWN = false;
-	var target = $("#fog_overlay");
+	var target = f("#fog_overlay");
 	target.css('cursor', '');
 	target.off('mousedown', drawing_mousedown);
 	target.off('mouseup', drawing_mouseup);
 	target.off('mousemove', drawing_mousemove);
 	target.off('contextmenu', drawing_contextmenu);
-	var target = $("#VTT");
+	var target = f("#VTT");
 	target.css('cursor', '');
 	target.off('mousedown', drawing_mousedown);
 	target.off('mouseup', drawing_mouseup);
@@ -659,16 +659,16 @@ function stop_drawing() {
 
 function drawing_mousedown(e) {
 
-	window.LINEWIDTH = $("#draw_line_width").val();
-	window.DRAWTYPE = $(".drawTypeSelected ").attr('data-value');
-	window.DRAWCOLOR = $(".colorselected").css('background-color');
+	window.LINEWIDTH = f("#draw_line_width").val();
+	window.DRAWTYPE = f(".drawTypeSelected ").attr('data-value');
+	window.DRAWCOLOR = f(".colorselected").css('background-color');
 	window.DRAWSHAPE = e.data.shape;
 	window.DRAWFUNCTION = e.data.type;
 
 	if (window.DRAWSHAPE === 'select') {
-		$("#fog_overlay").css("z-index", "50");
+		f("#fog_overlay").css("z-index", "50");
 		if (e.which == 1) {
-			$("#fog_overlay").css('cursor', 'crosshair');
+			f("#fog_overlay").css('cursor', 'crosshair');
 		}
 	}
 
@@ -704,7 +704,7 @@ function drawing_mousedown(e) {
 			window.BEGIN_MOUSEX = [pointX];
 			window.BEGIN_MOUSEY = [pointY];
 		}
-		var canvas = document.getElementById("fog_overlay");
+		var canvas = gamedoc.getElementById("fog_overlay");
 		var ctx = canvas.getContext("2d");
 		var drawStroke = getDrawingStroke();
 		var fill = getDrawingFill();
@@ -732,7 +732,7 @@ function drawing_mousedown(e) {
 			window.BRUSHPOINTS = [];
 			window.BRUSHPOINTS.push({x:window.BEGIN_MOUSEX, y:window.BEGIN_MOUSEY});
 			// draw a dot
-			var canvas = document.getElementById("fog_overlay");
+			var canvas = gamedoc.getElementById("fog_overlay");
 			var ctx = canvas.getContext("2d");
 			window.BRUSHPOINTS.push({x:window.BEGIN_MOUSEX+1, y:window.BEGIN_MOUSEY+1});
 			window.BRUSHPOINTS.push({x:window.BEGIN_MOUSEX-1, y:window.BEGIN_MOUSEY-1});
@@ -752,7 +752,7 @@ function drawing_mousemove(e) {
 	var mousex = Math.round(((e.pageX - 200) * (1.0 / window.ZOOM)));
 	var mousey = Math.round(((e.pageY - 200) * (1.0 / window.ZOOM)));
 
-	var canvas = document.getElementById("fog_overlay");
+	var canvas = gamedoc.getElementById("fog_overlay");
 	var ctx = canvas.getContext("2d");
 	var drawStroke = getDrawingStroke();
 	var fill = getDrawingFill();
@@ -873,8 +873,8 @@ function drawing_mouseup(e) {
 	mousey = Math.round(((e.pageY - 200) * (1.0 / window.ZOOM)));
 
 	if (window.DRAWSHAPE === 'select') {
-		$("#fog_overlay").css("z-index", "31");
-		$("#fog_overlay").css('cursor', '');
+		f("#fog_overlay").css("z-index", "31");
+		f("#fog_overlay").css('cursor', '');
 	}
 
 	// Return early from this function if we are measuring and have hit the right mouse button
@@ -1003,7 +1003,7 @@ function drawing_mouseup(e) {
 				c++;
 				// TOKEN IS INSIDE THE SELECTION
 				curr.selected = true;
-				//$("#tokens div[data-id='"+id+"']").addClass("tokenselected").css("border","2px solid white");
+				//f("#tokens div[data-id='"+id+"']").addClass("tokenselected").css("border","2px solid white");
 				curr.place();
 			}
 		}
@@ -1042,11 +1042,11 @@ function drawing_mouseup(e) {
 
 		// ASK FOR CONFIRMATION
 
-		$("#grid_overlay").show();
-		$("#tokens").show();
+		f("#grid_overlay").show();
+		f("#tokens").show();
 		window.ALIGNING = false;
 		window.WIZARDING = true;
-		$("#align-button").removeClass("button-enabled").css('background-color', '');
+		f("#align-button").removeClass("button-enabled").css('background-color', '');
 		stop_drawing();
 		window.ScenesHandler.scene.hpps = ppsX;
 		window.ScenesHandler.scene.vpps = ppsY;
@@ -1056,22 +1056,22 @@ function drawing_mouseup(e) {
 		window.ScenesHandler.scene.grid = "1";
 		window.ScenesHandler.persist();
 		stop_drawing();
-		$("#wizard_popup").empty();
+		f("#wizard_popup").empty();
 
-		$("#wizard_popup").append("We are now super-imposing a grid on the image. Does the grid match ? (no need to be 100% accurate, but try to get close) <button id='grid_yes'>YES</button> <button id='grid_no'>NO</button>");
+		f("#wizard_popup").append("We are now super-imposing a grid on the image. Does the grid match ? (no need to be 100% accurate, but try to get close) <button id='grid_yes'>YES</button> <button id='grid_no'>NO</button>");
 
-		$("#wizard_popup").find("#grid_no").click(
+		f("#wizard_popup").find("#grid_no").click(
 			function() {
-				$("#wizard_popup").empty().append("Try again. Remember to ZOOM IN so that you can be more accurate!!!");
-				$("#align-button").click();
+				f("#wizard_popup").empty().append("Try again. Remember to ZOOM IN so that you can be more accurate!!!");
+				f("#align-button").click();
 			}
 		);
 
-		$("#wizard_popup").find("#grid_yes").click(
+		f("#wizard_popup").find("#grid_yes").click(
 			function() {
-				$("#wizard_popup").empty().append("Nice!! How many feet per square ? <button id='grid_5'>5</button> or <button id='grid_10'>10</button>");
+				f("#wizard_popup").empty().append("Nice!! How many feet per square ? <button id='grid_5'>5</button> or <button id='grid_10'>10</button>");
 
-				$("#grid_5").click(function() {
+				f("#grid_5").click(function() {
 					window.WIZARDING = false;
 					window.ScenesHandler.scene.snap = "1";
 					window.ScenesHandler.scene.grid = "0";
@@ -1079,41 +1079,41 @@ function drawing_mouseup(e) {
 					window.ScenesHandler.scene.grid_subdivided = "0";
 					window.ScenesHandler.persist();
 					window.ScenesHandler.reload();
-					$("#wizard_popup").empty().append("You're good to go!! Measurement tool calibrated. Token Snapping Enabled (you can remove it from manual grid data)");
+					f("#wizard_popup").empty().append("You're good to go!! Measurement tool calibrated. Token Snapping Enabled (you can remove it from manual grid data)");
 
-					$("#wizard_popup").delay(2000).animate({ opacity: 0 }, 4000, function() {
+					f("#wizard_popup").delay(2000).animate({ opacity: 0 }, 4000, function() {
 
-						$("#wizard_popup").remove();
+						f("#wizard_popup").remove();
 					});
 				});
 
-				$("#grid_10").click(function() {
-					$("#wizard_popup").empty().append("Do you want me to subdivide the map grid in 2 so that you can get in-scale token size? <button id='grid_divide'>Yes</button> <button id='grid_nodivide'>No</button>");
+				f("#grid_10").click(function() {
+					f("#wizard_popup").empty().append("Do you want me to subdivide the map grid in 2 so that you can get in-scale token size? <button id='grid_divide'>Yes</button> <button id='grid_nodivide'>No</button>");
 
-					$("#grid_divide").click(function() {
+					f("#grid_divide").click(function() {
 						window.WIZARDING = false;
-						$("#wizard_popup").empty().append("You're good to go! AboveVTT is now super-imposing a grid that divides the original grid map in half. If you want to hide this grid just edit the manual grid data.");
+						f("#wizard_popup").empty().append("You're good to go! AboveVTT is now super-imposing a grid that divides the original grid map in half. If you want to hide this grid just edit the manual grid data.");
 						window.ScenesHandler.scene.grid_subdivided = "1";
 						window.ScenesHandler.scene.snap = "1";
 
 						window.ScenesHandler.scene.grid = "1";
 						window.ScenesHandler.scene.fpsq = "5";
 
-						$("#wizard_popup").delay(5000).animate({ opacity: 0 }, 4000, function() {
-							$("#wizard_popup").remove();
+						f("#wizard_popup").delay(5000).animate({ opacity: 0 }, 4000, function() {
+							f("#wizard_popup").remove();
 						});
 						window.ScenesHandler.persist();
 						window.ScenesHandler.reload();
 					});
 
-					$("#grid_nodivide").click(function() {
+					f("#grid_nodivide").click(function() {
 						window.WIZARDING = false;
 						window.ScenesHandler.scene.snap = "1";
 						window.ScenesHandler.scene.grid_subdivided = "0";
 						window.ScenesHandler.scene.grid = "0";
 						window.ScenesHandler.scene.fpsq = "10";
 						window.ScenesHandler.persist();
-						$("#wizard_popup").empty().append("You're good to go! Medium token will match the original grid size");
+						f("#wizard_popup").empty().append("You're good to go! Medium token will match the original grid size");
 					});
 
 
@@ -1131,9 +1131,9 @@ function drawing_mouseup(e) {
 }
 
 function drawing_contextmenu(e) {
-	window.LINEWIDTH = $("#draw_line_width").val();
-	window.DRAWTYPE = $(".drawTypeSelected ").attr('data-value');
-	window.DRAWCOLOR = $(".colorselected").css('background-color');
+	window.LINEWIDTH = f("#draw_line_width").val();
+	window.DRAWTYPE = f(".drawTypeSelected ").attr('data-value');
+	window.DRAWCOLOR = f(".colorselected").css('background-color');
 	window.DRAWSHAPE = e.data.shape;
 	window.DRAWFUNCTION = e.data.type;
 
@@ -1142,7 +1142,7 @@ function drawing_contextmenu(e) {
 		window.BEGIN_MOUSEY.pop();
 		if(window.BEGIN_MOUSEX.length > 0)
 		{
-			var canvas = document.getElementById("fog_overlay");
+			var canvas = gamedoc.getElementById("fog_overlay");
 			var ctx = canvas.getContext("2d");
 
 			var drawStroke = getDrawingStroke();
@@ -1185,83 +1185,83 @@ function drawing_contextmenu(e) {
 
 function setup_draw_buttons() {
 
-	var canvas = document.getElementById('fog_overlay');
+	var canvas = gamedoc.getElementById('fog_overlay');
 	var ctx = canvas.getContext('2d');
 
-	$(".drawbutton").click(function(e) {
+	f(".drawbutton").click(function(e) {
 		var clicked = this;
-		if (!($(clicked).hasClass('menu-option'))) {						//handle menu open/close toggling
-			$(".menu-button").not(clicked).removeClass('button-selected');
+		if (!(f(clicked).hasClass('menu-option'))) {						//handle menu open/close toggling
+			f(".menu-button").not(clicked).removeClass('button-selected');
 		}
 
-		if ($(clicked).hasClass('menu-button')) {
-			if($(clicked).is("#aoe_button") && $(clicked).hasClass('button-selected')) {
-				$('#select-button').click();
+		if (f(clicked).hasClass('menu-button')) {
+			if(f(clicked).is("#aoe_button") && f(clicked).hasClass('button-selected')) {
+				f('#select-button').click();
 				return;
 			}
-			$(clicked).toggleClass('button-selected');
+			f(clicked).toggleClass('button-selected');
 		}
 
-		$(".top_menu").removeClass('visible');
-		$("#aoe_feet").blur();
-		if ($("#fog_button").hasClass('button-selected')) {
-			$("#fog_menu").addClass('visible');
-			if ($(clicked).is("#fog_button") && !($(clicked).hasClass('button-enabled'))) {
-				clicked = $(".fog-option.remembered-selection");
+		f(".top_menu").removeClass('visible');
+		f("#aoe_feet").blur();
+		if (f("#fog_button").hasClass('button-selected')) {
+			f("#fog_menu").addClass('visible');
+			if (f(clicked).is("#fog_button") && !(f(clicked).hasClass('button-enabled'))) {
+				clicked = f(".fog-option.remembered-selection");
 			}
 		}
 
-		if ($("#draw_button").hasClass('button-selected')) {
-			$("#draw_menu").addClass('visible');
-			if ($(clicked).is("#draw_button") && !($(clicked).hasClass('button-enabled'))) {
-				clicked = $(".draw-option.remembered-selection");
+		if (f("#draw_button").hasClass('button-selected')) {
+			f("#draw_menu").addClass('visible');
+			if (f(clicked).is("#draw_button") && !(f(clicked).hasClass('button-enabled'))) {
+				clicked = f(".draw-option.remembered-selection");
 			}
 		}
 
-		if ($("#aoe_button").hasClass('button-selected')) {
-			$("#aoe_menu").addClass('visible');
-			if ($(clicked).is("#aoe_button") && !($(clicked).hasClass('button-enabled'))) {
-				clicked = $(".aoe-option.remembered-selection");
-				$("#aoe_feet").focus();
-				$("#fog_overlay").css("z-index", "20");
+		if (f("#aoe_button").hasClass('button-selected')) {
+			f("#aoe_menu").addClass('visible');
+			if (f(clicked).is("#aoe_button") && !(f(clicked).hasClass('button-enabled'))) {
+				clicked = f(".aoe-option.remembered-selection");
+				f("#aoe_feet").focus();
+				f("#fog_overlay").css("z-index", "20");
 			}
 		}
 
-		if (!($(clicked).hasClass('menu-button'))) {
-			if ($(clicked).hasClass('button-enabled')  && !($(clicked).is('#select-button'))) {
+		if (!(f(clicked).hasClass('menu-button'))) {
+			if (f(clicked).hasClass('button-enabled')  && !(f(clicked).is('#select-button'))) {
 				stop_drawing();
-				$(".drawbutton").removeClass('button-enabled');
-				$("#fog_overlay").css("z-index", "20");
+				f(".drawbutton").removeClass('button-enabled');
+				f("#fog_overlay").css("z-index", "20");
 
 				if (window.ALIGNING == true) {
 					window.ALIGNING = false;
 					window.ScenesHandler.reload();
 				}
 
-				$('#select-button').click();
+				f('#select-button').click();
 				return;
 			}
 
 			stop_drawing();
-			$(".drawbutton").removeClass('button-enabled');
-			$(clicked).addClass('button-enabled');
-			if ($(clicked).hasClass('fog-option')) {
-				$(".fog-option").removeClass('remembered-selection');
-				$(clicked).addClass('remembered-selection');
-				$("#fog_button").addClass('button-enabled');
+			f(".drawbutton").removeClass('button-enabled');
+			f(clicked).addClass('button-enabled');
+			if (f(clicked).hasClass('fog-option')) {
+				f(".fog-option").removeClass('remembered-selection');
+				f(clicked).addClass('remembered-selection');
+				f("#fog_button").addClass('button-enabled');
 			}
-			if ($(clicked).hasClass('draw-option')) {
-				$(".draw-option").removeClass('remembered-selection');
-				$(clicked).addClass('remembered-selection');
-				$("#draw_button").addClass('button-enabled');
+			if (f(clicked).hasClass('draw-option')) {
+				f(".draw-option").removeClass('remembered-selection');
+				f(clicked).addClass('remembered-selection');
+				f("#draw_button").addClass('button-enabled');
 			}
-			if ($(clicked).hasClass('aoe-option')) {
-				$(".aoe-option").removeClass('remembered-selection');
-				$(clicked).addClass('remembered-selection');
-				$("#aoe_button").addClass('button-enabled');
+			if (f(clicked).hasClass('aoe-option')) {
+				f(".aoe-option").removeClass('remembered-selection');
+				f(clicked).addClass('remembered-selection');
+				f("#aoe_button").addClass('button-enabled');
 			}
 
-			var target = $("#fog_overlay");
+			var target = f("#fog_overlay");
 
 			if (!e.currentTarget.id || (e.currentTarget.id !== "select-button" && e.currentTarget.id!='aoe_button')) {
 				console.log("setto a 50 per via di " + e.currentTarget.id);
@@ -1271,8 +1271,8 @@ function setup_draw_buttons() {
 			}
 
 
-			if ($(e.target).attr('id') == "measure-button") {
-				target = $("#VTT");
+			if (f(e.target).attr('id') == "measure-button") {
+				target = f("#VTT");
 			}
 
 
@@ -1281,23 +1281,23 @@ function setup_draw_buttons() {
 				target.css('cursor', 'crosshair');
 			}
 
-			$(clicked).addClass('button-enabled');
+			f(clicked).addClass('button-enabled');
 
 			var data = {
-				shape: $(clicked).attr('data-shape'),
-				type: $(clicked).attr('data-type'),
+				shape: f(clicked).attr('data-shape'),
+				type: f(clicked).attr('data-type'),
 			}
 
-			if ($(clicked).attr('id') == "align-button") {
+			if (f(clicked).attr('id') == "align-button") {
 				window.ALIGNING = true;
 
 				// ALIGNING REQURES SPECIAL SETTINGS
-				$("#scene_map").css("width", "auto");
-				$("#scene_map").css("height", "auto");
+				f("#scene_map").css("width", "auto");
+				f("#scene_map").css("height", "auto");
 				reset_canvas();
 				redraw_canvas();
-				$("#tokens").hide();
-				$("#grid_overlay").hide();
+				f("#tokens").hide();
+				f("#grid_overlay").hide();
 
 			}
 			else if (window.ALIGNING == true) {
@@ -1312,7 +1312,7 @@ function setup_draw_buttons() {
 			target.on('contextmenu', data, drawing_contextmenu);
 		}
 	})
-	$('#select-button').click();
+	f('#select-button').click();
 }
 
 function getDrawingStyle()
