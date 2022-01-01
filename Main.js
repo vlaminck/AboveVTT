@@ -2097,6 +2097,9 @@ $(function() {
 
 		newlink.click(function(e) {
 			e.preventDefault();
+
+			// TODO: have players play on their character sheet page
+
 			window.PLAYER_IMG = img;
 			window.PLAYER_SHEET = sheet;
 			window.PLAYER_NAME = name;
@@ -2173,7 +2176,8 @@ $(function() {
 		e.preventDefault();
 		gather_pcs();
 		window.EncounterHandler = new EncounterHandler(function() {
-			if (window.EncounterHandler.encounterBuilderDiceSupported == true) {
+			if (window.EncounterHandler.avttId !== undefined && window.EncounterHandler.avttId.length > 0) {
+			// if (window.EncounterHandler.encounterBuilderDiceSupported == true) {
 				let cs=$(".ddb-campaigns-invite-primary").text().split("/").pop();
 				window.open(`https://www.dndbeyond.com/encounters/${window.EncounterHandler.avttId}?abovevtt=true&cs=${cs}&cid=${window.EncounterHandler.campaignId}`, '_blank');
 			} else {
