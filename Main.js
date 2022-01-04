@@ -261,6 +261,9 @@ function switch_control(e) {
 
 	if ($(e.currentTarget).attr("data-target") == ".glc-game-log") {
 		$("#switch_gamelog").css('background', '');
+		if (is_characters_page()) {
+			$(".ct-character-header__group--game-log").click();
+		}
 	}
 
 	if ($(e.currentTarget).attr("data-target") == "#monsters-panel" && !window.MONSTERPANEL_LOADED) {
@@ -383,7 +386,10 @@ function init_controls() {
 	$(".sidebar").css("height", "calc(100vh - 45px)");
 
 	$("span.sidebar__control-group.sidebar__control-group--lock > button").click(); // CLICKA SU lucchetto
-	$(".sidebar__controls").empty();
+
+	let sidebarControls = is_characters_page() ? $(".ct-sidebar__controls") : $(".sidebar__controls");
+
+	sidebarControls.empty();
 	hider = $("<button id='hide_rightpanel' class='hasTooltip button-icon hideable' data-name='Show/hide sidebar (q)' data-visible=1></button>").click(function() {
 		if ($(this).attr('data-visible') == 1) {
 			$(this).attr('data-visible', 0);
@@ -404,49 +410,51 @@ function init_controls() {
 		}
 
 	}).html("<span class='material-icons button-icon'>chevron_right</span>").addClass("point-right");
-	$(".sidebar__controls").append(hider);
+	sidebarControls.append(hider);
 
 
 	b1 = $("<button id='switch_gamelog' class='tab-btn selected-tab hasTooltip button-icon leading-edge' data-name='Gamelog' data-target='.glc-game-log'></button>").click(switch_control);
 	b1.append('<svg class="gamelog-button__icon" width="18" height="18" viewBox="0 0 18 18"><path fill-rule="evenodd" clip-rule="evenodd" d="M15 10C15 10.551 14.551 11 14 11H9C8.735 11 8.48 11.105 8.293 11.293L6 13.586V12C6 11.447 5.552 11 5 11H4C3.449 11 3 10.551 3 10V4C3 3.449 3.449 3 4 3H14C14.551 3 15 3.449 15 4V10ZM14 1H4C2.346 1 1 2.346 1 4V10C1 11.654 2.346 13 4 13V16C4 16.404 4.244 16.77 4.617 16.924C4.741 16.975 4.871 17 5 17C5.26 17 5.516 16.898 5.707 16.707L9.414 13H14C15.654 13 17 11.654 17 10V4C17 2.346 15.654 1 14 1ZM12 6H6C5.448 6 5 6.447 5 7C5 7.553 5.448 8 6 8H12C12.552 8 13 7.553 13 7C13 6.447 12.552 6 12 6Z" fill="currentColor"></path></svg>');
-	$(".sidebar__controls").append(b1);
+	sidebarControls.append(b1);
 
 	b2 = $("<button id='switch_characters' class='tab-btn hasTooltip button-icon blue-tab' data-name='Players' data-target='#players-panel'></button>").click(switch_control);
 	b2.append("<img src='"+window.EXTENSION_PATH + "assets/icons/character.svg' height='100%;'>");
-	$(".sidebar__controls").append(b2);
+	sidebarControls.append(b2);
 	if (DM) {
 
 		b3 = $("<button id='switch_monsters' class='tab-btn hasTooltip button-icon blue-tab' data-name='Monsters' data-target='#monsters-panel'></button>").click(switch_control);
 
 		b3.append("<img src='"+window.EXTENSION_PATH + "assets/icons/mimic-chest.svg' height='100%;'>");
-		$(".sidebar__controls").append(b3);
+		sidebarControls.append(b3);
 		init_tokenmenu();
 		b5=$("<button id='switch_tokens' class='tab-btn hasTooltip button-icon blue-tab' data-name='Tokens' data-target='#tokens-panel'></button>");
 		b5.append("<img src='"+window.EXTENSION_PATH + "assets/icons/photo.svg' height='100%;'>");
 		b5.click(switch_control);
-		$(".sidebar__controls").append(b5);
+		sidebarControls.append(b5);
 
 	}
 
 	b6 = $("<button id='switch_sounds' class='tab-btn hasTooltip button-icon blue-tab' data-name='Sounds' data-target='#sounds-panel'></button>");
 	b6.append("<img src='" + window.EXTENSION_PATH + "assets/icons/speaker.svg' height='100%;'>");
 	b6.click(switch_control);
-	$(".sidebar__controls").append(b6);
+	sidebarControls.append(b6);
 
 	b4 = $("<button id='switch_journal' class='tab-btn hasTooltip button-icon blue-tab' data-name='Journal' data-target='#journal-panel'></button>");
 	b4.append("<img src='" + window.EXTENSION_PATH + "assets/conditons/note.svg' height='100%;'>");
 	b4.click(switch_control);
-	$(".sidebar__controls").append(b4);
+	sidebarControls.append(b4);
 
 	/*b4 = $("<button id='switch_spell' class='tab-btn hasTooltip button-icon' data-name='Spells' data-target='#spells-panel'></button>").click(switch_control);
 	b4.append("<img src='"+window.EXTENSION_PATH + "assets/icons/magic-wand.svg' height='100%;'>");
-	$(".sidebar__controls").append(b4);*/
+	sidebarControls.append(b4);*/
 
 	if (DM) {
 		b7 = $("<button id='switch_settings' class='tab-btn hasTooltip button-icon trailing-edge blue-tab' data-name='Settings' data-target='#settings-panel'></button>");
 		b7.append("<img src='" + window.EXTENSION_PATH + "assets/icons/cog.svg' height='100%;'>");
 		b7.click(switch_control);
-		$(".sidebar__controls").append(b7);
+		sidebarControls.append(b7);
+	} else {
+		b4.addClass("trailing-edge");
 	}
 
 	$(".tab-btn").on("click", function(e) {
@@ -455,7 +463,7 @@ function init_controls() {
 	});
 
 	if (!DM) {
-		$(".sidebar__controls").addClass("player");
+		sidebarControls.addClass("player");
 	}
 
 }
@@ -656,6 +664,10 @@ function init_spells() {
 }
 
 function init_sheet(){
+	if (is_characters_page()) {
+		console.warn("TODO: build sheet buttons!!!");
+		return;
+	}
 	let container = $("<div id='sheet'></div>");
 
 	//container.css('display', 'none');
@@ -1320,10 +1332,80 @@ function init_things() {
 			init_scene_selector();
 			init_splash();
 		});
+	} else if (is_characters_page()) {
+		
+		hide_player_sheet();
+		// resize_player_sheet_full_width();
+		init_character_page_ui();
+		init_character_page_sidebar();
+
+		// init_ui();
+		
+		$("#site-main").css({"display": "block", "visibility": "hidden"});
+		$(".dice-rolling-panel").css({"visibility": "visible"});
+		$("div.sidebar").parent().css({"display": "block", "visibility": "visible"});
+		$("div.dice-toolbar").css({"bottom": "35px"});
+
+
+		init_splash();
+
 	} else {
 		init_ui();
 		init_splash();
 	}
+		
+}
+
+var needs_ui = true;
+function init_character_page_sidebar() {
+	console.warn("init_character_page_sidebar");
+	if ($(".ct-sidebar__portal").length == 0) {
+		// not ready yet, try again in a second
+		setTimeout(function() {
+			init_character_page_sidebar();
+		}, 1000);
+		return;
+	}
+	$(".ct-character-header__group--game-log").click();
+	// after that click, give it a second to inject and render the sidebar
+	setTimeout(function() {
+		$(".ct-sidebar__control--unlock").click();
+		$("div.sidebar").parent().css({"display": "block", "visibility": "visible"});
+		$(".ct-sidebar__pane-top").hide();
+		$(".ct-sidebar__pane-bottom").hide();
+		$(".ct-sidebar__pane-gap").hide();
+		$(".ct-sidebar__pane-content").css("border", "none");
+		if (needs_ui) {
+			needs_ui = false;
+			init_ui();
+			resize_player_sheet_full_width();
+			show_player_sheet();	
+		}
+	}, 1000);
+}
+
+function init_character_page_ui() {
+
+	$("body").on("DOMNodeInserted", function(addedEvent) {
+		console.warn(addedEvent.target.outerHTML);
+		if ($(addedEvent.target).hasClass("ct-sidebar__portal")) {
+			console.warn("boom");
+			// init_character_page_sidebar();
+		}
+	});
+	$("body").on("DOMNodeRemoved", function(addedEvent) {
+		// console.warn(addedEvent.target.outerHTML);
+		if ($(addedEvent.target).hasClass("ct-sidebar__portal")) {
+			console.warn("boom");
+			// init_character_page_sidebar();
+		}
+	});
+
+	$(".ct-sidebar__portal").on("DOMSubtreeModified", function() {
+
+
+	});
+
 }
 
 function init_ui() {
@@ -1331,8 +1413,11 @@ function init_ui() {
 	$(".gamelog-button").click();
 	$(".glc-game-log").addClass("sidepanel-content");
 	$(".sidebar").css("z-index", 9999);
-	$("#site").children().hide();
+	if (!is_characters_page()) {
+		$("#site").children().hide();
+	}
 	$(".sidebar__controls").width(340);
+	// $(".ct-sidebar__control").width(340);
 	$("body").css("overflow", "scroll");
 
 
@@ -1737,13 +1822,16 @@ function init_ui() {
 
 
 
-	if(window.DM) {
+	if (window.DM) {
 		zoom_section.css("left","-136px");
-	}
-	else{
+		$(".sidebar__controls").append(zoom_section);
+	} else if (is_characters_page()) {
+		zoom_section.css({"left": "-136px", "margin-top": "4px" });
+		$(".ct-sidebar__controls").append(zoom_section);
+	} else {
 		zoom_section.css("left","-186px");
+		$(".sidebar__controls").append(zoom_section);
 	}
-	$(".sidebar__controls").append(zoom_section);
 
 	init_combat_tracker();
 
@@ -2123,15 +2211,19 @@ function init_stream_button() {
 	});
 	stream_button.addClass("stream_button");
 	stream_button.css("position", "absolute");
-	if (window.DM)
-		stream_button.css("left", "-197px");
-	else
+	if (window.DM) {
+		stream_button.css("left", "-198px");
+	} else if (is_characters_page()) {
+		stream_button.css("left", "-198px");
+	} else {
 		stream_button.css("left", "-247px");
+	}
 
 	//stream_button.css("background", "yellow");
 
 	if (!get_browser().mozilla) { // DISABLE FOR FIREFOX
 		$(".sidebar__controls").append(stream_button);
+		$(".ct-sidebar__controls").append(stream_button);
 		/*if(window.DM){
 			setTimeout( () => {stream_button.click()} , 5000);
 		}*/
@@ -2180,12 +2272,15 @@ $(function() {
 
 		newlink.click(function(e) {
 			e.preventDefault();
-			window.PLAYER_IMG = img;
-			window.PLAYER_SHEET = sheet;
-			window.PLAYER_NAME = name;
-			window.PLAYER_ID = getPlayerIDFromSheet(sheet);
-			window.DM = false;
-			init_things();
+			gather_pcs();
+			let cs=$(".ddb-campaigns-invite-primary").text().split("/").pop();
+			window.open(`https://www.dndbeyond.com${sheet}?cs=${cs}&cid=${get_campaign_id()}&abovevtt=true`, '_blank');
+			// window.PLAYER_IMG = img;
+			// window.PLAYER_SHEET = sheet;
+			// window.PLAYER_NAME = name;
+			// window.PLAYER_ID = getPlayerIDFromSheet(sheet);
+			// window.DM = false;
+			// init_things();
 		});
 
 		$(this).prepend(newlink);
@@ -2258,7 +2353,7 @@ $(function() {
 		window.EncounterHandler = new EncounterHandler(function() {
 			if (window.EncounterHandler.avttId !== undefined && window.EncounterHandler.avttId.length > 0) {
 				let cs=$(".ddb-campaigns-invite-primary").text().split("/").pop();
-				window.open(`https://www.dndbeyond.com/encounters/${window.EncounterHandler.avttId}?abovevtt=true&cs=${cs}&cid=${window.EncounterHandler.campaignId}`, '_blank');
+				window.open(`https://www.dndbeyond.com/encounters/${window.EncounterHandler.avttId}?cs=${cs}&cid=${window.EncounterHandler.campaignId}&abovevtt=true`, '_blank');
 			} else {
 				// DDB doesn't support dice on their encounters page for non-subscribers so load the non-DDB dice version
 				window.DM = true;
@@ -2277,13 +2372,34 @@ $(function() {
 			const urlParams = new URLSearchParams(window.location.search);
 			window.gameId = urlParams.get('cid');
 			window.CAMPAIGN_SECRET = urlParams.get('cs');
+			window.DM = true;
+			window.PLAYER_SHEET = false;
+			window.PLAYER_NAME = "THE DM";
+			window.PLAYER_ID = false;
+			window.PLAYER_IMG = 'https://media-waterdeep.cursecdn.com/attachments/thumbnails/0/14/240/160/avatar_2.png';
+			init_things();
+		} else if (is_characters_page()) {
+			let path = window.location.href;
+			let pathWithoutQuery = path.split("?")[0];
+			let lastComponent = pathWithoutQuery.substring(pathWithoutQuery.lastIndexOf('/') + 1);
+			const urlParams = new URLSearchParams(window.location.search);
+			window.gameId = urlParams.get('cid');
+			window.CAMPAIGN_SECRET = urlParams.get('cs');
+			window.DM = false;
+			window.PLAYER_SHEET = window.location.pathname;
+			window.PLAYER_ID = lastComponent;
+			// these need to be figured out after initial load
+			window.PLAYER_NAME = "TODO";
+			window.PLAYER_IMG = "https://www.dndbeyond.com/content/1-0-1436-0/skins/waterdeep/images/characters/default-avatar.png";
+			init_things();
+		} else {
+			window.DM = true;
+			window.PLAYER_SHEET = false;
+			window.PLAYER_NAME = "THE DM";
+			window.PLAYER_ID = false;
+			window.PLAYER_IMG = 'https://media-waterdeep.cursecdn.com/attachments/thumbnails/0/14/240/160/avatar_2.png';
+			init_things();
 		}
-		window.DM = true;
-		window.PLAYER_SHEET = false;
-		window.PLAYER_NAME = "THE DM";
-		window.PLAYER_ID = false;
-		window.PLAYER_IMG = 'https://media-waterdeep.cursecdn.com/attachments/thumbnails/0/14/240/160/avatar_2.png';
-		init_things();
 	}
 
 });
@@ -2426,4 +2542,144 @@ function get_browser() {
 		msie: M[0] == "Internet Explorer",
 		opera: M[0] == "Opera",
 	};
+}
+
+function show_player_sheet() {
+	$(".ct-character-sheet__inner").css({
+    "visibility": "visible"
+	});
+	$(".ct-character-header-desktop").css({
+    "visibility": "visible"
+	});
+	$(".ct-sidebar__portal").css({
+		"visibility": "visible"
+	});
+}
+
+function hide_player_sheet() {
+	$(".ct-character-sheet__inner").css({
+    "visibility": "hidden"
+	});
+	$(".ct-character-header-desktop").css({
+    "visibility": "hidden"
+	});
+	$(".ct-sidebar__portal").css({
+		"visibility": "hidden"
+	});
+}
+
+function resize_player_sheet_full_width() {
+
+	$(".ct-character-sheet__inner").css({
+		"width": "1200px",
+		"zoom": "0.8",
+		"position": "fixed",
+		"right": "430px",
+		"top": "40px",
+		"background": $("body").css("background"),
+		"background-position-y": "110px, 0%",
+		"z-index": 1
+	});
+
+	$(".ct-character-header-desktop").css({
+		"background": "rgba(0,0,0,.85)"
+	});
+
+	$(".site-bar").hide();
+	$("#mega-menu-target").hide();
+
+	// TODO: this needs to be observed
+	$(".ct-sidebar__portal").css({
+		// "zoom": "0.8",
+		"right": "0px",
+		"position": "fixed",
+		"bottom": "0px",
+		"top": "0px",
+		"z-index": 2
+	});
+	$(".ct-sidebar").css({
+		"right": "0px",
+		"top": "0px",
+		"bottom": "0px"
+	});
+
+	// $(".ct-sidebar__controls").hide();
+
+	// window.innerWidth = 1200;
+  // window.outerWidth = 1200;
+  // window.dispatchEvent(new Event('resize'));
+}
+
+	// window.innerWidth = 1030;
+  // window.outerWidth = 1030;
+  // window.dispatchEvent(new Event('resize'));
+
+  // $("html").css("width", `990px`);
+  // $("body").css("width", `990px`);
+  // $("#site").css("width", `990px`);
+  // $(".ct-combat-mobile").css("width", `990px`);
+  // $(".ct-character-sheet-mobile__header").css("width", `990px`);
+  // $(".ct-character-sheet-desktop").css("width", `990px`);
+  // $(".ct-character-header-desktop").css("width", `990px`);
+  // $(".ct-subsections").css("width", `990px`);
+  // $(".ct-quick-info").css("width", `990px`);
+
+  // $(".ct-subsection > div").css("width", `100%`);
+  // $(".ct-senses__callout").css("width", `100%`);
+
+  // $(".ct-subsection--abilities").css("width", `230px`);
+  // $(".ct-saving-throws-box__abilities").css("width", `190px`);
+  // $(".ct-saving-throws-box__info").css("width", `190px`);
+
+  // $(".ct-subsection--senses").css("width", `230px`);
+
+  // $(".ct-subsection--proficiency-groups").css("width", `228px`);
+
+  // $(".ct-subsection--skills").css("width", `230px`);
+
+  // $(".ct-subsection--combat").css("width", `517px`);
+  // $(".ct-combat").css("width", `517px`);
+
+  // $(".ct-subsection--primary-box").css("width", `517px`);
+  // $(".ct-primary-box").css("width", `517px`);
+
+
+	// $(".ddbc-saving-throws-summary__ability").css("width", "88px");
+	// $(".ct-quick-info__abilities").css("width", "463px");
+	// $(".ddbc-ability-summary").css("width", "66px");
+	// $(".ct-quick-info__box").css("width", "77px");
+	// $(".ct-proficiency-bonus-box").css("width", "77px");
+	// $(".ct-quick-info__inspiration").css("width", "70px");
+	// $(".ct-quick-info__health").css("width", "260px");
+	// $(".ct-subsection--skills").css("left", "243px");
+	// $(".ddbc-ability-summary__secondary").css("bottom", "auto");
+
+	// $(".ddbc-ability-summary__label").hide();
+	// $(".ddbc-ability-summary__abbr").show();
+
+
+  // window.innerWidth = 1030;
+  // window.outerWidth = 1030;
+  // window.dispatchEvent(new Event('resize'));
+// }
+
+function resize_player_sheet_mobile() {
+	window.innerWidth = 400;
+  window.outerWidth = 400;
+  window.dispatchEvent(new Event('resize'));
+
+  $("html").css("width", `400px`);
+  $("body").css("width", `400px`);
+  $("#site").css("width", `400px`);
+  $(".ct-character-header-desktop").css("width", `400px`);
+  $(".ct-character-sheet-desktop").css("width", `400px`);
+  $(".ct-character-sheet-mobile").css("width", `400px`);
+  $(".ct-character-sheet-mobile__header").css("width", `400px`);
+  $(".ct-combat-mobile").css("width", `400px`);
+
+  $(".ct-quick-nav").css("position", "absolute");
+
+  window.innerWidth = 400;
+  window.outerWidth = 400;
+  window.dispatchEvent(new Event('resize'));
 }

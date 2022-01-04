@@ -120,6 +120,10 @@ body > button:hover,
     max-height: 420px;
 }
 
+div.ct-sidebar__controls {
+    margin: 4px 0px 0px 0px !important;
+}
+
 .sidebar__controls > div button {
     width: 30px;
     font-size: 20px;
@@ -811,6 +815,7 @@ div#scene_properties form > div {
     position: relative;
 }
 
+/* .ct-sidebar__controls, */
 .sidebar__controls {
     position: relative;
     margin: 0 !important;
@@ -822,12 +827,14 @@ div#scene_properties form > div {
     left: -206px;
 }*/
 
+/* .ct-sidebar__pane-content, */
 .sidebar__pane-content {
     position: absolute;
     right: 0;
     top: 22px;
 }
 
+.ct-sidebar__controls .tab-btn,
 .sidebar__controls .tab-btn {
     background-color: #e3e3e3;
     margin: 0 2px;
@@ -842,18 +849,22 @@ div#scene_properties form > div {
     flex-grow: 1;
 }
 
+.ct-sidebar__controls .tab-btn.selected-tab,
 .sidebar__controls .tab-btn.selected-tab {
     background-color: #fff;
 }
 
+.ct-sidebar__controls .tab-btn.selected-tab.blue-tab,
 .sidebar__controls .tab-btn.selected-tab.blue-tab {
     background-color: rgb(235, 241, 245);
 }
 
+.ct-sidebar__controls .tab-btn.leading-edge,
 .sidebar__controls .tab-btn.leading-edge {
     margin-left: 0px;
 }
 
+.ct-sidebar__controls .tab-btn.trailing-edge,
 .sidebar__controls .tab-btn.trailing-edge {
     margin-right: 0px;
 }
@@ -994,6 +1005,7 @@ div#scene_properties form > div {
     margin-bottom: 10px;
 }
 
+.ct-sidebar__controls button,
 .sidebar__controls button{
 	font-size: 10px;
 }
@@ -1079,7 +1091,7 @@ div#scene_properties form > div {
 
 #hide_rightpanel{
 	position: absolute;
-	left: -34px;
+	left: -35px;
 }
 
 

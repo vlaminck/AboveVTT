@@ -1,31 +1,33 @@
 
 function init_sidebar_tabs() {
+
+  let sidebarContent = is_characters_page() ? $(".ct-game-log-pane") : $(".sidebar__pane-content");
   
   // gamelog doesn't use it yet, maybe never
 
   playersPanel = new SidebarPanel("players-panel", false);
-  $(".sidebar__pane-content").append(playersPanel.build());
+  sidebarContent.append(playersPanel.build());
   playersPanel.hide();
 
   // monsters doesn't use it yet, maybe never
   monstersPanel = new SidebarPanel("monsters-panel", false);
-  $(".sidebar__pane-content").append(monstersPanel.build());
+  sidebarContent.append(monstersPanel.build());
   monstersPanel.hide();
 
   tokensPanel = new SidebarPanel("tokens-panel", false);
-  $(".sidebar__pane-content").append(tokensPanel.build());
+  sidebarContent.append(tokensPanel.build());
   tokensPanel.hide();
 
   soundsPanel = new SidebarPanel("sounds-panel", false);
-  $(".sidebar__pane-content").append(soundsPanel.build());
+  sidebarContent.append(soundsPanel.build());
   soundsPanel.hide();
 
   journalPanel = new SidebarPanel("journal-panel", false);
-  $(".sidebar__pane-content").append(journalPanel.build());
+  sidebarContent.append(journalPanel.build());
   journalPanel.hide();  
 
   settingsPanel = new SidebarPanel("settings-panel", false);
-  $(".sidebar__pane-content").append(settingsPanel.build());
+  sidebarContent.append(settingsPanel.build());
   settingsPanel.hide();
 }
 

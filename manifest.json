@@ -7,7 +7,8 @@
 		{
 			"matches": [
 				"https://www.dndbeyond.com/campaigns/*",
-				"https://www.dndbeyond.com/encounters/*"
+				"https://www.dndbeyond.com/encounters/*",
+				"https://www.dndbeyond.com/profile/*/characters/*"
 			],
 			"js": [
 				"Load.js"

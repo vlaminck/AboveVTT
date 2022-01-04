@@ -2,6 +2,9 @@
 function is_encounters_page() {
 	return window.location.href.includes("/encounters/");
 }
+function is_characters_page() {
+	return window.location.href.includes("/characters/");
+}
 
 class EncounterHandler {
 
