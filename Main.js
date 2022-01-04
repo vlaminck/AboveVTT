@@ -404,21 +404,31 @@ function init_controls() {
 
 	sidebarControls.empty();
 	hider = $("<button id='hide_rightpanel' class='hasTooltip button-icon hideable' data-name='Show/hide sidebar (q)' data-visible=1></button>").click(function() {
+		let sidebar = is_characters_page() ? $(".ct-sidebar--right") : $(".sidebar--right");
 		if ($(this).attr('data-visible') == 1) {
 			$(this).attr('data-visible', 0);
-			$(".sidebar--right").animate({ "right": "-340px" }, 500);
+			sidebar.animate({ "right": "-340px" }, 500);
 			$(this).addClass("point-left").removeClass("point-right");
-			if (parseInt($("#sheet").css("right")) >= 0) {
-				$("#sheet").animate({ right: 343 - 340 }, 500);
+			if (is_characters_page()) {
+				$(".ct-character-sheet__inner").css({ "transform": "translateX(0px)"});
+				$(".ct-character-sheet__inner").animate({ "right": "0px" }, 500);
+			} else {
+				if (parseInt($("#sheet").css("right")) >= 0) {
+					$("#sheet").animate({ right: 343 - 340 }, 500);
+				}
 			}
 
 		}
 		else {
 			$(this).attr('data-visible', 1);
-			$(".sidebar--right").animate({ "right": "0px" }, 500);
+			sidebar.animate({ "right": "0px" }, 500);
 			$(this).addClass("point-right").removeClass("point-left");
-			if (parseInt($("#sheet").css("right")) >= 0) {
-				$("#sheet").animate({ right: 343 }, 500);
+			if (is_characters_page()) {
+				$(".ct-character-sheet__inner").animate({ right: 430 }, 500);
+			} else {
+				if (parseInt($("#sheet").css("right")) >= 0) {
+					$("#sheet").animate({ right: 343 }, 500);
+				}
 			}
 		}
 
@@ -679,6 +689,21 @@ function init_spells() {
 function init_sheet(){
 	if (is_characters_page()) {
 		console.warn("TODO: build sheet buttons!!!");
+		var sheet_button = $("<button id='sheet_button' class='hasTooltip button-icon hideable' data-name='Show/hide character sheet (SPACE)'>SHEET</button>");
+		sheet_button.css({ "position": "absolute", "top": "4px", "left": "-87px", "z-index": "999" });
+		$(".ct-sidebar__controls").append(sheet_button);
+		sheet_button.click(function(e) {
+			toggle_player_sheet();
+		});
+		var sheet_resize_button = $("<button id='sheet_resize_button' class='hasTooltip button-icon hideable' data-name='Resize character sheet'>Toggle Sheet Size</button>");
+		sheet_resize_button.css({ "position": "absolute", "top": "4px", "left": "-351px", "z-index": "999" });
+		// sheet_resize_button.css({ "position": "absolute", "top": "-30px", "left": "8px", "z-index": "999" });
+		$(".ct-sidebar__controls").append(sheet_resize_button);
+		// $(".ct-character-sheet__inner").append(sheet_resize_button);
+		sheet_resize_button.click(function(e) {
+			toggle_player_sheet_size();
+		});
+
 		return;
 	}
 	let container = $("<div id='sheet'></div>");
@@ -1853,7 +1878,7 @@ function init_ui() {
 		zoom_section.css("left","-136px");
 		$(".sidebar__controls").append(zoom_section);
 	} else if (is_characters_page()) {
-		zoom_section.css({"left": "-136px", "margin-top": "4px" });
+		zoom_section.css({"left": "-188px", "margin-top": "4px" });
 		$(".ct-sidebar__controls").append(zoom_section);
 	} else {
 		zoom_section.css("left","-186px");
@@ -2241,7 +2266,7 @@ function init_stream_button() {
 	if (window.DM) {
 		stream_button.css("left", "-198px");
 	} else if (is_characters_page()) {
-		stream_button.css("left", "-198px");
+		stream_button.css("left", "-250px");
 	} else {
 		stream_button.css("left", "-247px");
 	}
@@ -2571,28 +2596,40 @@ function get_browser() {
 	};
 }
 
+function toggle_player_sheet() {
+	if (is_player_sheet_open()) {
+		hide_player_sheet();
+	} else {
+		show_player_sheet()
+	}
+}
+
+function is_player_sheet_open() {
+	return $(".ct-character-sheet__inner").css("z-index") > 0;
+}
+
 function show_player_sheet() {
 	$(".ct-character-sheet__inner").css({
-    "visibility": "visible"
+    "visibility": "visible",
+		"z-index": 1
 	});
-	$(".ct-character-header-desktop").css({
-    "visibility": "visible"
-	});
-	$(".ct-sidebar__portal").css({
-		"visibility": "visible"
-	});
+	$("#sheet_resize_button").show();
 }
 
 function hide_player_sheet() {
 	$(".ct-character-sheet__inner").css({
-    "visibility": "hidden"
+    "visibility": "hidden",
+		"z-index": -1
 	});
-	$(".ct-character-header-desktop").css({
-    "visibility": "hidden"
-	});
-	$(".ct-sidebar__portal").css({
-		"visibility": "hidden"
-	});
+	$("#sheet_resize_button").hide();
+}
+
+function toggle_player_sheet_size() {
+	if ($(".ct-character-sheet__inner").width() >= 1200) {
+		resize_player_sheet_thin();
+	} else {
+		resize_player_sheet_full_width();
+	}
 }
 
 function resize_player_sheet_full_width() {
@@ -2626,7 +2663,6 @@ function resize_player_sheet_thin() {
 
 	$(".ct-character-header-desktop__group--share").hide();
 	$(".ct-character-header-desktop__group--builder").hide();
-	$(".ddbc-character-tidbits__menu-callout").hide();
 	
 	$(".ct-character-header-desktop__group--short-rest").css({ "position": "absolute", "left": "auto", "top": "20px", "right": "110px" });
 	$(".ct-character-header-desktop__group--long-rest").css({ "position": "absolute", "left": "auto", "top": "20px", "right": "0px" });
@@ -2652,7 +2688,6 @@ function reset_character_sheet_css() {
 
 	$(".ct-character-header-desktop__group--share").show();
 	$(".ct-character-header-desktop__group--builder").show();
-	$(".ddbc-character-tidbits__menu-callout").show();
 	
 	$(".ct-character-header-desktop__group--short-rest").removeAttr( 'style' );
 	$(".ct-character-header-desktop__group--long-rest").removeAttr( 'style' );
@@ -2662,7 +2697,8 @@ function reset_character_sheet_css() {
 	
 	$(".ct-character-header-desktop__group--campaign").removeAttr( 'style' );
 
-
 	$(".ct-character-sheet__inner").css({"visibility": "visible"});
+	
+	$(".ddbc-character-tidbits__menu-callout").hide();
 }
 
