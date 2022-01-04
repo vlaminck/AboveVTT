@@ -1,7 +1,7 @@
 
 function init_sidebar_tabs() {
 
-  let sidebarContent = is_characters_page() ? $(".ct-game-log-pane") : $(".sidebar__pane-content");
+  let sidebarContent = is_characters_page() ? $(".ct-sidebar__pane-content") : $(".sidebar__pane-content");
   
   // gamelog doesn't use it yet, maybe never
 

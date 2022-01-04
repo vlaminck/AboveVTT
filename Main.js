@@ -251,30 +251,39 @@ function notify_gamelog() {
 }
 
 function switch_control(e) {
-	if (window.BLOCKCONTROLS)
+	change_sidbar_tab($(e.currentTarget))
+}
+
+function change_sidbar_tab(clickedTab, isCharacterSheetInfo = false) {
+
+	if (window.BLOCKCONTROLS) {
 		return;
+	}
+
+	$(".selected-tab").removeClass("selected-tab");
+	clickedTab.addClass("selected-tab");
+
 	$(".sidepanel-content").hide();
 	$(".sidebar-panel-content").hide();
 	close_sidebar_modal();
-	$($(e.currentTarget).attr("data-target")).show();
+	$(clickedTab.attr("data-target")).show();
 
-
-	if ($(e.currentTarget).attr("data-target") == ".glc-game-log") {
-		$("#switch_gamelog").css('background', '');
-		if (is_characters_page()) {
-			$(".ct-character-header__group--game-log").click();
-		}
-	}
-
-	if ($(e.currentTarget).attr("data-target") == "#monsters-panel" && !window.MONSTERPANEL_LOADED) {
+	if (clickedTab.attr("data-target") == "#monsters-panel" && !window.MONSTERPANEL_LOADED) {
 		console.log('in teoria fatto show');
 		init_monster_panel();
 		window.MONSTERPANEL_LOADED = true;
 		window.BLOCKCONTROLS = true;
 		setTimeout(function() {
 			window.BLOCKCONTROLS = false;
-
 		}, 2000);
+	}
+
+	// switch back to gamelog if they change tabs
+	if (!isCharacterSheetInfo) {
+		// This only happens when `is_character_page() == true` and the user clicked the gamelog tab. 
+		// This is an important distinction, because we switch to the gamelog tab when the user clicks info on their character sheet that causes details to be displayed instead of the gamelog. 
+		// Since the user clicked the tab, we need to show the gamelog instead of any detail info that was previously shown.
+		$(".ct-character-header__group--game-log").click();
 	}
 
 }
@@ -1335,17 +1344,8 @@ function init_things() {
 	} else if (is_characters_page()) {
 		
 		hide_player_sheet();
-		// resize_player_sheet_full_width();
-		init_character_page_ui();
 		init_character_page_sidebar();
-
-		// init_ui();
 		
-		$("#site-main").css({"display": "block", "visibility": "hidden"});
-		$(".dice-rolling-panel").css({"visibility": "visible"});
-		$("div.sidebar").parent().css({"display": "block", "visibility": "visible"});
-		$("div.dice-toolbar").css({"bottom": "35px"});
-
 
 		init_splash();
 
@@ -1369,6 +1369,12 @@ function init_character_page_sidebar() {
 	$(".ct-character-header__group--game-log").click();
 	// after that click, give it a second to inject and render the sidebar
 	setTimeout(function() {
+
+		$("#site-main").css({"display": "block", "visibility": "hidden"});
+		$(".dice-rolling-panel").css({"visibility": "visible"});
+		$("div.sidebar").parent().css({"display": "block", "visibility": "visible"});
+		$("div.dice-toolbar").css({"bottom": "35px"});
+
 		$(".ct-sidebar__control--unlock").click();
 		$("div.sidebar").parent().css({"display": "block", "visibility": "visible"});
 		$(".ct-sidebar__pane-top").hide();
@@ -1380,31 +1386,35 @@ function init_character_page_sidebar() {
 			init_ui();
 			resize_player_sheet_full_width();
 			show_player_sheet();	
+			monitor_character_sidebar_changes();
 		}
 	}, 1000);
 }
 
-function init_character_page_ui() {
+function monitor_character_sidebar_changes() {
 
-	$("body").on("DOMNodeInserted", function(addedEvent) {
-		console.warn(addedEvent.target.outerHTML);
-		if ($(addedEvent.target).hasClass("ct-sidebar__portal")) {
-			console.warn("boom");
-			// init_character_page_sidebar();
-		}
-	});
-	$("body").on("DOMNodeRemoved", function(addedEvent) {
-		// console.warn(addedEvent.target.outerHTML);
-		if ($(addedEvent.target).hasClass("ct-sidebar__portal")) {
-			console.warn("boom");
-			// init_character_page_sidebar();
+	$(".ct-character-header__group--game-log").click(function(event) {
+		if (event.originalEvent !== undefined) {
+			// the user actually clicked the button. Make sure we switch tabs
+			$("#switch_gamelog").click();
 		}
 	});
 
-	$(".ct-sidebar__portal").on("DOMSubtreeModified", function() {
-
-
+	$(".ct-sidebar__portal").on("DOMNodeRemoved", function(event) {
+		// console.log(`sidebar removed: ${event.target.outerHTML}`);
+		if ($(event.target).hasClass("ct-game-log-pane")) {
+			// the gamelog was removed to show character sheet details. Switch to it
+			setTimeout(function() {
+				change_sidbar_tab($("#switch_gamelog"), true);
+			}, 0);
+		}
 	});
+	// $(".ct-sidebar__portal").on("DOMNodeInserted", function(event) {
+	// 	console.log(`sidebar inserted: ${event.target.classList}`);
+	// });
+	// $(".ct-sidebar__portal").on("DOMSubtreeModified", function(event) {
+	// 	console.log(`sidebar modified: ${event.target.outerHTML}`);
+	// });
 
 }
 

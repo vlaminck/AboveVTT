@@ -1,9 +1,12 @@
 
 function is_encounters_page() {
-	return window.location.href.includes("/encounters/");
+	return window.location.pathname.includes("/encounters/");
 }
 function is_characters_page() {
-	return window.location.href.includes("/characters/");
+	return window.location.pathname.includes("/characters/");
+}
+function is_campaign_page() {
+	return window.location.pathname.includes("/campaigns/");
 }
 
 class EncounterHandler {
@@ -12,10 +15,8 @@ class EncounterHandler {
 		if (typeof callback !== 'function') {
 			callback = function(){};
 		}
-		let path = window.location.href;
-		let pathWithoutQuery = path.split("?")[0];
-		let lastComponent = pathWithoutQuery.substring(pathWithoutQuery.lastIndexOf('/') + 1);
-		if (is_encounters_page()) {
+		let lastComponent = window.location.pathname.substring(window.location.pathname.lastIndexOf("/")+1)
+		if (is_encounters_page() || is_characters_page()) {
 			const urlParams = new URLSearchParams(window.location.search);
 			this.campaignId = urlParams.get('cid');
 			this.avttId = lastComponent;
@@ -517,12 +518,11 @@ function display_combat_tracker_loading_indicator() {
 
 function get_campaign_id() {
 	let path = window.location.href;
-	if (is_encounters_page()) {
+	if (is_campaign_page()) {
+		return window.location.pathname.substring(window.location.pathname.lastIndexOf("/") + 1);
+	} else {
 		const urlParams = new URLSearchParams(window.location.search);
 		return urlParams.get('cid');
-	} else {
-		let pathWithoutQuery = path.split("?")[0];
-		return pathWithoutQuery.substring(pathWithoutQuery.lastIndexOf('/') + 1);
 	}
 }
 

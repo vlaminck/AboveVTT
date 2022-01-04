@@ -1333,6 +1333,15 @@ body {
     bottom: 0;
 }
 
+/* the characters page renders over the top of the sidebar to allow the character sheet sidebar actions to properly display */
+.ct-sidebar__pane-content .sidebar-panel-content {
+    position: fixed;
+    top: 26px;
+    right: 0px;
+    width: 340px;
+    z-index: 1;
+}
+
 /* Make a few adjustments for when it's a modal because we nest it inside or .sidebar-modal and change the UI slightly  */
 .sidebar-modal .sidebar-panel-content,
 .sidebar-modal .sidebar-panel-content .sidebar-panel-header,
