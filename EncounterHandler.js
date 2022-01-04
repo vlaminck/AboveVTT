@@ -15,17 +15,13 @@ class EncounterHandler {
 		if (typeof callback !== 'function') {
 			callback = function(){};
 		}
-		let lastComponent = window.location.pathname.substring(window.location.pathname.lastIndexOf("/")+1)
-		if (is_encounters_page() || is_characters_page()) {
+		if (is_encounters_page()) {
 			const urlParams = new URLSearchParams(window.location.search);
-			this.campaignId = urlParams.get('cid');
-			this.avttId = lastComponent;
-			this.encounters = {};
+			this.avttId = window.location.pathname.substring(window.location.pathname.lastIndexOf("/") + 1);
 		} else {
-			this.campaignId = lastComponent;
 			this.avttId = "";
-			this.encounters = {};
 		}
+		this.encounters = {};
 		this.combat_iframe;
 		this.combat_stat_block_monster;
 		this.encounterBuilderDiceSupported = false;
@@ -120,7 +116,7 @@ class EncounterHandler {
 		console.log(`fetch_all_encounters starting with pageNumber: ${pageNumber}`);
 		get_cobalt_token(function (token) {
 			$.ajax({
-				url: `https://encounter-service.dndbeyond.com/v1/encounters?page=${pageNumber}`,
+				url: `https://encounter-service.dndbeyond.com/v1/encounters?campaignIds=${get_campaign_id()}&page=${pageNumber}`,
 				beforeSend: function (xhr) {
 					xhr.setRequestHeader('Authorization', 'Bearer ' + token);
 				},
@@ -132,7 +128,7 @@ class EncounterHandler {
 					console.log(`fetch_all_encounters successfully fetched ${encountersList.length} encounters; pageNumber: ${pageNumber}`);
 					for (let i = 0; i < encountersList.length; i++) {
 						let encounter = encountersList[i];
-						if (encounter.campaign !== undefined && encounter.campaign != null && encounter.campaign.id == window.EncounterHandler.campaignId) {
+						if (encounter.campaign !== undefined && encounter.campaign != null && encounter.campaign.id == get_campaign_id()) {
 							// only collect encounters for this campaign
 							window.EncounterHandler.encounters[encounter.id] = encounter;
 							if (encounter.name == "AboveVTT") {
@@ -165,7 +161,7 @@ class EncounterHandler {
 		console.log(`fetch_campaign_info starting`);
 		get_cobalt_token(function (token) {
 			$.ajax({
-				url: `https://www.dndbeyond.com/api/campaign/stt/active-campaigns/${window.EncounterHandler.campaignId}`,
+				url: `https://www.dndbeyond.com/api/campaign/stt/active-campaigns/${get_campaign_id()}`,
 				beforeSend: function (xhr) {
 					xhr.setRequestHeader('Authorization', 'Bearer ' + token);
 				},
@@ -196,12 +192,12 @@ class EncounterHandler {
 			if (campaignInfo === undefined) {
 				// this is the bare minimum that we need to send
 				campaignInfo = {
-					"id": window.EncounterHandler.campaignId
+					"id": get_campaign_id()
 				};
 			}
-			if (campaignInfo.id != window.EncounterHandler.campaignId) {
+			if (campaignInfo.id != get_campaign_id()) {
 				// not sure this is even a concern, but we need to make sure we create the encounter for this campaign only
-				campaignInfo.id = window.EncounterHandler.campaignId;
+				campaignInfo.id = get_campaign_id();
 			}
 
 			get_cobalt_token(function (token) {
@@ -246,7 +242,7 @@ class EncounterHandler {
 		console.log(`fetch_campaign_characters starting`);
 		get_cobalt_token(function (token) {
 			$.ajax({
-				url: `https://www.dndbeyond.com/api/campaign/stt/active-short-characters/${window.EncounterHandler.campaignId}`,
+				url: `https://www.dndbeyond.com/api/campaign/stt/active-short-characters/${get_campaign_id()}`,
 				beforeSend: function (xhr) {
 					xhr.setRequestHeader('Authorization', 'Bearer ' + token);
 				},
@@ -517,7 +513,6 @@ function display_combat_tracker_loading_indicator() {
 }
 
 function get_campaign_id() {
-	let path = window.location.href;
 	if (is_campaign_page()) {
 		return window.location.pathname.substring(window.location.pathname.lastIndexOf("/") + 1);
 	} else {

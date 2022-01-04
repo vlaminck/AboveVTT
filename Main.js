@@ -2363,7 +2363,7 @@ $(function() {
 		window.EncounterHandler = new EncounterHandler(function() {
 			if (window.EncounterHandler.avttId !== undefined && window.EncounterHandler.avttId.length > 0) {
 				let cs=$(".ddb-campaigns-invite-primary").text().split("/").pop();
-				window.open(`https://www.dndbeyond.com/encounters/${window.EncounterHandler.avttId}?cs=${cs}&cid=${window.EncounterHandler.campaignId}&abovevtt=true`, '_blank');
+				window.open(`https://www.dndbeyond.com/encounters/${window.EncounterHandler.avttId}?cs=${cs}&cid=${get_campaign_id()}&abovevtt=true`, '_blank');
 			} else {
 				// DDB doesn't support dice on their encounters page for non-subscribers so load the non-DDB dice version
 				window.DM = true;
