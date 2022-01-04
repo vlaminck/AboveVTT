@@ -387,6 +387,10 @@ function load_monster_stat(monsterid) {
 	}, 500);
 }
 
+function re_init_sidebar() {
+	init_controls();
+
+}
 
 function init_controls() {
 	init_sidebar_tabs();
@@ -1381,11 +1385,24 @@ function init_character_page_sidebar() {
 		$(".ct-sidebar__pane-bottom").hide();
 		$(".ct-sidebar__pane-gap").hide();
 		$(".ct-sidebar__pane-content").css("border", "none");
+		$(".site-bar").hide();
+		$("#mega-menu-target").hide();		
+		$(".ct-sidebar__portal").css({
+			"right": "0px",
+			"position": "fixed",
+			"bottom": "0px",
+			"top": "0px",
+			"z-index": 2
+		});
+		$(".ct-character-header-desktop").css({
+			"background": "rgba(0,0,0,.85)"
+		});	
+		$(".ct-sidebar").css({ "right": "0px", "top": "0px", "bottom": "0px" });	
 		if (needs_ui) {
 			needs_ui = false;
 			init_ui();
 			resize_player_sheet_full_width();
-			show_player_sheet();	
+			show_player_sheet();
 			monitor_character_sidebar_changes();
 		}
 	}, 1000);
@@ -2579,7 +2596,7 @@ function hide_player_sheet() {
 }
 
 function resize_player_sheet_full_width() {
-
+	reset_character_sheet_css();
 	$(".ct-character-sheet__inner").css({
 		"width": "1200px",
 		"zoom": "0.8",
@@ -2590,106 +2607,62 @@ function resize_player_sheet_full_width() {
 		"background-position-y": "110px, 0%",
 		"z-index": 1
 	});
-
-	$(".ct-character-header-desktop").css({
-		"background": "rgba(0,0,0,.85)"
-	});
-
-	$(".site-bar").hide();
-	$("#mega-menu-target").hide();
-
-	// TODO: this needs to be observed
-	$(".ct-sidebar__portal").css({
-		// "zoom": "0.8",
-		"right": "0px",
-		"position": "fixed",
-		"bottom": "0px",
-		"top": "0px",
-		"z-index": 2
-	});
-	$(".ct-sidebar").css({
-		"right": "0px",
-		"top": "0px",
-		"bottom": "0px"
-	});
-
-	// $(".ct-sidebar__controls").hide();
-
-	// window.innerWidth = 1200;
-  // window.outerWidth = 1200;
-  // window.dispatchEvent(new Event('resize'));
 }
 
-	// window.innerWidth = 1030;
-  // window.outerWidth = 1030;
-  // window.dispatchEvent(new Event('resize'));
+function resize_player_sheet_thin() {
+	reset_character_sheet_css();
+	$(".ct-character-sheet__inner").css("zoom", "0.8");
+	$(".ct-character-sheet__inner").css({ "width": "570px", "overflow-y": "auto", "height": "100%" });
+	$(".ct-subsections").css({ "display": "flex", "flex-direction": "column", "width": "570px", "top": "200px" });
+	$(".ct-subsection").css({ "display": "flex", "top": "auto", "left": "auto", "width": "50%", "margin-bottom": "14px", "position": "relative" });
+	$(".ct-subsection--skills").css({ "position": "absolute", "right": "0px" });
+	$(".ct-subsection--combat").css({ "position": "absolute", "top": "-100px", "width": "100%" });
+	$(".ct-subsection--primary-box").css({ "width": "100%" });
 
-  // $("html").css("width", `990px`);
-  // $("body").css("width", `990px`);
-  // $("#site").css("width", `990px`);
-  // $(".ct-combat-mobile").css("width", `990px`);
-  // $(".ct-character-sheet-mobile__header").css("width", `990px`);
-  // $(".ct-character-sheet-desktop").css("width", `990px`);
-  // $(".ct-character-header-desktop").css("width", `990px`);
-  // $(".ct-subsections").css("width", `990px`);
-  // $(".ct-quick-info").css("width", `990px`);
+	$(".ct-quick-info__box--proficiency").css({ "position": "relative", "top": "105px", "left": "-480px" });
+	$(".ct-quick-info__box--speed").css({ "position": "relative", "top": "105px", "left": "-468px" });
+	$(".ct-quick-info__inspiration").css({ "position": "relative", "left": "-184px", "top": "8px" });
+	$(".ct-quick-info__health").css({ "position": "relative", "top": "105px", "left": "-510px" });
 
-  // $(".ct-subsection > div").css("width", `100%`);
-  // $(".ct-senses__callout").css("width", `100%`);
-
-  // $(".ct-subsection--abilities").css("width", `230px`);
-  // $(".ct-saving-throws-box__abilities").css("width", `190px`);
-  // $(".ct-saving-throws-box__info").css("width", `190px`);
-
-  // $(".ct-subsection--senses").css("width", `230px`);
-
-  // $(".ct-subsection--proficiency-groups").css("width", `228px`);
-
-  // $(".ct-subsection--skills").css("width", `230px`);
-
-  // $(".ct-subsection--combat").css("width", `517px`);
-  // $(".ct-combat").css("width", `517px`);
-
-  // $(".ct-subsection--primary-box").css("width", `517px`);
-  // $(".ct-primary-box").css("width", `517px`);
-
-
-	// $(".ddbc-saving-throws-summary__ability").css("width", "88px");
-	// $(".ct-quick-info__abilities").css("width", "463px");
-	// $(".ddbc-ability-summary").css("width", "66px");
-	// $(".ct-quick-info__box").css("width", "77px");
-	// $(".ct-proficiency-bonus-box").css("width", "77px");
-	// $(".ct-quick-info__inspiration").css("width", "70px");
-	// $(".ct-quick-info__health").css("width", "260px");
-	// $(".ct-subsection--skills").css("left", "243px");
-	// $(".ddbc-ability-summary__secondary").css("bottom", "auto");
-
-	// $(".ddbc-ability-summary__label").hide();
-	// $(".ddbc-ability-summary__abbr").show();
-
-
-  // window.innerWidth = 1030;
-  // window.outerWidth = 1030;
-  // window.dispatchEvent(new Event('resize'));
-// }
-
-function resize_player_sheet_mobile() {
-	window.innerWidth = 400;
-  window.outerWidth = 400;
-  window.dispatchEvent(new Event('resize'));
-
-  $("html").css("width", `400px`);
-  $("body").css("width", `400px`);
-  $("#site").css("width", `400px`);
-  $(".ct-character-header-desktop").css("width", `400px`);
-  $(".ct-character-sheet-desktop").css("width", `400px`);
-  $(".ct-character-sheet-mobile").css("width", `400px`);
-  $(".ct-character-sheet-mobile__header").css("width", `400px`);
-  $(".ct-combat-mobile").css("width", `400px`);
-
-  $(".ct-quick-nav").css("position", "absolute");
-
-  window.innerWidth = 400;
-  window.outerWidth = 400;
-  window.dispatchEvent(new Event('resize'));
+	$(".ct-character-header-desktop__group--share").hide();
+	$(".ct-character-header-desktop__group--builder").hide();
+	$(".ddbc-character-tidbits__menu-callout").hide();
+	
+	$(".ct-character-header-desktop__group--short-rest").css({ "position": "absolute", "left": "auto", "top": "20px", "right": "110px" });
+	$(".ct-character-header-desktop__group--long-rest").css({ "position": "absolute", "left": "auto", "top": "20px", "right": "0px" });
+	$(".ct-character-header-desktop__group--short-rest .ct-character-header-desktop__button").css({ "padding": "2px 10px", "margin": "0px" });
+	$(".ct-character-header-desktop__group--long-rest .ct-character-header-desktop__button").css({ "padding": "2px 10px", "margin": "0px" });
+	$(".ct-character-header-desktop__group-tidbits").css({ "width": "60%" });
+	
+	$(".ct-character-header-desktop__group--campaign").css({ "position": "relative", "top": "15px", "left": "auto", "right": "-10px", "margin-right": "0px" });
 }
+
+function reset_character_sheet_css() {
+	// $(".ct-character-sheet__inner").removeAttr( 'style' );
+	$(".ct-subsections").removeAttr( 'style' );
+	$(".ct-subsection").removeAttr( 'style' );
+	$(".ct-subsection--skills").removeAttr( 'style' );
+	$(".ct-subsection--combat").removeAttr( 'style' );
+	$(".ct-subsection--primary-box").removeAttr( 'style' );
+
+	$(".ct-quick-info__box--proficiency").removeAttr( 'style' );
+	$(".ct-quick-info__box--speed").removeAttr( 'style' );
+	$(".ct-quick-info__inspiration").removeAttr( 'style' );
+	$(".ct-quick-info__health").removeAttr( 'style' );
+
+	$(".ct-character-header-desktop__group--share").show();
+	$(".ct-character-header-desktop__group--builder").show();
+	$(".ddbc-character-tidbits__menu-callout").show();
+	
+	$(".ct-character-header-desktop__group--short-rest").removeAttr( 'style' );
+	$(".ct-character-header-desktop__group--long-rest").removeAttr( 'style' );
+	$(".ct-character-header-desktop__group--short-rest .ct-character-header-desktop__button").removeAttr( 'style' );
+	$(".ct-character-header-desktop__group--long-rest .ct-character-header-desktop__button").removeAttr( 'style' );
+	$(".ct-character-header-desktop__group-tidbits").removeAttr( 'style' );
+	
+	$(".ct-character-header-desktop__group--campaign").removeAttr( 'style' );
+
+
+	$(".ct-character-sheet__inner").css({"visibility": "visible"});
+}
+
