@@ -401,46 +401,11 @@ function init_controls() {
 	$("span.sidebar__control-group.sidebar__control-group--lock > button").click(); // CLICKA SU lucchetto
 
 	let sidebarControls = is_characters_page() ? $(".ct-sidebar__controls") : $(".sidebar__controls");
-
 	sidebarControls.empty();
-	hider = $("<button id='hide_rightpanel' class='hasTooltip button-icon hideable' data-name='Show/hide sidebar (q)' data-visible=1></button>").click(function() {
-		let sidebar = is_characters_page() ? $(".ct-sidebar--right") : $(".sidebar--right");
-		if ($(this).attr('data-visible') == 1) {
-			$(this).attr('data-visible', 0);
-			// sidebar.animate({ "right": "-340px" }, 500, "linear");
-			sidebar.css("transform", "translateX(340px)");
-			$(this).addClass("point-left").removeClass("point-right");
-			if (is_characters_page()) {
-				// $(".ct-character-sheet__inner").animate({ "right": "0px" }, 500, "linear");
-				// TODO: Make this a function and open the sidebar if a user taps on the details of a thing on their sheet
-				$(".ct-character-sheet__inner").css("transform", "translateX(378px)");
-			} else {
-				if (parseInt($("#sheet").css("right")) >= 0) {
-					// $("#sheet").animate({ right: 343 - 340 }, 500, "linear");
-					$("#sheet").css("transform", "translateX(343)");
-				}
-			}
 
-		}
-		else {
-			$(this).attr('data-visible', 1);
-			// sidebar.animate({ "right": "0px" }, 500, "linear");
-			sidebar.css("transform", "translateX(0px)");
-			$(this).addClass("point-right").removeClass("point-left");
-			if (is_characters_page()) {
-				// $(".ct-character-sheet__inner").animate({ "right": "378px" }, 500, "linear");
-				$(".ct-character-sheet__inner").css("transform", "translateX(0px)");
-			} else {
-				if (parseInt($("#sheet").css("right")) >= 0) {
-					// $("#sheet").animate({ right: 343 }, 500, "linear");
-					$("#sheet").css("transform", "translateX(0)");
-				}
-			}
-		}
-
-	}).html("<span class='material-icons button-icon'>chevron_right</span>").addClass("point-right");
+	hider = $("<button id='hide_rightpanel' class='point-right hasTooltip button-icon hideable' data-name='Show/hide sidebar (q)' data-visible=1><span class='material-icons button-icon'>chevron_right</span></button>");
+	hider.click(toggle_sidebar_visibility);
 	sidebarControls.append(hider);
-
 
 	b1 = $("<button id='switch_gamelog' class='tab-btn selected-tab hasTooltip button-icon leading-edge' data-name='Gamelog' data-target='.glc-game-log'></button>").click(switch_control);
 	b1.append('<svg class="gamelog-button__icon" width="18" height="18" viewBox="0 0 18 18"><path fill-rule="evenodd" clip-rule="evenodd" d="M15 10C15 10.551 14.551 11 14 11H9C8.735 11 8.48 11.105 8.293 11.293L6 13.586V12C6 11.447 5.552 11 5 11H4C3.449 11 3 10.551 3 10V4C3 3.449 3.449 3 4 3H14C14.551 3 15 3.449 15 4V10ZM14 1H4C2.346 1 1 2.346 1 4V10C1 11.654 2.346 13 4 13V16C4 16.404 4.244 16.77 4.617 16.924C4.741 16.975 4.871 17 5 17C5.26 17 5.516 16.898 5.707 16.707L9.414 13H14C15.654 13 17 11.654 17 10V4C17 2.346 15.654 1 14 1ZM12 6H6C5.448 6 5 6.447 5 7C5 7.553 5.448 8 6 8H12C12.552 8 13 7.553 13 7C13 6.447 12.552 6 12 6Z" fill="currentColor"></path></svg>');
@@ -2646,7 +2611,7 @@ function resize_player_sheet_full_width() {
 }
 
 function resize_player_sheet_thin() {
-	$(".ct-character-sheet__inner").css({ "width": "570px", "overflow-y": "auto", "height": "100%" });
+	$(".ct-character-sheet__inner").css({ "width": "570px", "overflow-y": "auto" });
 	$(".ct-subsections").css({ "display": "flex", "flex-direction": "column", "width": "570px", "top": "200px" });
 	$(".ct-subsection").css({ "display": "flex", "top": "auto", "left": "auto", "width": "50%", "margin-bottom": "14px", "position": "relative" });
 	$(".ct-subsection--skills").css({ "position": "absolute", "right": "0px" });
@@ -2668,6 +2633,9 @@ function resize_player_sheet_thin() {
 	$(".ct-character-header-desktop__group-tidbits").css({ "width": "60%" });
 	
 	$(".ct-character-header-desktop__group--campaign").css({ "position": "relative", "top": "15px", "left": "auto", "right": "-10px", "margin-right": "0px" });
+
+	$(".ct-primary-box").css({ "height": "610px" });
+	$(".ddbc-tab-options__content").css({ "height": "510px" });
 }
 
 function reset_character_sheet_css() {
@@ -2693,19 +2661,56 @@ function reset_character_sheet_css() {
 	$(".ct-character-header-desktop__group-tidbits").removeAttr( 'style' );
 	
 	$(".ct-character-header-desktop__group--campaign").removeAttr( 'style' );
+	$(".ct-primary-box").removeAttr( 'style' );
+	$(".ddbc-tab-options__content").removeAttr( 'style' );
 
 	$(".ct-character-sheet__inner").css({"visibility": "visible"});
 	
 	$(".ddbc-character-tidbits__menu-callout").hide();
 
 	$(".ct-character-sheet__inner").css({
-		"zoom": "0.9",
 		"position": "fixed",
-		"right": "378px",
-		"top": "32px",
+		"right": "340px",
+		"top": "26px",
 		"background": $("body").css("background"),
 		"background-position-y": "110px, 0%",
 		"max-height": "100%",
 		"overflow-y": "auto"
 	});
+
+	$(".ct-sidebar").css({ "height": "100%" });
+}
+
+function toggle_sidebar_visibility() {
+	if ($("#hide_rightpanel").attr('data-visible') == 1) {
+		hide_sidebar();
+	} else {
+		show_sidebar();
+	}
+}
+
+function show_sidebar() {
+	let sidebar = is_characters_page() ? $(".ct-sidebar--right") : $(".sidebar--right");
+	sidebar.css("transform", "translateX(0px)");
+	if (is_characters_page()) {
+		$(".ct-character-sheet__inner").css("transform", "translateX(0px)");
+	} else if (parseInt($("#sheet").css("right")) >= 0) {
+		$("#sheet").css("transform", "translateX(0px)");
+	}
+	let toggleButton = $("#hide_rightpanel");
+	toggleButton.addClass("point-right").removeClass("point-left");
+	toggleButton.attr('data-visible', 1);
+}
+
+function hide_sidebar() {
+	let sidebar = is_characters_page() ? $(".ct-sidebar--right") : $(".sidebar--right");
+	sidebar.css("transform", "translateX(340px)");
+	if (is_characters_page()) {
+		$(".ct-character-sheet__inner").css("transform", "translateX(340px)");
+	} else if (parseInt($("#sheet").css("right")) >= 0) {
+		$("#sheet").css("transform", "translateX(343)px");
+	}
+	let toggleButton = $("#hide_rightpanel");
+	toggleButton.addClass("point-left").removeClass("point-right");
+	toggleButton.attr('data-visible', 0);
 }
