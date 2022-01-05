@@ -407,27 +407,33 @@ function init_controls() {
 		let sidebar = is_characters_page() ? $(".ct-sidebar--right") : $(".sidebar--right");
 		if ($(this).attr('data-visible') == 1) {
 			$(this).attr('data-visible', 0);
-			sidebar.animate({ "right": "-340px" }, 500);
+			// sidebar.animate({ "right": "-340px" }, 500, "linear");
+			sidebar.css("transform", "translateX(340px)");
 			$(this).addClass("point-left").removeClass("point-right");
 			if (is_characters_page()) {
-				$(".ct-character-sheet__inner").css({ "transform": "translateX(0px)"});
-				$(".ct-character-sheet__inner").animate({ "right": "0px" }, 500);
+				// $(".ct-character-sheet__inner").animate({ "right": "0px" }, 500, "linear");
+				// TODO: Make this a function and open the sidebar if a user taps on the details of a thing on their sheet
+				$(".ct-character-sheet__inner").css("transform", "translateX(378px)");
 			} else {
 				if (parseInt($("#sheet").css("right")) >= 0) {
-					$("#sheet").animate({ right: 343 - 340 }, 500);
+					// $("#sheet").animate({ right: 343 - 340 }, 500, "linear");
+					$("#sheet").css("transform", "translateX(343)");
 				}
 			}
 
 		}
 		else {
 			$(this).attr('data-visible', 1);
-			sidebar.animate({ "right": "0px" }, 500);
+			// sidebar.animate({ "right": "0px" }, 500, "linear");
+			sidebar.css("transform", "translateX(0px)");
 			$(this).addClass("point-right").removeClass("point-left");
 			if (is_characters_page()) {
-				$(".ct-character-sheet__inner").animate({ right: 430 }, 500);
+				// $(".ct-character-sheet__inner").animate({ "right": "378px" }, 500, "linear");
+				$(".ct-character-sheet__inner").css("transform", "translateX(0px)");
 			} else {
 				if (parseInt($("#sheet").css("right")) >= 0) {
-					$("#sheet").animate({ right: 343 }, 500);
+					// $("#sheet").animate({ right: 343 }, 500, "linear");
+					$("#sheet").css("transform", "translateX(0)");
 				}
 			}
 		}
@@ -1374,9 +1380,10 @@ function init_things() {
 		
 		hide_player_sheet();
 		init_character_page_sidebar();
-		
 
-		init_splash();
+		$(window).resize(function() {
+			init_character_page_sidebar();
+		});
 
 	} else {
 		init_ui();
@@ -1429,6 +1436,7 @@ function init_character_page_sidebar() {
 			resize_player_sheet_full_width();
 			show_player_sheet();
 			monitor_character_sidebar_changes();
+			init_splash();
 		}
 	}, 1000);
 }
@@ -2634,21 +2642,10 @@ function toggle_player_sheet_size() {
 
 function resize_player_sheet_full_width() {
 	reset_character_sheet_css();
-	$(".ct-character-sheet__inner").css({
-		"width": "1200px",
-		"zoom": "0.8",
-		"position": "fixed",
-		"right": "430px",
-		"top": "40px",
-		"background": $("body").css("background"),
-		"background-position-y": "110px, 0%",
-		"z-index": 1
-	});
+	$(".ct-character-sheet__inner").css({ "width": "1200px" });
 }
 
 function resize_player_sheet_thin() {
-	reset_character_sheet_css();
-	$(".ct-character-sheet__inner").css("zoom", "0.8");
 	$(".ct-character-sheet__inner").css({ "width": "570px", "overflow-y": "auto", "height": "100%" });
 	$(".ct-subsections").css({ "display": "flex", "flex-direction": "column", "width": "570px", "top": "200px" });
 	$(".ct-subsection").css({ "display": "flex", "top": "auto", "left": "auto", "width": "50%", "margin-bottom": "14px", "position": "relative" });
@@ -2700,5 +2697,15 @@ function reset_character_sheet_css() {
 	$(".ct-character-sheet__inner").css({"visibility": "visible"});
 	
 	$(".ddbc-character-tidbits__menu-callout").hide();
-}
 
+	$(".ct-character-sheet__inner").css({
+		"zoom": "0.9",
+		"position": "fixed",
+		"right": "378px",
+		"top": "32px",
+		"background": $("body").css("background"),
+		"background-position-y": "110px, 0%",
+		"max-height": "100%",
+		"overflow-y": "auto"
+	});
+}
