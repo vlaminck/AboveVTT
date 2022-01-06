@@ -174,6 +174,9 @@ function roll_our_dice(displayName, imgUrl, expression, modifier, damageType, dm
 }
 
 function find_currently_open_character_sheet() {
+	if (is_characters_page()) {
+		return window.location.pathname;
+	}
 	let sheet;
 	$("#sheet").find("iframe").each(function () {
 		let src = $(this).attr("src");

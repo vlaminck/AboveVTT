@@ -696,6 +696,8 @@ function init_sheet(){
 			toggle_player_sheet_size();
 		});
 
+
+
 		return;
 	}
 	let container = $("<div id='sheet'></div>");
@@ -794,6 +796,11 @@ function init_sheet(){
 
 function init_player_sheet(pc_sheet, loadWait = 0)
 {
+
+	if (is_characters_page()) {
+		// character sheet uses the html on the page instead of loading an iframe
+		return;
+	}
 
 	let container = $("#sheet");
 	iframe = $("<iframe id='PlayerSheet"+getPlayerIDFromSheet(pc_sheet)+"' src=''></iframe>")
@@ -1446,8 +1453,12 @@ function monitor_character_sidebar_changes() {
 	});
 	$(".ct-sidebar__portal").on("DOMNodeInserted", function(event) {
 		console.log(`sidebar inserted: ${event.target.classList}`);
-		if ($(event.target).hasClass("ct-game-log-pane")) {
+		let addedElement = $(event.target);
+		if (addedElement.hasClass("ct-game-log-pane")) {
 			inject_chat_buttons();
+		}
+		if (addedElement.hasClass("ct-creature-pane")) {
+			scan_player_creature_pane(addedElement);
 		}
 	});
 	// $(".ct-sidebar__portal").on("DOMSubtreeModified", function(event) {
@@ -2424,6 +2435,7 @@ $(function() {
 	
 	
 	if (window.location.search.includes("abovevtt=true")) {
+		gather_pcs();
 		if (is_encounters_page()) {
 			const urlParams = new URLSearchParams(window.location.search);
 			window.gameId = urlParams.get('cid');
