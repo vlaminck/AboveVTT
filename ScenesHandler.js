@@ -62,6 +62,13 @@ class ScenesHandler { // ONLY THE DM USES THIS OBJECT
 			scene.id=uuid();
 		}
 
+		if (typeof scene.player_map_is_video === 'undefined') {
+			scene.player_map_is_video = "0";
+		}
+		if (typeof scene.dm_map_is_video === 'undefined') {
+			scene.dm_map_is_video = "0";
+		}
+
 		window.CURRENT_SCENE_DATA = scene;
 
 		$(".VTTToken").each(function() {
@@ -72,8 +79,6 @@ class ScenesHandler { // ONLY THE DM USES THIS OBJECT
 		for (var i in window.TOKEN_OBJECTS) {
 			delete window.TOKEN_OBJECTS[i];
 		}
-
-
 
 		if (scene.grid_subdivided == "1")
 			scene.grid = "1";
@@ -88,6 +93,7 @@ class ScenesHandler { // ONLY THE DM USES THIS OBJECT
 			scene.grid = 0;
 			scene.snap = 0;
 			scene.fpsq = 5;
+			scene.upsq = 'ft'
 
 			for (var id in scene.tokens) { // RESCALE ALL THE TOKENS
 				var tok_options = scene.tokens[id];
@@ -175,18 +181,21 @@ class ScenesHandler { // ONLY THE DM USES THIS OBJECT
 		else {
 			window.DRAWINGS = [];
 		}
-
+		
 		var map_url = "";
+		var map_is_video = false;
 		if ((scene.dm_map != "") && (scene.dm_map_usable == "1") && (window.DM)) {
 			map_url = scene.dm_map;
+			map_is_video = (scene.dm_map_is_video === "1");
 		}
 		else {
 			map_url = scene.player_map;
+			map_is_video = (scene.player_map_is_video === "1");
 		}
 
 
 
-		load_scenemap(map_url, null, null, function() {
+		load_scenemap(map_url, map_is_video, null, null, function() {
 			var owidth = $("#scene_map").width();
 			var oheight = $("#scene_map").height();
 			var max_length = get_canvas_max_length();
@@ -268,11 +277,14 @@ class ScenesHandler { // ONLY THE DM USES THIS OBJECT
 		data.hpps = window.CURRENT_SCENE_DATA.hpps;
 		data.vpps = window.CURRENT_SCENE_DATA.vpps;
 		data.fpsq = window.CURRENT_SCENE_DATA.fpsq;
+		data.upsq = window.CURRENT_SCENE_DATA.upsq;
+		
 		data.grid_subdivded = window.CURRENT_SCENE_DATA.grid_subdivided;
 		data.offsetx = window.CURRENT_SCENE_DATA.offsetx;
 		data.offsety = window.CURRENT_SCENE_DATA.offsety;
 
 		data.map = this.scene.player_map;
+		data.is_video = this.scene.player_map_is_video;
 		data.width = $("#scene_map").width();
 		data.height = $("#scene_map").height();
 		data.tokens = [];
@@ -352,7 +364,6 @@ class ScenesHandler { // ONLY THE DM USES THIS OBJECT
 			callback();
 		});
 	}
-
 
 	build_chapters(keyword, callback) {
 		var self = this;
@@ -468,6 +479,8 @@ class ScenesHandler { // ONLY THE DM USES THIS OBJECT
 					title: title,
 					dm_map: dm_map,
 					player_map: player_map,
+					player_map_is_video: "0",
+					dm_map_is_video: "0",
 					thumb: thumb,
 					scale: "100",
 					dm_map_usable: "0",
@@ -502,6 +515,8 @@ class ScenesHandler { // ONLY THE DM USES THIS OBJECT
 					title: title,
 					dm_map: dm_map,
 					player_map: player_map,
+					player_map_is_video: "0",
+					dm_map_is_video: "0",
 					scale: "100",
 					dm_map_usable: "0",
 					fog_of_war: "0",
@@ -534,6 +549,8 @@ class ScenesHandler { // ONLY THE DM USES THIS OBJECT
 						title: title,
 						dm_map: dm_map,
 						player_map: player_map,
+						player_map_is_video: "0",
+						dm_map_is_video: "0",
 						scale: "100",
 						dm_map_usable: "0",
 						fog_of_war: "0",
@@ -551,7 +568,6 @@ class ScenesHandler { // ONLY THE DM USES THIS OBJECT
 			callback();
 		});
 	}
-
 
 	create_update_token(options, save = true) {
 		console.log("create_update_token");
@@ -605,6 +621,13 @@ class ScenesHandler { // ONLY THE DM USES THIS OBJECT
 		if (localStorage.getItem('ScenesHandler' + gameid) != null) {
 			this.scenes = $.parseJSON(localStorage.getItem('ScenesHandler' + gameid));
 			this.current_scene_id = localStorage.getItem("CurrentScene" + gameid);
+
+			if (!this.scenes.hasOwnProperty('player_map_is_video')) {
+				this.scenes.player_map_is_video = "0";
+			}
+			if (!this.scenes.hasOwnProperty('dm_map_is_video')) {
+				this.scenes.dm_map_is_video = "0";
+			}
 		}
 		else {
 			this.scenes = [];
@@ -614,6 +637,8 @@ class ScenesHandler { // ONLY THE DM USES THIS OBJECT
 				player_map: "https://i.pinimg.com/originals/a2/04/d4/a204d4a2faceb7f4ae93e8bd9d146469.jpg",
 				scale: "100",
 				dm_map_usable: "0",
+				player_map_is_video: "0",
+				dm_map_is_video: "0",
 				fog_of_war: "1",
 				tokens: {},
 				grid: "0",
@@ -621,6 +646,7 @@ class ScenesHandler { // ONLY THE DM USES THIS OBJECT
 				vpps: "72",
 				snap: "1",
 				fpsq: "5",
+				upsq: "ft",
 				offsetx: 29,
 				offsety: 54,
 				reveals: [[0, 0, 0, 0, 2, 0]],

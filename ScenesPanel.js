@@ -18,7 +18,6 @@ function consider_upscaling(target){
 			target.scale_factor=1;
 		}
 }
-	
 
 function preset_importer(target, key) {
 	target.empty();
@@ -38,8 +37,17 @@ function preset_importer(target, key) {
 		i = sel.val();
 		scene = PRESET[key][i];
 
+		if (typeof scene.player_map_is_video === 'undefined') {
+			scene.player_map_is_video = "0";
+		}
+		if (typeof scene.dm_map_is_video === 'undefined') {
+			scene.dm_map_is_video = "0";
+		}
+
 		$("#scene_properties input[name='player_map']").val(scene.player_map);
 		$("#scene_properties input[name='dm_map']").val(scene.dm_map);
+		$("#scene_properties input[name='player_map_is_video']").prop('checked', scene.player_map_is_video === "1");
+		$("#scene_properties input[name='dm_map_is_video']").prop('checked', scene.dm_map_is_video === "1");
 		$("#scene_properties input[name='title']").val(scene.title);
 		$("#scene_properties input[name='scale']").val(scene.scale);
 	});
@@ -47,8 +55,6 @@ function preset_importer(target, key) {
 	target.append(sel);
 	target.append(import_button);
 }
-
-
 
 function edit_scene_dialog(scene_id) {
 	let scene = window.ScenesHandler.scenes[scene_id];
@@ -114,13 +120,40 @@ function edit_scene_dialog(scene_id) {
 		f.append(row);
 	};
 
+	let addrow_with_checkbox = function(name, title, checkbox_name, checkbox_title, type = 'text') {
+		var row = $("<div style='width:100%;'/>");
+		var c1 = $("<div style='display: inline-block; width:30%'>" + title + "</div>");
+		c1.css("font-weight", "bold");
+		var c2 = $("<div style='display:inline-block; width:50%'/>");
+		var i = $("<input />");
+		i.attr('type', type);
+		i.attr('name', name);
+		i.val(scene[name]);
+		i.css("width", "100%");
+
+		var c3 = $("<div style='display: inline-block;'>&nbsp;&nbsp;" + checkbox_title + "&nbsp;&nbsp;</div>");
+		c3.css("font-weight", "bold");
+		var c4 = $("<div style='display:inline-block;'/>");
+		var t = $("<input />");
+		t.attr('type', "checkbox");
+		t.attr('name', checkbox_name);
+		t.prop('checked', scene[checkbox_name] === "1");
+		c2.append(i);
+		c4.append(t);
+		row.append(c1);
+		row.append(c2);
+		row.append(c3);
+		row.append(c4);
+		f.append(row);
+	};
+
 	var uuid_hidden = $("<input name='uuid' type='hidden'/>");
 	uuid_hidden.val(scene['uuid']);
 	f.append(uuid_hidden);
 
 	addrow('title', 'Scene Title');
-	addrow('player_map', 'Player Map');
-	addrow('dm_map', 'Dm Map');
+	addrow_with_checkbox('player_map', 'Player Map', 'player_map_is_video', "Is Video?");
+	addrow_with_checkbox('dm_map', 'Dm Map', 'dm_map_is_video', "Is Video?");
 	addrow('dm_map_usable', 'Use DM Map (1 to enable)');
 	wizard = $("<button><b>Super Mega Wizard</b></button>");
 	manual_button = $("<button>Manual Grid Data</button>");
@@ -136,8 +169,9 @@ function edit_scene_dialog(scene_id) {
 	manual.append($("<div><div style='display:inline-block; width:30%'>Offset</div><div style='display:inline-block;width:70%;'><input name='offsetx'> X <input name='offsety'></div></div>"));
 	manual.append($("<div><div style='display:inline-block; width:30%'>Snap to Grid(1 to enable)</div><div style='display:inline-block; width:70'%'><input name='snap'></div></div>"));
 	manual.append($("<div><div style='display:inline-block; width:30%'>Show Grid(1 to enable)</div><div style='display:inline-block; width:70'%'><input name='grid'></div></div>"));
-	manual.append($("<div><div style='display:inline-block; width:30%'>Foot per square</div><div style='display:inline-block; width:70'%'><input name='fpsq'></div></div>"));
-	manual.append($("<div><div style='display:inline-block; width:30%'>Grid is a subdivided 10ft</div><div style='display:inline-block; width:70'%'><input name='grid_subdivided'></div></div>"));
+	manual.append($("<div><div style='display:inline-block; width:30%'>Units per square</div><div style='display:inline-block; width:70'%'><input name='fpsq'></div></div>"));
+	manual.append($("<div><div style='display:inline-block; width:30%'>Distance Unit (i.e. feet)</div><div style='display:inline-block; width:70'%'><input name='upsq'></div></div>"));
+	manual.append($("<div><div style='display:inline-block; width:30%'>Grid is a subdivided 10 units</div><div style='display:inline-block; width:70'%'><input name='grid_subdivided'></div></div>"));
 	manual.append($("<div><div style='display:inline-block; width:30%'>Image Scale Factor</div><div style='display:inline-block; width:70'%'><input name='scale_factor'></div></div>"));
 	manual.hide();
 
@@ -154,15 +188,8 @@ function edit_scene_dialog(scene_id) {
 	});
 
 
-
-
-
-
-
 	if (typeof scene.fog_of_war == "undefined")
 		scene.fog_of_war = "1";
-
-
 
 
 	var sub = $("<button>Save And Switch</button>");
@@ -170,7 +197,14 @@ function edit_scene_dialog(scene_id) {
 	sub.click(function() {
 		f.find("input").each(function() {
 			var n = $(this).attr('name');
-			let nValue = $(this).val();
+			var t = $(this).attr('type');
+			let nValue = null;
+			if (t == "checkbox") {
+				nValue = $(this).prop("checked") ? "1" : "0";
+			}
+			else {
+				nValue = $(this).val();
+			}
 
 			if ( ((n === 'player_map') || (n==='dm_map'))   
 					&& nValue.startsWith("https://drive.google.com")
@@ -188,7 +222,7 @@ function edit_scene_dialog(scene_id) {
 		$("#scene_selector").removeAttr("disabled");
 		$("#scene_selector_toggle").click();
 	});
-
+	
 
 	
 
@@ -212,6 +246,7 @@ function edit_scene_dialog(scene_id) {
 			window.ScenesHandler.scene.grid = "0";
 
 		window.ScenesHandler.scene.fpsq = "5";
+		window.ScenesHandler.scene.upsq = "ft";
 		window.ScenesHandler.scene.grid_subdivided = "0";
 		consider_upscaling(window.ScenesHandler.scene);
 		
@@ -236,6 +271,7 @@ function edit_scene_dialog(scene_id) {
 			window.ScenesHandler.scene.snap = "1";
 			window.ScenesHandler.scene.grid = "1";
 			window.ScenesHandler.scene.fpsq = "5";
+			window.ScenesHandler.scene.upsq = "ft";
 			window.ScenesHandler.scene.hpps /= 2;
 			window.ScenesHandler.scene.vpps /= 2;
 			
@@ -256,6 +292,7 @@ function edit_scene_dialog(scene_id) {
 			window.ScenesHandler.scene.grid_subdivided = "0";
 			window.ScenesHandler.scene.grid = "0";
 			window.ScenesHandler.scene.fpsq = "10";
+			window.ScenesHandler.scene.upsq = "ft";
 			consider_upscaling(window.ScenesHandler.scene);
 			window.ScenesHandler.persist();
 			window.ScenesHandler.reload();
@@ -275,6 +312,7 @@ function edit_scene_dialog(scene_id) {
 		window.ScenesHandler.scene.snap = "1";
 		window.ScenesHandler.scene.grid = "0";
 		window.ScenesHandler.scene.fpsq = "5";
+		window.ScenesHandler.scene.upsq = "ft";
 		window.ScenesHandler.scene.hpps /= 3;
 		window.ScenesHandler.scene.vpps /= 3;
 		consider_upscaling(window.ScenesHandler.scene);
@@ -295,6 +333,7 @@ function edit_scene_dialog(scene_id) {
 		window.ScenesHandler.scene.snap = "1";
 		window.ScenesHandler.scene.grid = "1";
 		window.ScenesHandler.scene.fpsq = "5";
+		window.ScenesHandler.scene.upsq = "ft";
 		window.ScenesHandler.scene.hpps /= 4;
 		window.ScenesHandler.scene.vpps /= 4;
 		consider_upscaling(window.ScenesHandler.scene);
@@ -563,7 +602,7 @@ function edit_scene_dialog(scene_id) {
 						grid_5(false, false);
 					}
 					else if (!square) {
-						$("#wizard_popup").empty().append("Nice!! How many feet per square ? <button id='grid_5'>5</button> <button id='grid_10'>10</button> <button id='grid_15'>15</button> <button id='grid_20'>20</button>");
+						$("#wizard_popup").empty().append("Nice!! How many units (i.e. feet) per square ? <button id='grid_5'>5</button> <button id='grid_10'>10</button> <button id='grid_15'>15</button> <button id='grid_20'>20</button>");
 						$("#grid_5").click(function() { grid_5(); });
 						$("#grid_10").click(function() { grid_10(); });
 						$("#grid_15").click(function() { grid_15(); });
@@ -584,7 +623,14 @@ function edit_scene_dialog(scene_id) {
 
 			f.find("input").each(function() {
 				var n = $(this).attr('name');
-				let nValue = $(this).val();
+				var t = $(this).attr('type');
+				let nValue = null;
+				if (t == "checkbox") {
+					nValue = $(this).prop("checked") ? "1" : "0";
+				}
+				else {
+					nValue = $(this).val();
+				}
 
 				if (((n === 'player_map') || (n==='dm_map'))
 					&& nValue.startsWith("https://drive.google.com")
@@ -681,8 +727,6 @@ function edit_scene_dialog(scene_id) {
 
 
 }
-
-
 
 function refresh_scenes() {
 	target = $("#scene_selector");
@@ -781,9 +825,12 @@ function init_scene_selector() {
 			player_map: "",
 			scale: "100",
 			dm_map_usable: "0",
+			player_map_is_video: "0",
+			dm_map_is_video: "0",
 			fog_of_war: "1",
 			tokens: {},
 			fpsq: 5,
+			upsq: 'ft',
 			hpps: 60,
 			vpps: 60,
 			offsetx: 0,
@@ -818,7 +865,6 @@ function init_scene_selector() {
 	$(window.document.body).append(toggle);
 
 }
-
 
 function display_sources() {
 	$("#source_select").empty();
@@ -936,7 +982,6 @@ function init_ddb_importer(target) {
 
 }
 
-
 function fill_importer(scene_set, start) {
 	area = $("#importer_area");
 	area.empty();
@@ -997,11 +1042,16 @@ function fill_importer(scene_set, start) {
 
 		b.click(function() {
 			var scene = current_scene;
-
+		
 			$("#scene_properties input[name='player_map']").val(scene.player_map);
 			$("#scene_properties input[name='dm_map']").val(scene.dm_map);
 			$("#scene_properties input[name='title']").val(scene.title);
 			$("#scene_properties input[name='scale']").val(scene.scale);
+
+			if (typeof scene.player_map_is_video !== "undefined")
+				$("#scene_properties input[name='player_map_is_video']").prop('checked', scene.player_map_is_video === "1");
+			if (typeof scene.dm_map_is_video !== "undefined")
+				$("#scene_properties input[name='dm_map_is_video']").prop('checked', scene.dm_map_is_video === "1");
 
 
 			if (typeof scene.uuid !== "undefined")
@@ -1020,6 +1070,8 @@ function fill_importer(scene_set, start) {
 				$("#scene_properties input[name='snap']").val(scene.snap);
 			if (typeof scene.fpsq !== "undefined")
 				$("#scene_properties input[name='fpsq']").val(scene.fpsq);
+			if (typeof scene.upsq !== "undefined")
+				$("#scene_properties input[name='upsq']").val(scene.upsq);
 			if (typeof scene.offsetx !== "undefined")
 				$("#scene_properties input[name='offsetx']").val(scene.offsetx);
 			if (typeof scene.offsety !== "undefined")
