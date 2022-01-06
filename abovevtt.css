@@ -859,6 +859,11 @@ div#scene_properties form > div {
     background-color: rgb(235, 241, 245);
 }
 
+.ct-sidebar__controls .tab-btn.notification,
+.sidebar__controls .tab-btn.notification {
+    background-color: red;
+}
+
 .ct-sidebar__controls .tab-btn.leading-edge,
 .sidebar__controls .tab-btn.leading-edge {
     margin-left: 0px;

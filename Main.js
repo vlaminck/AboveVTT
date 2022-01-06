@@ -263,8 +263,15 @@ function set_pointer(data,dontscroll=false) {
 }
 
 function notify_gamelog() {
-	if ($(".glc-game-log").is(":hidden")) {
-		$("#switch_gamelog").css("background", "red");
+	if (!$("#switch_gamelog").hasClass("selected-tab")) {
+		if ($("#switch_gamelog").hasClass("notification")) {
+			$("#switch_gamelog").removeClass("notification");
+			setTimeout(function() {
+				$("#switch_gamelog").addClass("notification");
+			}, 400);
+		} else {
+			$("#switch_gamelog").addClass("notification");
+		}
 	}
 
 	if ($(".GameLog_GameLog__2z_HZ").scrollTop() < 0) {
@@ -282,8 +289,8 @@ function change_sidbar_tab(clickedTab, isCharacterSheetInfo = false) {
 		return;
 	}
 
-	$(".selected-tab").removeClass("selected-tab");
-	clickedTab.addClass("selected-tab");
+	$(".selected-tab").removeClass("selected-tab")
+	clickedTab.addClass("selected-tab").removeClass("notification");
 
 	$(".sidepanel-content").hide();
 	$(".sidebar-panel-content").hide();
@@ -1453,6 +1460,8 @@ function monitor_character_sidebar_changes() {
 			// the gamelog was removed to show character sheet details. Switch to it
 			setTimeout(function() {
 				change_sidbar_tab($("#switch_gamelog"), true);
+				// deselect the gamelog tab since we're not technically showing the gamelog
+				$("#switch_gamelog").removeClass("selected-tab");
 			}, 0);
 		}
 	});

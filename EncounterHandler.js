@@ -20,9 +20,9 @@ PLAYER UPDATES STILL NEEDED
 + done re-inject gamelog chat and buttons
 + done messageBroker can't parse messages
 + done player extras stat blocks aren't being parsed
-- parsed messages are lost when gamelog is removed leaving the pre-parsed uuid shown to the user
++ done parsed messages are lost when gamelog is removed leaving the pre-parsed uuid shown to the user
 - background niceness on load / when no DM
-- gamelog button doesn't turn red
++ gamelog button doesn't turn red
 
 */
 

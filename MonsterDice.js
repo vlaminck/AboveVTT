@@ -171,6 +171,10 @@ function roll_our_dice(displayName, imgUrl, expression, modifier, damageType, dm
 		dmonly: dmOnly,
 	};
 	window.MB.inject_chat(data);
+	if (is_characters_page()) {
+		// TODO: there's gotta be a better way
+		notify_gamelog();
+	}
 }
 
 function find_currently_open_character_sheet() {
