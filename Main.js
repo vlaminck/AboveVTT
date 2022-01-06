@@ -1457,10 +1457,11 @@ function monitor_character_sidebar_changes() {
 		}
 	});
 	$(".ct-sidebar__portal").on("DOMNodeInserted", function(event) {
-		console.log(`sidebar inserted: ${event.target.classList}`);
+		// console.log(`sidebar inserted: ${event.target.classList}`);
 		let addedElement = $(event.target);
 		if (addedElement.hasClass("ct-game-log-pane")) {
 			inject_chat_buttons();
+			window.MB.reprocess_chat_message_history();
 		}
 		if (addedElement.hasClass("ct-creature-pane")) {
 			scan_player_creature_pane(addedElement);

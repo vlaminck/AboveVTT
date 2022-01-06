@@ -1,5 +1,80 @@
 // this shouln't be here...
 
+function parse_avtt_messages() {
+	var count = 0;
+	$(document.getElementsByClassName("_5nRAAveKoV3VRwwATFRy5Q==")).each(function() {
+		if (this.textContent == "AboveVTT") {
+			let message = this.parentElement.getElementsByClassName("e5tW4dyfiZqZEWgkVugvEQ==")[0].innerHTML;
+			this.closest("li").getElementsByClassName("oDA6c7IdLEVJ7uSe5103CQ==")[0].innerHTML = message;
+		}
+	});
+	console.log(`found ${count} AboveVTT messages`);
+}
+
+function send_chat_via_ddb(message, toSelf = false) {
+	try {
+		let convertedDice = [];       // a list of objects in the format that DDB expects
+		let allValues = []; //  ["all values"];         // all the rolled values
+
+		let ddbJson = {
+			id: uuid(),
+			dateTime: `${Date.now()}`,
+			gameId: window.MB.gameid,
+			userId: window.MB.userid,
+			source: "web",
+			persist: true,
+			messageScope: toSelf ? "userId" : "gameId",
+			messageTarget: toSelf ? window.MB.userid : window.MB.gameid,
+			entityId: window.MB.userid,
+			entityType: "user",
+			eventType: "dice/roll/fulfilled",
+			data: {
+				action: "AboveVTT",
+				context: {
+					entityId: window.MB.userid,
+					entityType: "user",
+					messageScope: "userId",
+					messageTarget: window.MB.userid
+				},
+				rollId: uuid(),
+				rolls: [
+					{
+						diceNotation: {
+							set: convertedDice,
+							constant: 0
+						},
+						diceNotationStr: "dice notation string",
+						rollType: message,
+						rollKind: "",
+						result: {
+							constant: 0,
+							values: allValues,
+							total: roll.total,
+							text: ""
+						}
+					}
+				]
+			}
+		};
+
+		if (window.MB.ws.readyState == window.MB.ws.OPEN) {
+			window.MB.ws.send(JSON.stringify(ddbJson));
+			return true;
+		} else { // TRY TO RECOVER
+			get_cobalt_token(function(token) {
+				window.MB.loadWS(token, function() {
+					// TODO, CONSIDER ADDING A SYNCMEUP / SCENE PAIR HERE
+					window.MB.ws.send(JSON.stringify(ddbJson));
+				});
+			});
+			return true; // we can't guarantee that this actually worked, unfortunately
+		}
+	} catch (error) {
+		console.warn(`failed to send expression as DDB roll; expression = ${expression}`, error);
+		return false;
+	}
+}
+
 function mydebounce(func, timeout = 800){
   let timer;
   return (...args) => {
@@ -162,9 +237,32 @@ class MessageBroker {
 		
 	}
 
-	handle_injected_data(data){
+	reprocess_chat_message_history() {
+		for (let i = 0; i < window.MB.chat_message_history.length; i++) {
+			window.MB.chat_pending_messages.push(window.MB.chat_message_history[i]);
+		}
+		window.MB.handle_injected_data(window.MB.chat_pending_messages[0], false);
+	}
+
+	track_message_history(data) {
+		let existingMessage = window.MB.chat_message_history.find(message => message.id == data.id);
+		if (existingMessage) {
+			// already have this one
+			return;
+		}
+		window.MB.chat_message_history.unshift(data);
+		if (window.MB.chat_message_history > 100) {
+			window.MB.chat_message_history.pop();
+		}
+	}
+
+	handle_injected_data(data, trackHistory = true){
 		let self=this;
 		self.chat_pending_messages.push(data);
+		let animationDuration = trackHistory ? 250 : 0; // don't animate if we're reprocessing messages
+		if (trackHistory) {
+			window.MB.track_message_history(data);
+		}
 		// start the task
 		
 		if(self.chat_decipher_task==null){
@@ -190,11 +288,11 @@ class MessageBroker {
 							if(newlihtml=="")
 								li.css("display","none"); // THIS IS TO HIDE DMONLY STUFF
 								
-							li.animate({ opacity: 0 }, 250, function() {
+							li.animate({ opacity: 0 }, animationDuration, function() {
 							 	li.html(newlihtml);
 								let neweight = li.height();
 								li.height(oldheight);
-								li.animate({ opacity: 1, height: neweight }, 250, () => { li.height("") });
+								li.animate({ opacity: 1, height: neweight }, animationDuration, () => { li.height("") });
 								li.find(".magnify").magnificPopup({type: 'image', closeOnContentClick: true });
 
 								if (injection_data.dmonly && window.DM) { // ADD THE "Send To Player Buttons"
@@ -216,7 +314,7 @@ class MessageBroker {
 						// It's possible that we could lose messages due to this not being here, but
 						// if we push the message here, we can end up in an infinite loop.
 						// We may need to revisit this and do better with error handling if we end up missing too many messages.
-						self.chat_pending_messages.push(current);
+						// self.chat_pending_messages.push(current);
 					}
 				}
 				if(self.chat_pending_messages.length==0){
@@ -241,6 +339,7 @@ class MessageBroker {
 		this.chat_id=uuid();
 		this.chat_counter=0;
 		this.chat_pending_messages=[];
+		this.chat_message_history=[];
 		this.chat_decipher_task=null;
 
 		this.callbackQueue = [];
