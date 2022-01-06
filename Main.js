@@ -1486,6 +1486,7 @@ function monitor_character_sidebar_changes() {
 			// these need a little more space due to the filter search bar
 			$(".ct-extras").css({ "height": "540px" });
 			$(".ct-equipment").css({ "height": "540px" });
+			$(".ct-spells").css({ "height": "540px" });
 		}
 	});
 
@@ -2710,6 +2711,7 @@ function resize_player_sheet_thin() {
 	// these need a little more space due to the filter search bar
 	$(".ct-extras").css({ "height": "540px" });
 	$(".ct-equipment").css({ "height": "540px" });
+	$(".ct-spells").css({ "height": "540px" });
 }
 
 function reset_character_sheet_css() {

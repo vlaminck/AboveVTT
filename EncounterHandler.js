@@ -3,8 +3,8 @@
 BUGS FOUND
 
 - Changing Scenes breaks Send To (Default) in the monster stat block because it re-fetches that iframe. Make sure we sync it on load
-- gamelog button stayed red the entire session.
 - refreshing breaks character tab (maybe not?...)
++ done gamelog button stayed red the entire session.
 
 
 OTHER THINGS FOUND
@@ -21,8 +21,11 @@ PLAYER UPDATES STILL NEEDED
 + done messageBroker can't parse messages
 + done player extras stat blocks aren't being parsed
 + done parsed messages are lost when gamelog is removed leaving the pre-parsed uuid shown to the user
-- background niceness on load / when no DM
 + gamelog button doesn't turn red
+- spell list size when thin
+- underdark mode supprt. Everything in the sidebar looks weird
+- background niceness on load / when no DM
+
 
 */
 
