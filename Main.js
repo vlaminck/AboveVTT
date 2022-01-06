@@ -1424,6 +1424,11 @@ function init_character_page_sidebar() {
 		$(".ct-sidebar").css({ "right": "0px", "top": "0px", "bottom": "0px" });	
 		if (needs_ui) {
 			needs_ui = false;
+			window.PLAYER_NAME = $(".ddbc-character-name").text();
+			try {
+				// this should be just fine, but catch any parsing errors just in case
+				window.PLAYER_IMG = get_higher_res_url($(".ddbc-character-avatar__portrait").css("background-image").slice(4, -1).replace(/"/g, ""));
+			} catch {}
 			init_ui();
 			resize_player_sheet_full_width();
 			show_player_sheet();

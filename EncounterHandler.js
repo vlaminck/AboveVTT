@@ -4,7 +4,7 @@ BUGS FOUND
 
 - Changing Scenes breaks Send To (Default) in the monster stat block because it re-fetches that iframe. Make sure we sync it on load
 - gamelog button stayed red the entire session.
-- refreshing breaks character tab (maybe not...)
+- refreshing breaks character tab (maybe not?...)
 
 
 OTHER THINGS FOUND
@@ -20,11 +20,9 @@ PLAYER UPDATES STILL NEEDED
 + done re-inject gamelog chat and buttons
 + done messageBroker can't parse messages
 + done player extras stat blocks aren't being parsed
-- couldn't find a message matching {"id":"f784dbe7-5cfa-4d75-9e3a-2849c1ca9bc6","source":"web","gameId":"2562878","userId":"107445242","persist":false,"messageScope":"gameId","messageTarget":"2562878","eventType":"dice/roll/pending",
-    "data":{"player_name":"TODO","injected_data":{"player":"TODO","img":"https://www.dndbeyond.com/content/1-0-1436-0/skins/waterdeep/images/characters/default-avatar.png","text":"TODO has connected to the server!"},"action":"ABOVETT","rolls":[{"diceNotation":{"set":[],"constant":0},"diceNotationStr":"1d4","rollType":"b067c42b-4a48-4e35-9038-efdc8a8bbec20","rollKind":""}],"context":{"entityId":"107445242","entityType":"user","messageScope":"gameId","messageTarget":"2562878"},"setId":"01201","rollId":"44b7112d-9ba9-4c2d-96b9-15c6d0602272"},"entityId":"107445242","entityType":"user"}
+- parsed messages are lost when gamelog is removed leaving the pre-parsed uuid shown to the user
 - background niceness on load / when no DM
 - gamelog button doesn't turn red
-- parsed messages are lost when gamelog is removed leaving the pre-parsed uuid shown to the user
 
 */
 
