@@ -1479,6 +1479,15 @@ function monitor_character_sidebar_changes() {
 	// $(".ct-sidebar__portal").on("DOMSubtreeModified", function(event) {
 	// 	console.log(`sidebar modified: ${event.target.outerHTML}`);
 	// });
+	$(".ddbc-tab-list__content").on("DOMSubtreeModified", function(event) {
+		if (!is_player_sheet_full_width()) {
+			$(".ct-primary-box").css({ "height": "610px" });
+			$(".ddbc-tab-options__content").css({ "height": "510px" });
+			// these need a little more space due to the filter search bar
+			$(".ct-extras").css({ "height": "540px" });
+			$(".ct-equipment").css({ "height": "540px" });
+		}
+	});
 
 }
 
@@ -2656,11 +2665,15 @@ function hide_player_sheet() {
 }
 
 function toggle_player_sheet_size() {
-	if ($(".ct-character-sheet__inner").width() >= 1200) {
+	if (is_player_sheet_full_width()) {
 		resize_player_sheet_thin();
 	} else {
 		resize_player_sheet_full_width();
 	}
+}
+
+function is_player_sheet_full_width() {
+	return $(".ct-character-sheet__inner").width() >= 1200;
 }
 
 function resize_player_sheet_full_width() {
@@ -2694,6 +2707,9 @@ function resize_player_sheet_thin() {
 
 	$(".ct-primary-box").css({ "height": "610px" });
 	$(".ddbc-tab-options__content").css({ "height": "510px" });
+	// these need a little more space due to the filter search bar
+	$(".ct-extras").css({ "height": "540px" });
+	$(".ct-equipment").css({ "height": "540px" });
 }
 
 function reset_character_sheet_css() {
