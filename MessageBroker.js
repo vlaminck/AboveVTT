@@ -180,7 +180,7 @@ class MessageBroker {
 					console.log(injection_data);
 					
 					var found=false;
-					$(self.diceMessageSelector).each(function(){
+					$(document.getElementsByClassName(self.diceMessageSelector)).each(function(){
 						if($(this).text()==injection_id){
 							console.log("TROVATOOOOOOOOOOOOOOOOO");
 							found=true;
@@ -191,7 +191,7 @@ class MessageBroker {
 								li.css("display","none"); // THIS IS TO HIDE DMONLY STUFF
 								
 							li.animate({ opacity: 0 }, 250, function() {
-								li.html(newlihtml);
+							 	li.html(newlihtml);
 								let neweight = li.height();
 								li.height(oldheight);
 								li.animate({ opacity: 1, height: neweight }, 250, () => { li.height("") });
@@ -249,9 +249,11 @@ class MessageBroker {
 		this.userid = $("#message-broker-client").attr("data-userId");
 		this.gameid = find_game_id();
 		this.url = $("#message-broker-client").attr("data-connectUrl");
-		this.diceMessageSelector = ".DiceMessage_RollType__wlBsW";
+		this.diceMessageSelector = "DiceMessage_RollType__wlBsW";
 		if (is_encounters_page()) {
-			this.diceMessageSelector = ".DiceMessage_RollType__3a3Yo";
+			this.diceMessageSelector = "DiceMessage_RollType__3a3Yo";
+		} else if (is_characters_page()) {
+			this.diceMessageSelector = "e5tW4dyfiZqZEWgkVugvEQ==";
 		}
 
 		this.lastAlertTS = 0;
@@ -765,6 +767,21 @@ class MessageBroker {
 					</div>
 					<div class="GameLogEntry_Message___nA2h GameLogEntry_Collapsed__1D6Vi GameLogEntry_Other__NDy4Y Flex_Flex__3K1Dd">${data.text}</div>
 					<time datetime="2021-12-21T13:11:06-06:00" title="12/21/2021 1:11 PM" class="GameLogEntry_TimeAgo__NX7ml TimeAgo_TimeAgo__2bZoF">27 mins ago</time></div>
+				</li>
+			`);
+		} else if (is_characters_page()) {
+			return $(`
+				<li class="cwBGi-s80YSXZFf9zFTAGg== wtVS4Bjey6LwdMo1GyKvpQ== QXDbdjnpeXLRB22KlOxDsA== _42x6X+dUmW-21eOxSO1c7Q== _9ORHCNDFVTb1uWMCEaGDYg==">
+					<p role="img" class="TILdlgSwOYvXr2yBdjxU7A== QXDbdjnpeXLRB22KlOxDsA==">
+						<img class="U5icMJo74qXY3K0pjow8zA==" src="${data.img}" alt="">
+					</p>
+					<div class="pw06vls7GmA2pPxoGyDytQ== QXDbdjnpeXLRB22KlOxDsA== VwlMdrxdj-7VFbj4bhgJCg== bDu7knPli3v29ahk5PQFIQ==">
+						<div class="zmFwkmlgaKJ3kVU14zW8Lg== QXDbdjnpeXLRB22KlOxDsA== CoBE7nCohYcFyEBBP3K93A==">
+							<span class="_22SVeI3ayk2KgS4V+GqCCA==">${data.player}</span>
+						</div>
+						<div class="oDA6c7IdLEVJ7uSe5103CQ== iQqUeZkD8989e4pBhSqIrQ== wtVS4Bjey6LwdMo1GyKvpQ== QXDbdjnpeXLRB22KlOxDsA==">${data.text}</div>
+						<time datetime="2022-01-06T07:46:19-06:00" title="1/6/2022 7:46 AM" class="VL1LOQfDhMHRvAGyWG2vGg== _1-XSkDcxqHW18wFo5qzQzA==">24 mins ago</time>
+					</div>
 				</li>
 			`);
 		}

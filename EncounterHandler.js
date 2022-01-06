@@ -1,4 +1,33 @@
 
+/*
+BUGS FOUND
+
+- Changing Scenes breaks Send To (Default) in the monster stat block because it re-fetches that iframe. Make sure we sync it on load
+- gamelog button stayed red the entire session.
+- refreshing breaks character tab (maybe not...)
+
+
+OTHER THINGS FOUND
+- API calls to /character/-1
+- "lost a message" error log // not sure if this already existed
+- Failed to fetch DOMException: Failed to execute 'fetch' on 'Window': The user aborted a request.
+- MessageBoker Failed to parse JSON: var msg = $.parseJSON(event.data);
++ fixed: token_button errored on the first line `outerHTML` for AOETemplates:170
+- Use MutationObservers - https://stackoverflow.com/a/59699879
+
+
+PLAYER UPDATES STILL NEEDED
++ done re-inject gamelog chat and buttons
+- messageBroker can't parse messages
+- player extras stat blocks aren't being parsed
+- couldn't find a message matching {"id":"f784dbe7-5cfa-4d75-9e3a-2849c1ca9bc6","source":"web","gameId":"2562878","userId":"107445242","persist":false,"messageScope":"gameId","messageTarget":"2562878","eventType":"dice/roll/pending",
+    "data":{"player_name":"TODO","injected_data":{"player":"TODO","img":"https://www.dndbeyond.com/content/1-0-1436-0/skins/waterdeep/images/characters/default-avatar.png","text":"TODO has connected to the server!"},"action":"ABOVETT","rolls":[{"diceNotation":{"set":[],"constant":0},"diceNotationStr":"1d4","rollType":"b067c42b-4a48-4e35-9038-efdc8a8bbec20","rollKind":""}],"context":{"entityId":"107445242","entityType":"user","messageScope":"gameId","messageTarget":"2562878"},"setId":"01201","rollId":"44b7112d-9ba9-4c2d-96b9-15c6d0602272"},"entityId":"107445242","entityType":"user"}
+- background niceness on load / when no DM
+- gamelog button doesn't turn red
+
+*/
+
+
 function is_encounters_page() {
 	return window.location.pathname.includes("/encounters/");
 }

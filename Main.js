@@ -659,7 +659,6 @@ function init_spells() {
 
 function init_sheet(){
 	if (is_characters_page()) {
-		console.warn("TODO: build sheet buttons!!!");
 		var sheet_button = $("<button id='sheet_button' class='hasTooltip button-icon hideable' data-name='Show/hide character sheet (SPACE)'>SHEET</button>");
 		sheet_button.css({ "position": "absolute", "top": "4px", "left": "-87px", "z-index": "999" });
 		$(".ct-sidebar__controls").append(sheet_button);
@@ -1359,7 +1358,6 @@ function init_things() {
 
 var needs_ui = true;
 function init_character_page_sidebar() {
-	console.warn("init_character_page_sidebar");
 	if ($(".ct-sidebar__portal").length == 0) {
 		// not ready yet, try again in a second
 		setTimeout(function() {
@@ -1424,28 +1422,24 @@ function monitor_character_sidebar_changes() {
 			}, 0);
 		}
 	});
-	// $(".ct-sidebar__portal").on("DOMNodeInserted", function(event) {
-	// 	console.log(`sidebar inserted: ${event.target.classList}`);
-	// });
+	$(".ct-sidebar__portal").on("DOMNodeInserted", function(event) {
+		console.log(`sidebar inserted: ${event.target.classList}`);
+		if ($(event.target).hasClass("ct-game-log-pane")) {
+			inject_chat_buttons();
+		}
+	});
 	// $(".ct-sidebar__portal").on("DOMSubtreeModified", function(event) {
 	// 	console.log(`sidebar modified: ${event.target.outerHTML}`);
 	// });
 
 }
 
-function init_ui() {
-	// ATTIVA GAMELOG
-	$(".gamelog-button").click();
-	$(".glc-game-log").addClass("sidepanel-content");
-	$(".sidebar").css("z-index", 9999);
-	if (!is_characters_page()) {
-		$("#site").children().hide();
+function inject_chat_buttons() {
+	if ($(".glc-game-log").find("#chat-text").length > 0) {
+		// make sure we only ever inject these once. This gets called a lot on the character sheet which is intentional, but just in case we accidentally call it too many times, let's log it, and return
+		console.warn("inject_chat_buttons was called too many times!");
+		return;
 	}
-	$(".sidebar__controls").width(340);
-	// $(".ct-sidebar__control").width(340);
-	$("body").css("overflow", "scroll");
-
-
 	// AGGIUNGI CHAT
 	$(".glc-game-log").append($("<div><input id='chat-text' placeholder='Chat, /roll 1d20+4 , /dmroll 1d6 ..'></div>"));
 	$(".glc-game-log").append($(`
@@ -1673,6 +1667,21 @@ function init_ui() {
 			$(this).removeClass("highlight-gamelog");
 		}
 	});
+}
+
+function init_ui() {
+	// ATTIVA GAMELOG
+	$(".gamelog-button").click();
+	$(".glc-game-log").addClass("sidepanel-content");
+	$(".sidebar").css("z-index", 9999);
+	if (!is_characters_page()) {
+		$("#site").children().hide();
+	}
+	$(".sidebar__controls").width(340);
+	// $(".ct-sidebar__control").width(340);
+	$("body").css("overflow", "scroll");
+
+	inject_chat_buttons();
 
 	//s = $("<script src='https://meet.jit.si/external_api.js'></script>");
 	//$("#site").append(s);

@@ -1141,7 +1141,7 @@ function default_options() {
 }
 
 function token_button(e, tokenIndex = null, tokenTotal = null) {
-	console.log($(e.target).outerHTML());
+	console.log(e.target.outerHTML);
 	let imgsrc = parse_img($(e.target).attr("data-img"));
 	if (imgsrc.startsWith("data:")){
 		alert("WARNING! Support for token urls that starts with data: will be removed soon (as they can cause problems). Please find an image with url that begins with http:// or https://");
