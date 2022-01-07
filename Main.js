@@ -1462,7 +1462,7 @@ function monitor_character_sidebar_changes() {
 	});
 
 	$(".ct-sidebar__portal").on("DOMNodeRemoved", function(event) {
-		// console.log(`sidebar removed: ${event.target.outerHTML}`);
+		console.log(`sidebar removed: ${event.target.classList}`);
 		if ($(event.target).hasClass("ct-game-log-pane")) {
 			// the gamelog was removed to show character sheet details. Switch to it
 			setTimeout(function() {
@@ -1473,7 +1473,7 @@ function monitor_character_sidebar_changes() {
 		}
 	});
 	$(".ct-sidebar__portal").on("DOMNodeInserted", function(event) {
-		// console.log(`sidebar inserted: ${event.target.classList}`);
+		console.log(`sidebar inserted: ${event.target.classList}`);
 		let addedElement = $(event.target);
 		if (addedElement.hasClass("ct-game-log-pane")) {
 			inject_chat_buttons();
@@ -1483,9 +1483,14 @@ function monitor_character_sidebar_changes() {
 			scan_player_creature_pane(addedElement);
 		}
 	});
-	// $(".ct-sidebar__portal").on("DOMSubtreeModified", function(event) {
-	// 	console.log(`sidebar modified: ${event.target.outerHTML}`);
-	// });
+	$(".ct-sidebar__portal").on("DOMSubtreeModified", function(event) {
+		console.log(`sidebar modified: ${event.target.classList}`);
+		let modifiedElement = $(event.target);
+		if (modifiedElement.hasClass("ct-sidebar__pane-content")) {
+			// The user clicked on something that shows details. Open the sidebar and show it
+			show_sidebar();
+		}
+	});
 	$(".ddbc-tab-list__content").on("DOMSubtreeModified", function(event) {
 		if (!is_player_sheet_full_width()) {
 			$(".ct-primary-box").css({ "height": "610px" });
@@ -2737,7 +2742,6 @@ function resize_player_sheet_thin() {
 }
 
 function reset_character_sheet_css() {
-	// $(".ct-character-sheet__inner").removeAttr( 'style' );
 	$(".ct-subsections").removeAttr( 'style' );
 	$(".ct-subsection").removeAttr( 'style' );
 	$(".ct-subsection--skills").removeAttr( 'style' );
@@ -2772,7 +2776,7 @@ function reset_character_sheet_css() {
 		"right": "340px",
 		"top": "26px",
 		"background": $("body").css("background"),
-		"background-position-y": "110px, 0%",
+		"background-position-y": "0px, 0%",
 		"max-height": maxHeight,
 		"overflow-y": "auto"
 	});

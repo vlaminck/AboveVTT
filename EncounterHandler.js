@@ -21,16 +21,16 @@ PLAYER UPDATES STILL NEEDED
 + done messageBroker can't parse messages
 + done player extras stat blocks aren't being parsed
 + done parsed messages are lost when gamelog is removed leaving the pre-parsed uuid shown to the user
-+ gamelog button doesn't turn red
-- spell list size when thin
-- underdark mode supprt. Everything in the sidebar looks weird
-- background niceness on load / when no DM
-- background url for scrollable character sheet looks weird
++ done gamelog button doesn't turn red
++ done spell list size when thin
 + done don't cover jitsi
++ done background url for scrollable character sheet looks weird
++ open sidebar when user clicks on details of item
+- underdark mode support. Everything in the sidebar looks weird
+- background niceness on load / when no DM
 - figure out smaller screen sizes
-- open sidebar when user clicks on details of item
-- resizing the screen smaller, removes sidebar tabs which never come back	
-		cutoff is 1200px width
+- resizing the screen smaller, removes sidebar tabs which never come back; cutoff is 1200px width
+- send to: (default) goes off the screen sometimes
 
 */
 
