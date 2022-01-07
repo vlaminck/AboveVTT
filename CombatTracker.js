@@ -15,6 +15,7 @@ function init_combat_tracker(){
 			$("#combat_tracker").css("height","450px"); // IMPORTANT
 		}
 		reposition_enounter_combat_tracker_iframe();
+		reposition_player_sheet(); // not sure if this needs to be here, but maybe for smaller screens?
 	});
 	ct.append(toggle);
 	ct_inside=$("<div id='combat_tracker_inside'/>");

@@ -1382,7 +1382,14 @@ function init_things() {
 		init_character_page_sidebar();
 
 		$(window).resize(function() {
+			// when the user resizes the window, bring everything out into view. They can alwasy re-hide it if they want to
 			init_character_page_sidebar();
+			show_sidebar();
+			resize_player_sheet_full_width();
+			if (window.innerWidth > 1200) {
+				// the reactive nature of the character sheet starts messing with our thin layout so don't allow the thin layout on smaller screens. Let DDB do their condensed/tablet/mobile view instead
+				$("#sheet_resize_button").show();
+			}
 		});
 
 	} else {
@@ -2654,7 +2661,12 @@ function show_player_sheet() {
     "visibility": "visible",
 		"z-index": 1
 	});
-	$("#sheet_resize_button").show();
+	if (window.innerWidth > 1200) {
+		// the reactive nature of the character sheet starts messing with our thin layout so don't allow the thin layout on smaller screens. Let DDB do their condensed/tablet/mobile view instead
+		$("#sheet_resize_button").show();
+	} else {
+		$("#sheet_resize_button").hide();
+	}
 }
 
 function hide_player_sheet() {
@@ -2670,6 +2682,16 @@ function toggle_player_sheet_size() {
 		resize_player_sheet_thin();
 	} else {
 		resize_player_sheet_full_width();
+	}
+}
+
+function reposition_player_sheet() {
+	// if the window size changes, or if they open jitsi, or anything like that, we want to update the character sheet css without toggling the size
+	// this is explicitly the opposite behavior as toggle_player_sheet_size()
+	if (is_player_sheet_full_width()) {
+		resize_player_sheet_full_width();
+	} else {
+		resize_player_sheet_thin();
 	}
 }
 
@@ -2744,13 +2766,14 @@ function reset_character_sheet_css() {
 	
 	$(".ddbc-character-tidbits__menu-callout").hide();
 
+	let maxHeight = $("#jitsi_container").length == 0 ? "99%" : "84%"; // if the video is on, don't cover it
 	$(".ct-character-sheet__inner").css({
 		"position": "fixed",
 		"right": "340px",
 		"top": "26px",
 		"background": $("body").css("background"),
 		"background-position-y": "110px, 0%",
-		"max-height": "100%",
+		"max-height": maxHeight,
 		"overflow-y": "auto"
 	});
 

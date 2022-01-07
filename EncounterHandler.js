@@ -25,7 +25,12 @@ PLAYER UPDATES STILL NEEDED
 - spell list size when thin
 - underdark mode supprt. Everything in the sidebar looks weird
 - background niceness on load / when no DM
-
+- background url for scrollable character sheet looks weird
++ done don't cover jitsi
+- figure out smaller screen sizes
+- open sidebar when user clicks on details of item
+- resizing the screen smaller, removes sidebar tabs which never come back	
+		cutoff is 1200px width
 
 */
 
@@ -561,6 +566,11 @@ function hide_enounter_combat_tracker_iframe() {
 }
 
 function reposition_enounter_combat_tracker_iframe(isDisplayingLoadingIndicator = false) {
+
+	if (is_characters_page()) {
+		// PCs don't get to see monster stat blocks
+		return;
+	}
 
 	if (window.EncounterHandler.combat_stat_block_monster === undefined && !isDisplayingLoadingIndicator) {
 		// if there isn't a combat_stat_block_monster, then we have nothing to show unless we are intentionally showing a loading indicator
