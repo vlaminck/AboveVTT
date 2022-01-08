@@ -4,7 +4,7 @@ BUGS FOUND
 
 + done - Changing Scenes breaks Send To (Default) in the monster stat block because it re-fetches that iframe. Make sure we sync it on load
 x unable to reproduce - refreshing breaks character tab (maybe not?...)
-+ done gamelog button stayed red the entire session.
++ done - gamelog button stayed red the entire session.
 
 
 OTHER THINGS FOUND
@@ -27,7 +27,7 @@ PLAYER UPDATES STILL NEEDED
 + done - background url for scrollable character sheet looks weird
 + done - open sidebar when user clicks on details of item
 + done - send to: (default) goes off the screen sometimes
-- underdark mode support. Everything in the sidebar looks weird
++ done - very basic underdark mode support. Everything in the sidebar looks weird otherwise
 - background niceness on load / when no DM
 - figure out smaller screen sizes
 - resizing the screen smaller, removes sidebar tabs which never come back; cutoff is 1200px width

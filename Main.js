@@ -1513,7 +1513,7 @@ function inject_chat_buttons() {
 		return;
 	}
 	// AGGIUNGI CHAT
-	$(".glc-game-log").append($("<div><input id='chat-text' placeholder='Chat, /roll 1d20+4 , /dmroll 1d6 ..'></div>"));
+	$(".glc-game-log").append($("<div class='chat-text-wrapper'><input id='chat-text' placeholder='Chat, /roll 1d20+4 , /dmroll 1d6 ..'></div>"));
 	$(".glc-game-log").append($(`
 		<div class="dice-roller">
 			<div>
@@ -1591,7 +1591,7 @@ function inject_chat_buttons() {
 			} else {
 				$(".roll-button").removeClass("show");
 			}
-		}, 500);
+		}, 0);
 	});
 
 	$(".dice-roller > div img").on("contextmenu", function(e) {

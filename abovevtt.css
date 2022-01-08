@@ -123,6 +123,16 @@ body > button:hover,
 div.ct-sidebar__controls {
     margin: 4px 0px 0px 0px !important;
 }
+div.ct-sidebar__pane-content--is-dark-mode #chat-text {
+    color: #bfccd6;
+}
+div.ct-sidebar__pane-content--is-dark-mode .dice-roller img {
+    filter: invert(0.6) sepia(1) saturate(0.5) hue-rotate(175deg);
+}
+div.ct-sidebar__pane-content--is-dark-mode .sidebar-panel-content {
+    color: black;
+}
+
 
 .sidebar__controls > div button {
     width: 30px;
@@ -874,10 +884,13 @@ div#scene_properties form > div {
     margin-right: 0px;
 }
 
+.chat-text-wrapper{
+    width:100%;
+    padding: 0px 20px;
+}
 #chat-text {
-    width:260px;
+    width:100%;
     height:30px;
-    margin-bottom:10px;
 }
 
 .highlight-gamelog {
@@ -1344,7 +1357,7 @@ body {
     top: 26px;
     right: 0px;
     width: 340px;
-    z-index: 1;
+    z-index: 21;
 }
 
 /* Make a few adjustments for when it's a modal because we nest it inside or .sidebar-modal and change the UI slightly  */
