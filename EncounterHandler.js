@@ -1,40 +1,4 @@
 
-/*
-BUGS FOUND
-
-+ done - Changing Scenes breaks Send To (Default) in the monster stat block because it re-fetches that iframe. Make sure we sync it on load
-x unable to reproduce - refreshing breaks character tab (maybe not?...)
-+ done - gamelog button stayed red the entire session.
-
-
-OTHER THINGS FOUND
-- API calls to /character/-1
-- "lost a message" error log // not sure if this already existed
-- Failed to fetch DOMException: Failed to execute 'fetch' on 'Window': The user aborted a request.
-- MessageBoker Failed to parse JSON: var msg = $.parseJSON(event.data);
-+ done - token_button errored on the first line `outerHTML` for AOETemplates:170
-- Use MutationObservers - https://stackoverflow.com/a/59699879
-
-
-PLAYER UPDATES STILL NEEDED
-+ done - re-inject gamelog chat and buttons
-+ done - messageBroker can't parse messages
-+ done - player extras stat blocks aren't being parsed
-+ done - parsed messages are lost when gamelog is removed leaving the pre-parsed uuid shown to the user
-+ done - gamelog button doesn't turn red
-+ done - spell list size when thin
-+ done - don't cover jitsi
-+ done - background url for scrollable character sheet looks weird
-+ done - open sidebar when user clicks on details of item
-+ done - send to: (default) goes off the screen sometimes
-+ done - very basic underdark mode support. Everything in the sidebar looks weird otherwise
-- background niceness on load / when no DM
-- figure out smaller screen sizes
-- resizing the screen smaller, removes sidebar tabs which never come back; cutoff is 1200px width
-
-*/
-
-
 function is_encounters_page() {
 	return window.location.pathname.includes("/encounters/");
 }

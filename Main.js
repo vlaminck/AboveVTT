@@ -1464,7 +1464,7 @@ function monitor_character_sidebar_changes() {
 	});
 
 	$(".ct-sidebar__portal").on("DOMNodeRemoved", function(event) {
-		console.log(`sidebar removed: ${event.target.classList}`);
+		// console.log(`sidebar removed: ${event.target.classList}`);
 		if ($(event.target).hasClass("ct-game-log-pane")) {
 			// the gamelog was removed to show character sheet details. Switch to it
 			setTimeout(function() {
@@ -1475,7 +1475,7 @@ function monitor_character_sidebar_changes() {
 		}
 	});
 	$(".ct-sidebar__portal").on("DOMNodeInserted", function(event) {
-		console.log(`sidebar inserted: ${event.target.classList}`);
+		// console.log(`sidebar inserted: ${event.target.classList}`);
 		let addedElement = $(event.target);
 		if (addedElement.hasClass("ct-game-log-pane")) {
 			inject_chat_buttons();
@@ -1486,7 +1486,7 @@ function monitor_character_sidebar_changes() {
 		}
 	});
 	$(".ct-sidebar__portal").on("DOMSubtreeModified", function(event) {
-		console.log(`sidebar modified: ${event.target.classList}`);
+		// console.log(`sidebar modified: ${event.target.classList}`);
 		let modifiedElement = $(event.target);
 		if (modifiedElement.hasClass("ct-sidebar__pane-content")) {
 			// The user clicked on something that shows details. Open the sidebar and show it
@@ -2390,12 +2390,6 @@ $(function() {
 			gather_pcs();
 			let cs=$(".ddb-campaigns-invite-primary").text().split("/").pop();
 			window.open(`https://www.dndbeyond.com${sheet}?cs=${cs}&cid=${get_campaign_id()}&abovevtt=true`, '_blank');
-			// window.PLAYER_IMG = img;
-			// window.PLAYER_SHEET = sheet;
-			// window.PLAYER_NAME = name;
-			// window.PLAYER_ID = getPlayerIDFromSheet(sheet);
-			// window.DM = false;
-			// init_things();
 		});
 
 		$(this).prepend(newlink);
@@ -2504,8 +2498,8 @@ $(function() {
 			window.DM = false;
 			window.PLAYER_SHEET = window.location.pathname;
 			window.PLAYER_ID = lastComponent;
-			// these need to be figured out after initial load
-			window.PLAYER_NAME = "TODO";
+			// these will be updated after the initial load
+			window.PLAYER_NAME = "";
 			window.PLAYER_IMG = "https://www.dndbeyond.com/content/1-0-1436-0/skins/waterdeep/images/characters/default-avatar.png";
 			init_things();
 		} else {
@@ -2674,7 +2668,7 @@ function is_player_sheet_open() {
 
 function show_player_sheet() {
 	$(".ct-character-sheet__inner").css({
-    "visibility": "visible",
+		"visibility": "visible",
 		"z-index": 1
 	});
 	if (window.innerWidth > 1200) {
@@ -2687,7 +2681,7 @@ function show_player_sheet() {
 
 function hide_player_sheet() {
 	$(".ct-character-sheet__inner").css({
-    "visibility": "hidden",
+		"visibility": "hidden",
 		"z-index": -1
 	});
 	$("#sheet_resize_button").hide();
