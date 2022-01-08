@@ -416,11 +416,6 @@ function load_monster_stat(monsterid) {
 	}, 500);
 }
 
-function re_init_sidebar() {
-	init_controls();
-
-}
-
 function init_controls() {
 	init_sidebar_tabs();
 
@@ -1372,6 +1367,13 @@ function init_things() {
 				$("#ddbeb-popup-container").css({"display": "block", "visibility": "visible"});
 				init_enounter_combat_tracker_iframe();
 
+				// if the user changes `Send To (Default)` for dice rolls, make sure we synchronize the monster stat blocks as well
+				$(".sidebar .MuiButtonBase-root.MuiButton-root").on("DOMSubtreeModified", ".MuiButton-label", function(event) {
+					let text = event.target.textContent;
+					if (text == "Self" || text == "Everyone") {
+						sync_send_to_default();
+					}
+				});
 			}
 			init_scene_selector();
 			init_splash();
@@ -1737,6 +1739,15 @@ function inject_chat_buttons() {
 			$(this).removeClass("highlight-gamelog");
 		}
 	});
+
+	// open, resize, then close the `Send To: (Default)` drop down. It won't resize unless it's open
+	$("div.MuiPaper-root.MuiMenu-paper").click();
+	setTimeout(function() {
+		$("div.MuiPaper-root.MuiMenu-paper").css({
+			"min-width": "200px"
+		})
+		$("div.MuiPaper-root.MuiMenu-paper").click();
+	}, 0);
 }
 
 function init_ui() {
@@ -2770,7 +2781,10 @@ function reset_character_sheet_css() {
 	
 	$(".ddbc-character-tidbits__menu-callout").hide();
 
-	let maxHeight = $("#jitsi_container").length == 0 ? "99%" : "84%"; // if the video is on, don't cover it
+	let maxHeight = window.innerHeight - 26;
+	if ($("#jitsi_container").length > 0) {
+		maxHeight -= $("#jitsi_container").height();
+	}
 	$(".ct-character-sheet__inner").css({
 		"position": "fixed",
 		"right": "340px",

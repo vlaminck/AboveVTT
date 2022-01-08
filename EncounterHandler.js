@@ -116,6 +116,7 @@ class EncounterHandler {
 			open_monster_stat_block(window.EncounterHandler.is_reloading);
 			window.EncounterHandler.is_reloading = undefined;
 		}
+		sync_send_to_default();
 		console.log("combat_iframe_did_load finished");
 	}
 
@@ -448,10 +449,19 @@ class EncounterHandler {
 	}
 }
 
+function close_monster_stat_block() {
+	// Passing the same monsterId will toggle it. Passing undefined will also make sure it's closed.
+	open_monster_stat_block(window.EncounterHandler.combat_stat_block_monster);
+}
+
 function open_monster_stat_block(monsterId) {
 
 	if (monsterId === undefined) {
-		hide_enounter_combat_tracker_iframe();
+		window.EncounterHandler.combat_stat_block_monster = undefined;
+		setTimeout(function(){
+			// make sure this happens on a different thread
+			window.EncounterHandler.combat_iframe.hide();
+		}, 0);
 		return;
 	}
 
@@ -508,7 +518,11 @@ function open_monster_stat_block(monsterId) {
 
 	if (window.EncounterHandler.combat_stat_block_monster == monsterId) {
 		// the stat block is already open so toggle it closed
-		hide_enounter_combat_tracker_iframe();
+		window.EncounterHandler.combat_stat_block_monster = undefined;
+		setTimeout(function(){
+			// make sure this happens on a different thread
+			window.EncounterHandler.combat_iframe.hide();
+		}, 0);
 	} else {
 		// we just opened the stat block. Hold the monsterId locally so we know which one is currently open.
 		window.EncounterHandler.combat_stat_block_monster = monsterId;
@@ -555,14 +569,6 @@ function get_campaign_id() {
 		const urlParams = new URLSearchParams(window.location.search);
 		return urlParams.get('cid');
 	}
-}
-
-function hide_enounter_combat_tracker_iframe() {
-	window.EncounterHandler.combat_stat_block_monster = undefined;
-	setTimeout(function(){
-		// make sure this happens on a different thread
-		window.EncounterHandler.combat_iframe.hide();
-	}, 0);
 }
 
 function reposition_enounter_combat_tracker_iframe(isDisplayingLoadingIndicator = false) {
@@ -616,6 +622,33 @@ function reposition_enounter_combat_tracker_iframe(isDisplayingLoadingIndicator 
 	window.EncounterHandler.combat_iframe.show();
 }
 
+function sync_send_to_default() {
+
+	let combatSendTo = window.EncounterHandler.combat_body.find(".sidebar .MuiButtonBase-root.MuiButton-root");
+	if (combatSendTo.length == 0) {
+		// open the combat gamelog and try again
+		let gamelogButton = window.EncounterHandler.combat_body.find(".gamelog-button");
+		if (gamelogButton.length == 0) {
+			console.warn("sync_send_to_default failed to find and open the combat gamelog")
+			return;
+		}
+		console.log("sync_send_to_default is opening the combat gamelog and trying again");
+		gamelogButton.click();
+		setTimeout(function() {
+			sync_send_to_default();
+		}, 500);
+		return;
+	}
+
+	let encounterSendToText = $(".MuiButtonBase-root.MuiButton-root.gl1 .MuiButton-label.gl2").text();
+	window.EncounterHandler.combat_body.find(".MuiList-root.MuiMenu-list .MuiListItemText-root").each(function() {
+		if (this.textContent.includes(encounterSendToText)) {
+			$(this).click();
+		}
+	});
+	console.log(`encounterSendToText = ${encounterSendToText}, combatSendToText = ${combatSendTo.text()}`);
+}
+
 function init_enounter_combat_tracker_iframe() {
 
 	if (!window.EncounterHandler.has_avtt_encounter()) {
@@ -651,15 +684,6 @@ function init_enounter_combat_tracker_iframe() {
 
 		$(event.target).contents().find("body").on("DOMNodeRemoved", function(addedEvent) {
 			let removedElement = $(addedEvent.target);
-
-			if (removedElement.hasClass("sidebar__pane-content")) {
-				// DDB constantly removes the "send to (default)" options so we need to click .gamelog-button to make sure they inject it again. 
-				// This doesn't show on screen anywhere, we just need the options in the DOM so we can synchronize the "send to (default)" selection
-				setTimeout(function() {
-					$(event.target).contents().find(".gamelog-button").click();
-				}, 500);
-			}
-
 			if (removedElement.hasClass("ddbeb-tooltip")) {
 				// a tooltip has been removed from the monster stat block iframe. We injected it into the root popup container so let's remove it now
 				$("#ddbeb-popup-container").find(".mon-stat-block-injected").remove();
@@ -721,7 +745,7 @@ function init_enounter_combat_tracker_iframe() {
 				reposition_enounter_combat_tracker_iframe();
 				addedElement.find(".combat-tracker-page__content-section-close-button").css("position", "fixed");
 				addedElement.find(".combat-tracker-page__content-section-close-button").click(function() {
-					hide_enounter_combat_tracker_iframe();
+					close_monster_stat_block();
 				});
 			}
 
