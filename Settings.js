@@ -37,9 +37,11 @@ function download(data, filename, type) {
 }
 
 
-function init_settings(){
+function init_settings() {
 	
 	let body = settingsPanel.body;
+
+	if (window.DM) {
 
 	body.append(`
 		<h5 class="token-image-modal-footer-title">Import / Export</h5>
@@ -163,35 +165,39 @@ function init_settings(){
 	});
 	body.append(resetToDefaults);
 
+	setTimeout(function() {
+		redraw_settings_panel_token_examples();
+	}, 1000);
+}
 
-	const experimental_features = [
-		// {
-		// 	name: 'test',
-		// 	label: 'Test One',
-		// 	enabledDescription: 'You are testing this feature',
-		// 	disabledDescription: 'Testing this feature means, you will see x, y, and z instead of a, b, and c.'
-		// }
+
+	let experimental_features = [
 	];
+	if (get_browser().chrome) {
+		experimental_features.push({
+			name: 'streamDiceRolls',
+			label: 'Stream Dice Rolls',
+			enabledDescription: `You can currently see player's DDB dice rolling visuals. Disclaimer: currently shows dice in low resolution in the first few rolls, then it gets better.`,
+			disabledDescription: `SHARE/SEE player's DDB dice rolling visuals. Disclaimer: currently shows dice in low resolution in the first few rolls, then it gets better.`,
+		});
+	}
 	if (experimental_features.length > 0) {
 		body.append(`
 			<br />
 			<h5 class="token-image-modal-footer-title">Experimental Features</h5>
 			<div class="sidebar-panel-header-explanation">These are experimental features. You must explicitly opt-in to them. Use at your own risk.</div>
 		`);
-		const experimental_features = [
-			// {
-			// 	name: 'test',
-			// 	label: 'Test One',
-			// 	enabledDescription: 'You are testing this feature',
-			// 	disabledDescription: 'Testing this feature means, you will see x, y, and z instead of a, b, and c.'
-			// }
-		];
 		for(let i = 0; i < experimental_features.length; i++) {
 			let setting = experimental_features[i];
-			let currentValue = window.TOKEN_SETTINGS[setting.name];
+			let currentValue = window.EXPERIMENTAL_SETTINGS[setting.name];
 			let inputWrapper = build_toggle_input(setting.name, setting.label, currentValue, setting.enabledDescription, setting.disabledDescription, function(name, newValue) {
-				console.log(`${name} setting is now ${newValue}`);
-				// TODO: store this setting somewhere?
+				console.log(`experimental setting ${name} is now ${newValue}`);
+				if (name == "streamDiceRolls") {
+					update_dice_streaming_feature(newValue)
+				} else {
+					window.EXPERIMENTAL_SETTINGS[setting.name] = newValue;
+					persist_experimental_settings(window.EXPERIMENTAL_SETTINGS);
+				}
 			});
 			body.append(inputWrapper);
 		}
@@ -207,8 +213,6 @@ function init_settings(){
 		});
 		body.append(optOutOfAll);
 	}
-
-	redraw_settings_panel_token_examples();
 }
 
 function redraw_settings_panel_token_examples() {
@@ -286,6 +290,27 @@ function redraw_settings_panel_token_examples() {
 		items.find("img").removeClass("preserve-aspect-ratio");
 	} else {
 		items.find("img").addClass("preserve-aspect-ratio");
+	}
+}
+
+function update_dice_streaming_feature(enabled) {
+	// this essentially does what the button used to do, but I could never get it to work before and I still can't. Hopefully someone that understands it will fix it.
+	if (enabled == true) {
+		window.JOINTHEDICESTREAM = true;
+	} else {
+		window.JOINTHEDICESTREAM = false;
+	}
+
+	if (window.JOINTHEDICESTREAM) {
+		window.JOINTHEDICESTREAM = false;
+		for (let i in window.STREAMPEERS) {
+			window.STREAMPEERS[i].close();
+			delete window.STREAMPEERS[i];
+		}
+		$(".streamer-canvas").remove();
+	} else {
+		window.JOINTHEDICESTREAM = true;
+		window.MB.sendMessage("custom/myVTT/wannaseemydicecollection", { from: window.MYSTREAMID });
 	}
 }
 

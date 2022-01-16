@@ -247,7 +247,7 @@ function build_toggle_input(name, labelText, enabled, enabledHoverText, disabled
     </div>
   `);
   let input = $(`<button name="${name}" type="button" role="switch" class="rc-switch"><span class="rc-switch-inner"></span></button>`);
-  if (enabled) {
+  if (enabled == true) {
     input.addClass("rc-switch-checked");
     wrapper.attr("data-hover", enabledHoverText);
   } else {

@@ -1,7 +1,7 @@
 
 function create_jitsi_button() {
 
-	b = $("<button id='jitsi_switch' class='hasTooltip button-icon hideable' data-name='Connect video call'><span>VIDEO</span><span class='material-icons button-icon'>video_call</span></button>");
+	b = $("<div id='jitsi_switch' class='hasTooltip button-icon hideable ddbc-tab-options--layout-pill' data-name='Connect video call'><div class='ddbc-tab-options__header-heading'><span>VIDEO</span><span class='material-icons button-icon' style='margin: -3px 0px -3px 3px'>video_call</span></div></div>");
 	b.css("position", "fixed");
 	b.css("bottom", "3px");
 	b.css("left", "3px");

@@ -421,7 +421,13 @@ function init_controls() {
 
 	init_sidebar_tabs();
 
-	$(".sidebar").css("top", "10px");
+	if (is_characters_page()) {
+		$(".ct-sidebar").css("top", "-2px");
+	} else if (is_encounters_page()) {
+		$(".sidebar").css("top", "2px");
+	} else {
+		$(".sidebar").css("top", "10px");
+	}
 	$(".sidebar").css("height", "calc(100vh - 45px)");
 
 	$("span.sidebar__control-group.sidebar__control-group--lock > button").click(); // CLICKA SU lucchetto
@@ -429,9 +435,12 @@ function init_controls() {
 	let sidebarControls = is_characters_page() ? $(".ct-sidebar__controls") : $(".sidebar__controls");
 	sidebarControls.empty();
 
-	hider = $("<button id='hide_rightpanel' class='point-right hasTooltip button-icon hideable' data-name='Show/hide sidebar (q)' data-visible=1><span class='material-icons button-icon'>chevron_right</span></button>");
+	hider = $("<div id='hide_rightpanel' class='ddbc-tab-options--layout-pill point-right hasTooltip button-icon hideable' data-name='Show/hide sidebar (q)' data-visible=1><div class='ddbc-tab-options__header-heading'><span class='material-icons button-icon'>chevron_right</span></div></div>");
 	hider.click(toggle_sidebar_visibility);
 	sidebarControls.append(hider);
+	if (is_encounters_page() || is_campaign_page()) {
+		hider.css("top", "-3px");
+	}
 
 	b1 = $("<button id='switch_gamelog' class='tab-btn selected-tab hasTooltip button-icon leading-edge' data-name='Gamelog' data-target='.glc-game-log'></button>").click(switch_control);
 	b1.append('<svg class="gamelog-button__icon" width="18" height="18" viewBox="0 0 18 18"><path fill-rule="evenodd" clip-rule="evenodd" d="M15 10C15 10.551 14.551 11 14 11H9C8.735 11 8.48 11.105 8.293 11.293L6 13.586V12C6 11.447 5.552 11 5 11H4C3.449 11 3 10.551 3 10V4C3 3.449 3.449 3 4 3H14C14.551 3 15 3.449 15 4V10ZM14 1H4C2.346 1 1 2.346 1 4V10C1 11.654 2.346 13 4 13V16C4 16.404 4.244 16.77 4.617 16.924C4.741 16.975 4.871 17 5 17C5.26 17 5.516 16.898 5.707 16.707L9.414 13H14C15.654 13 17 11.654 17 10V4C17 2.346 15.654 1 14 1ZM12 6H6C5.448 6 5 6.447 5 7C5 7.553 5.448 8 6 8H12C12.552 8 13 7.553 13 7C13 6.447 12.552 6 12 6Z" fill="currentColor"></path></svg>');
@@ -468,7 +477,7 @@ function init_controls() {
 	b4.append("<img src='"+window.EXTENSION_PATH + "assets/icons/magic-wand.svg' height='100%;'>");
 	sidebarControls.append(b4);*/
 
-	if (DM) {
+	if (get_browser().chrome || window.DM) {
 		b7 = $("<button id='switch_settings' class='tab-btn hasTooltip button-icon trailing-edge blue-tab' data-name='Settings' data-target='#settings-panel'></button>");
 		b7.append("<img src='" + window.EXTENSION_PATH + "assets/icons/cog.svg' height='100%;'>");
 		b7.click(switch_control);
@@ -692,15 +701,16 @@ function init_sheet(){
 		$("#sheet_resize_button").remove();
 
 		// when playing on the characters page, we need to do a little bit of UI manipulation so we do that here
-		var sheet_button = $("<button id='sheet_button' class='hasTooltip button-icon hideable' data-name='Show/hide character sheet (SPACE)'>SHEET</button>");
-		sheet_button.css({ "position": "absolute", "top": "4px", "left": "-87px", "z-index": "999" });
+		var sheet_button = $("<div id='sheet_button' class='hasTooltip button-icon hideable ddbc-tab-options--layout-pill' data-name='Show/hide character sheet (SPACE)'><div class='ddbc-tab-options__header-heading'>SHEET</div></div>");
+		sheet_button.css({ "position": "absolute", "top": "1px", "left": "-80px", "z-index": "999" });
+		sheet_button.find(".ddbc-tab-options__header-heading").css({ "padding": "6px" });
 		$(".ct-sidebar__controls").append(sheet_button);
 		sheet_button.click(function(e) {
 			toggle_player_sheet();
 		});
-		var sheet_resize_button = $("<button id='sheet_resize_button' class='hasTooltip button-icon hideable' data-name='Resize character sheet'>Toggle Sheet Size</button>");
-		sheet_resize_button.css({ "position": "absolute", "top": "4px", "left": "-351px", "z-index": "999" });
-		// sheet_resize_button.css({ "position": "absolute", "top": "-30px", "left": "8px", "z-index": "999" });
+		var sheet_resize_button = $("<div id='sheet_resize_button' class='hasTooltip button-icon hideable ddbc-tab-options--layout-pill' data-name='Resize character sheet'><div class='ddbc-tab-options__header-heading'>Toggle Sheet Size</div></div>");
+		sheet_resize_button.css({ "position": "absolute", "top": "1px", "left": "-285px", "z-index": "999" });
+		sheet_resize_button.find(".ddbc-tab-options__header-heading").css({ "padding": "6px" });
 		$(".ct-sidebar__controls").append(sheet_resize_button);
 		// $(".ct-character-sheet__inner").append(sheet_resize_button);
 		sheet_resize_button.click(function(e) {
@@ -794,11 +804,9 @@ function init_sheet(){
 	if (!window.DM) {
 
 		let iframe =  $("[id='PlayerSheet"+window.PLAYER_ID+"']");
-		sheet_button = $("<button id='sheet_button' class='hasTooltip button-icon hideable' data-name='Show/hide character sheet (SPACE)'>SHEET</button>");
-		sheet_button.css("position", "absolute");
-		sheet_button.css("top", 0);
-		sheet_button.css("left", -86);
-		sheet_button.css("z-index", 999);
+		sheet_button = $("<div id='sheet_button' class='hasTooltip button-icon hideable ddbc-tab-options--layout-pill' data-name='Show/hide character sheet (SPACE)'><div class='ddbc-tab-options__header-heading'>SHEET</div></div>");
+		sheet_button.css({ "position": "absolute", "top": "-3px", "left": "-80px", "z-index": "999" });
+		sheet_button.find(".ddbc-tab-options__header-heading").css({ "padding": "6px" });
 
 		$(".sidebar__controls").append(sheet_button);
 
@@ -1474,7 +1482,6 @@ function init_character_page_sidebar() {
 			init_sheet();	
 			inject_chat_buttons();
 			init_zoom_buttons();
-			init_stream_button();
 		}
 	}, 1000);
 }
@@ -2010,7 +2017,6 @@ function init_ui() {
 
 
 	init_buttons();
-	init_stream_button();
 	init_zoom_buttons();
 	init_combat_tracker();
 
@@ -2154,7 +2160,7 @@ function init_buttons() {
 		return; // only need to do this once
 	}
 
-	var clear_button = $("<button style='width:75px;'>ALL</button>");
+	var clear_button = $("<div class='ddbc-tab-options__header-heading'>ALL</div>");
 	clear_button.click(function() {
 
 		r = confirm("This will delete all FOG zones and REVEAL ALL THE MAP to the player. THIS CANNOT BE UNDONE. Are you sure?");
@@ -2166,7 +2172,7 @@ function init_buttons() {
 		}
 	});
 
-	var hide_all_button = $("<button style='width:75px;'>ALL</button>");
+	var hide_all_button = $("<div class='ddbc-tab-options__header-heading'>ALL</div>");
 	hide_all_button.click(function() {
 		r = confirm("This will delete all FOG zones and HIDE ALL THE MAP to the player. THIS CANNOT BE UNDONE. Are you sure?");
 		if (r == true) {
@@ -2179,17 +2185,17 @@ function init_buttons() {
 
 
 	fog_menu = $("<div id='fog_menu' class='top_menu'></div>");
-	fog_menu.append("<div style='font-weight: bold;'>Reveal</div>");
-	fog_menu.append("<div><button id='fog_square-r' style='width:75px' class='drawbutton menu-option fog-option remembered-selection' data-shape='rect' data-type=0>Square</button></div>");
-	fog_menu.append("<div><button id='fog_circle_r' style='width:75px' class='drawbutton menu-option fog-option' data-shape='arc'  data-type=0>Circle</button></div>");
-	fog_menu.append("<div><button id='fog_polygon_r' style='width:75px' class='drawbutton menu-option fog-option' data-shape='polygon' data-type=0>Polygon</button></div>");
-	fog_menu.append($("<div/>").append(clear_button));
-	fog_menu.append("<div style='font-weight: bold;'>Hide</div>");
-	fog_menu.append("<div><button id='fog_square_h' style='width:75px' class='drawbutton menu-option fog-option' data-shape='rect' data-type=1>Square</button></div>");
-	fog_menu.append("<div><button id='fog_circle_h' style='width:75px' class='drawbutton menu-option fog-option' data-shape='arc' data-type=1>Circle</button></div>");
-	fog_menu.append("<div><button id='fog_polygon_h' style='width:75px' class='drawbutton menu-option fog-option' data-shape='polygon' data-type=1>Polygon</button></div>");
-	fog_menu.append($("<div/>").append(hide_all_button));
-	fog_menu.append("<div><button id='fog_undo' style='width:75px'>UNDO</button></div>")
+	fog_menu.append("<div class='menu-subtitle'>Reveal</div>");
+	fog_menu.append("<div class='ddbc-tab-options--layout-pill'><div id='fog_square-r' class='ddbc-tab-options__header-heading drawbutton menu-option fog-option remembered-selection' data-shape='rect' data-type=0>Square</div></div>");
+	fog_menu.append("<div class='ddbc-tab-options--layout-pill'><div id='fog_circle_r' class='ddbc-tab-options__header-heading drawbutton menu-option fog-option' data-shape='arc'  data-type=0>Circle</div></div>");
+	fog_menu.append("<div class='ddbc-tab-options--layout-pill'><div id='fog_polygon_r' class='ddbc-tab-options__header-heading drawbutton menu-option fog-option' data-shape='polygon' data-type=0>Polygon</div></div>");
+	fog_menu.append($("<div class='ddbc-tab-options--layout-pill' />").append(clear_button));
+	fog_menu.append("<div class='menu-subtitle'>Hide</div>");
+	fog_menu.append("<div class='ddbc-tab-options--layout-pill'><div id='fog_square_h' class='ddbc-tab-options__header-heading drawbutton menu-option fog-option' data-shape='rect' data-type=1>Square</div></div>");
+	fog_menu.append("<div class='ddbc-tab-options--layout-pill'><div id='fog_circle_h' class='ddbc-tab-options__header-heading drawbutton menu-option fog-option' data-shape='arc' data-type=1>Circle</div></div>");
+	fog_menu.append("<div class='ddbc-tab-options--layout-pill'><div id='fog_polygon_h' class='ddbc-tab-options__header-heading drawbutton menu-option fog-option' data-shape='polygon' data-type=1>Polygon</div></div>");
+	fog_menu.append($("<div class='ddbc-tab-options--layout-pill' />").append(hide_all_button));
+	fog_menu.append("<div class='ddbc-tab-options--layout-pill'><div class='ddbc-tab-options__header-heading' id='fog_undo'>UNDO</div></div>")
 	fog_menu.css("position", "fixed");
 	fog_menu.css("top", "25px");
 	fog_menu.css("width", "75px");
@@ -2203,16 +2209,16 @@ function init_buttons() {
 	});
 
 
-	buttons = $("<div/>")
+	buttons = $(`<div class="ddbc-tab-options--layout-pill"></div>`);
 	$("body").append(buttons);
 
 	
-	buttons.append($("<button style='display:inline; width:75px;' id='select-button' class='drawbutton hideable' data-shape='select'><u>S</u>ELECT</button>"));
+	buttons.append($("<div style='display:inline; width:75px;' id='select-button' class='drawbutton hideable ddbc-tab-options__header-heading' data-shape='select'><u>S</u>ELECT</div>"));
 
-	buttons.append($("<button style='display:inline;width:75px;;' id='measure-button' class='drawbutton hideable' data-shape='measure'><u>R</u>ULER</button>"));
+	buttons.append($("<div style='display:inline;width:75px;' id='measure-button' class='drawbutton hideable ddbc-tab-options__header-heading' data-shape='measure'><u>R</u>ULER</div>"));
 	
 	if (window.DM) {
-		fog_button = $("<button style='display:inline;width:75px;' id='fog_button' class='drawbutton menu-button hideable'><u>F</u>OG</button>");
+		fog_button = $("<div style='display:inline;width:75px;' id='fog_button' class='drawbutton menu-button hideable ddbc-tab-options__header-heading'><u>F</u>OG</div>");
 
 		buttons.append(fog_button);
 		if (!window.DM) {
@@ -2221,17 +2227,15 @@ function init_buttons() {
 		fog_menu.css("left",fog_button.position().left);
 
 		draw_menu = $("<div id='draw_menu' class='top_menu'></div>");
-		draw_menu.append("<div><button id='draw_square' style='width:75px' class='drawbutton menu-option draw-option remembered-selection' data-shape='rect' data-type='draw'>Square</button></div>");
-		draw_menu.append("<div><button id='draw_circle' style='width:75px' class='drawbutton menu-option draw-option' data-shape='arc' data-type='draw'>Circle</button></div>");
-		draw_menu.append("<div><button id='draw_cone' style='width:75px' class='drawbutton menu-option draw-option' data-shape='cone' data-type='draw'>Cone</button></div>");
-		draw_menu.append("<div><button id='draw_line' style='width:75px' class='drawbutton menu-option draw-option' data-shape='line' data-type='draw'>Line</button></div>");
-		draw_menu.append("<div><button id='draw_brush' style='width:75px' class='drawbutton menu-option draw-option' data-shape='brush' data-type='draw'>Brush</button></div>");
-		draw_menu.append("<div><button id='draw_polygon' style='width:75px' class='drawbutton menu-option draw-option' data-shape='polygon' data-type='draw'>Polygon</button></div>");
-		draw_menu.append("<div><button id='draw_erase' style='width:75px' class='drawbutton menu-option draw-option' data-shape='rect' data-type='eraser'>Erase</button></div>");
-
-		draw_menu.append("<div><button id='draw_undo' style='width:75px'>UNDO</button></div>");
-
-		draw_menu.append("<div><button id='delete_drawing' style='width:75px'>CLEAR</button></div>");
+		draw_menu.append("<div class='ddbc-tab-options--layout-pill'><div id='draw_square' class='drawbutton menu-option draw-option ddbc-tab-options__header-heading remembered-selection' data-shape='rect' data-type='draw'>Square</div></div>");
+		draw_menu.append("<div class='ddbc-tab-options--layout-pill'><div id='draw_circle' class='drawbutton menu-option draw-option ddbc-tab-options__header-heading' data-shape='arc' data-type='draw'>Circle</div></div>");
+		draw_menu.append("<div class='ddbc-tab-options--layout-pill'><div id='draw_cone' class='drawbutton menu-option draw-option ddbc-tab-options__header-heading' data-shape='cone' data-type='draw'>Cone</div></div>");
+		draw_menu.append("<div class='ddbc-tab-options--layout-pill'><div id='draw_line' class='drawbutton menu-option draw-option ddbc-tab-options__header-heading' data-shape='line' data-type='draw'>Line</div></div>");
+		draw_menu.append("<div class='ddbc-tab-options--layout-pill'><div id='draw_brush' class='drawbutton menu-option draw-option ddbc-tab-options__header-heading' data-shape='brush' data-type='draw'>Brush</div></div>");
+		draw_menu.append("<div class='ddbc-tab-options--layout-pill'><div id='draw_polygon' class='drawbutton menu-option draw-option ddbc-tab-options__header-heading' data-shape='polygon' data-type='draw'>Polygon</div></div>");
+		draw_menu.append("<div class='ddbc-tab-options--layout-pill'><div id='draw_erase' class='drawbutton menu-option draw-option ddbc-tab-options__header-heading' data-shape='rect' data-type='eraser'>Erase</div></div>");
+		draw_menu.append("<div class='ddbc-tab-options--layout-pill'><div class='ddbc-tab-options__header-heading' id='draw_undo'>UNDO</div></div>");
+		draw_menu.append("<div class='ddbc-tab-options--layout-pill'><div class='ddbc-tab-options__header-heading' id='delete_drawing'>CLEAR</div></div>");
 
 		draw_menu.find("#delete_drawing").click(function() {
 			r = confirm("DELETE ALL DRAWINGS? (cannot be undone!)");
@@ -2315,20 +2319,22 @@ function init_buttons() {
 		});
 
 		draw_menu.append(colors);
-		draw_menu.append("<div style='font-weight:bold;'>Type</div>");
-		draw_menu.append("<div><button style='width:75px' class='drawType' data-value='transparent'>TRANSP</button></div>");
-		draw_menu.append("<div><button style='width:75px' class='drawType' data-value='border'>BORDER</button></div>");
-		draw_menu.append("<div><button style='width:75px' class='drawType' data-value='filled'>FILLED</button></div>");
+		draw_menu.append("<div class='menu-subtitle'>Type</div>");
+		draw_menu.append("<div class='ddbc-tab-options--layout-pill'><div class='drawType ddbc-tab-options__header-heading' data-value='transparent'>TRANSP</div></div>");
+		draw_menu.append("<div class='ddbc-tab-options--layout-pill'><div class='drawType ddbc-tab-options__header-heading' data-value='border'>BORDER</div></div>");
+		draw_menu.append("<div class='ddbc-tab-options--layout-pill'><div class='drawType ddbc-tab-options__header-heading' data-value='filled'>FILLED</div></div>");
 
 		draw_menu.find(".drawType").click(function(e) {
 			$(".drawType").removeClass('drawTypeSelected');
+			$(".drawType").removeClass('ddbc-tab-options__header-heading--is-active');
 			$(".drawType").css('background', '');
 			$(e.currentTarget).addClass('drawTypeSelected');
-			$(e.currentTarget).css('background', '-webkit-linear-gradient(270deg, #e29393, #f37a7a)');
+			$(e.currentTarget).addClass('ddbc-tab-options__header-heading--is-active');
+			// $(e.currentTarget).css('background', '-webkit-linear-gradient(270deg, #e29393, #f37a7a)');
 		});
 
-		draw_menu.append("<div style='font-weight:bold'>Line Width</div>");
-		draw_menu.append("<div><input id='draw_line_width' type='range' style='width:75px' min='1' max='60' value='6' class='drawWidthSlider'></div>");
+		draw_menu.append("<div class='menu-subtitle'>Line Width</div>");
+		draw_menu.append("<div><input id='draw_line_width' type='range' style='width:90%' min='1' max='60' value='6' class='drawWidthSlider'></div>");
 
 		draw_menu.css("position", "fixed");
 		draw_menu.css("top", "25px");
@@ -2337,7 +2343,7 @@ function init_buttons() {
 
 		$("body").append(draw_menu);
 
-		draw_button = $("<button style='display:inline;width:75px' id='draw_button' class='drawbutton menu-button hideable'><u>D</u>RAW</button>");
+		draw_button = $("<div style='display:inline;width:75px' id='draw_button' class='drawbutton menu-button hideable ddbc-tab-options__header-heading'><u>D</u>RAW</div>");
 
 		buttons.append(draw_button);
 		draw_menu.css("left",draw_button.position().left);	
@@ -2350,7 +2356,7 @@ function init_buttons() {
 	setup_aoe_button();
 	setup_draw_buttons();
 
-	buttons.append("<button style='display:inline;width:75px' id='help_button' class='hideable'>HELP</button>");
+	buttons.append("<div style='display:inline;width:75px' id='help_button' class='hideable ddbc-tab-options__header-heading'>HELP</div>");
 
 	buttons.css("position", "fixed");
 	buttons.css("top", '5px');
@@ -2373,55 +2379,6 @@ function init_buttons() {
 
 }
 
-function init_stream_button() {
-	if ($("#stream_button").length > 0) {
-		return;
-	}
-	var stream_button = $("<button id='stream_button' class='hasTooltip button-icon hideable' data-name='Stream dice rolls'></button>");
-	stream_button.attr("data-name", "SHARE/SEE player's DDB dice rolling visuals (Experimental/stable).\nDisclaimer: currently shows dice in low resolution in the first few rolls, then it gets better.\nOn by default = RED.");
-	stream_button.append("<img height='20px' src='"+window.EXTENSION_PATH+ "assets/dice/d6.png'>");
-	stream_button.append("<img height='20px' src='"+window.EXTENSION_PATH + "assets/icons/share.svg'>");
-
-	stream_button.click(() => {
-		if (!window.JOINTHEDICESTREAM) {
-			window.JOINTHEDICESTREAM = true;
-			window.MB.sendMessage("custom/myVTT/wannaseemydicecollection", { from: window.MYSTREAMID });
-			stream_button.css("background", "red");
-		}
-		else {
-			window.JOINTHEDICESTREAM = false;
-			stream_button.css("background", "");
-			for (let i in window.STREAMPEERS) {
-				window.STREAMPEERS[i].close();
-				delete window.STREAMPEERS[i];
-			}
-			$(".streamer-canvas").remove();
-		}
-	});
-	stream_button.addClass("stream_button");
-	stream_button.css("position", "absolute");
-	if (window.DM) {
-		stream_button.css("left", "-198px");
-	} else if (is_characters_page()) {
-		stream_button.css("left", "-250px");
-	} else {
-		stream_button.css("left", "-247px");
-	}
-
-	//stream_button.css("background", "yellow");
-
-	if (!get_browser().mozilla) { // DISABLE FOR FIREFOX
-		$(".sidebar__controls").append(stream_button);
-		$(".ct-sidebar__controls").append(stream_button);
-		/*if(window.DM){
-			setTimeout( () => {stream_button.click()} , 5000);
-		}*/
-	}
-
-
-
-}
-
 function init_zoom_buttons() {
 	
 	if ($("#zoom_buttons").length > 0) {
@@ -2431,19 +2388,19 @@ function init_zoom_buttons() {
 	// ZOOM BUTTON
 	zoom_section = $("<div id='zoom_buttons' />");
 
-	zoom_center = $("<button id='zoom_fit' class='hasTooltip button-icon hideable' data-name='fit screen (0)'><span class='material-icons button-icon'>fit_screen</span></button>");
+	zoom_center = $("<div id='zoom_fit' class='ddbc-tab-options--layout-pill hasTooltip button-icon hideable' data-name='fit screen (0)'><div class='ddbc-tab-options__header-heading'><span class='material-icons button-icon'>fit_screen</span></div></div>");
 	zoom_center.click(reset_zoom);
 	zoom_section.append(zoom_center);
 
-	zoom_minus = $("<button id='zoom_minus' class='hasTooltip button-icon hideable' data-name='zoom out (-)'><span class='material-icons button-icon'>zoom_out</span></button>");
+	zoom_minus = $("<div id='zoom_minus' class='ddbc-tab-options--layout-pill'><div class='ddbc-tab-options__header-heading hasTooltip button-icon hideable' data-name='zoom out (-)'><span class='material-icons button-icon'>zoom_out</span></div></div>");
 	zoom_minus.click(decrease_zoom)
 	zoom_section.append(zoom_minus);
 
-	zoom_plus = $("<button id='zoom_plus' class='hasTooltip button-icon hideable' data-name='zoom in (+)'><span class='material-icons button-icon'>zoom_in</span></button>");
+	zoom_plus = $("<div id='zoom_plus' class='ddbc-tab-options--layout-pill'><div class='ddbc-tab-options__header-heading hasTooltip button-icon hideable' data-name='zoom in (+)'><span class='material-icons button-icon'>zoom_in</span></div></div>");
 	zoom_plus.click(increase_zoom);
 	zoom_section.append(zoom_plus);
 
-	hide_interface = $(`<button id='hide_interface_button' class='hasTooltip button-icon' data-name='Unhide interface (shift+h)'><span class='material-icons md-16 button-icon'>visibility</span></button>`);
+	hide_interface = $(`<div id='hide_interface_button' class='ddbc-tab-options--layout-pill'><div class='ddbc-tab-options__header-heading hasTooltip button-icon' data-name='Unhide interface (shift+h)'><span class='material-icons md-16 button-icon'>visibility</span></div></div>`);
 	hide_interface.click(unhide_interface);
 	hide_interface.css("display", "none");
 	hide_interface.css("position", "absolute");
@@ -2451,19 +2408,20 @@ function init_zoom_buttons() {
 	hide_interface.css("right", "-136px");
 	zoom_section.append(hide_interface);
 
-
-
-	if (window.DM) {
-		zoom_section.css("left","-136px");
-		$(".sidebar__controls").append(zoom_section);
-	} else if (is_characters_page()) {
-		zoom_section.css({"left": "-188px", "margin-top": "4px" });
+	if (is_characters_page()) {
 		$(".ct-sidebar__controls").append(zoom_section);
 	} else {
-		zoom_section.css("left","-186px");
 		$(".sidebar__controls").append(zoom_section);
 	}
 
+	if (is_characters_page()) {
+		zoom_section.css("top", "1px");
+	}
+	if (window.DM) {
+		zoom_section.css("left","-122px");
+	} else {
+		zoom_section.css("left","-170px");
+	}
 }
 
 /// The first time the screen loads, we cover it with an overlay to mask all the UI changes we do. This builds and injects a nice loading indicator to inform the user that everything is fine. See `Load.js` for the injection of the overlay.
@@ -3043,6 +3001,7 @@ function show_player_sheet() {
 	} else {
 		$("#sheet_resize_button").hide();
 	}
+	$('#sheet_button').find(".ddbc-tab-options__header-heading").addClass("ddbc-tab-options__header-heading--is-active");
 }
 
 /// When playing on the characters page, this will hide the character sheet. When not on the characters page, `close_player_sheet` is used.
@@ -3052,6 +3011,7 @@ function hide_player_sheet() {
 		"z-index": -1
 	});
 	$("#sheet_resize_button").hide();
+	$('#sheet_button').find(".ddbc-tab-options__header-heading").removeClass("ddbc-tab-options__header-heading--is-active");
 }
 
 /// When playing on the characters page, this will toggle the width of the character sheet. When not on the characters page, `init_sheet` injects a button to handle the iframe resizing

@@ -4,20 +4,25 @@ function init_combat_tracker(){
 	
 	ct=$("<div id='combat_tracker'/>");
 	ct.css("height","20px"); // IMPORTANT
-	toggle=$("<button id='combat_button' class='hideable'><u>C</u>OMBAT</button>");
+	toggle=$("<div id='combat_button' class='hideable ddbc-tab-options__header-heading' style='display:inline-block'><u>C</u>OMBAT</div>");
 	toggle.click(function(){
 		if($("#combat_tracker_inside").is(":visible")){
 			$("#combat_tracker_inside").attr('style', 'display: none;');
 			$("#combat_tracker").css("height","20px"); // IMPORTANT
+			toggle.removeClass("ddbc-tab-options__header-heading--is-active");
 		}
 		else{
 			$("#combat_tracker_inside").attr('style', 'display: block;');
 			$("#combat_tracker").css("height","450px"); // IMPORTANT
+			toggle.addClass("ddbc-tab-options__header-heading--is-active");
 		}
 		reposition_enounter_combat_tracker_iframe();
 		reposition_player_sheet(); // not sure if this needs to be here, but maybe for smaller screens?
 	});
-	ct.append(toggle);
+	let pill = $(`<div class="ddbc-tab-options--layout-pill" />`);
+	pill.append(toggle);
+	ct.append(pill);
+	// ct.append(toggle);
 	ct_inside=$("<div id='combat_tracker_inside'/>");
 	ct_inside.hide();
 	ct.append(ct_inside);
