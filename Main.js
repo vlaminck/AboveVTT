@@ -1194,10 +1194,13 @@ function observe_character_sheet_aoe(documentToObserve) {
 					// grab feet (this should always exist)
 					feet = $(this).prev().children().first().children().first().text();
 
-					// drop the token
-					container.animate({opacity:"0.1"},1000);
-					setTimeout( ()=>drop_aoe_token(color, shape, feet),1000);
-					setTimeout( ()=>container.animate({opacity:"1.0"},2000),3000);
+					// hide the character sheet and drop the token. We hide the sheet because they'll likely want to move it into place right away
+					if (is_characters_page()) {
+						hide_player_sheet();
+					} else {
+						close_player_sheet(find_currently_open_character_sheet());
+					}
+					drop_aoe_token(color, shape, feet);
 				});
 				return button;
 			});

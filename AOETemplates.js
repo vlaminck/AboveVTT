@@ -153,30 +153,28 @@ function drop_aoe_token(color, shape, feet) {
         size = size * 2;
     }
 
-    console.log(`dropping aoe token: color ${color}, shape ${shape}, feet ${feet}`);
-
     let atts = {
-        'data-disablestat': true,
-        'data-hidestat': true,
-        'data-disableborder': true,
-        'data-square': 1,
-        'data-img': AOE_TEMPLATES[`${color}-${shape}`],
-        'data-size': Math.round(size),
+        'disablestat': true,
+        'hidestat': true,
+        'disableborder': true,
+        'square': 1,
+        'imgsrc': AOE_TEMPLATES[`${color}-${shape}`],
+        'size': Math.round(size),
+        'restrictPlayerMove': false,
+        'deleteableByPlayers': true
     };
-
-    if(window.DM){
-        let fake=$("<div/>");
-        fake.attr(atts);
-        token_button({target:fake.get(0)});
-        fake.remove();
-    }
-    else{
+        
+    if (window.DM) {
+        console.log(`dropping aoe token: color ${color}, shape ${shape}, feet ${feet}`);
+        place_token_in_center_of_map(atts);
+    } else {
         let centerX = $(window).scrollLeft() + Math.round(+$(window).width() / 2) - 200;
         let centerY = $(window).scrollTop() + Math.round($(window).height() / 2) - 200;
         centerX = Math.round(centerX * (1.0 / window.ZOOM));
         centerY = Math.round(centerY * (1.0 / window.ZOOM));
-        atts['data-left']=centerX;
-        atts['data-top']=centerY;
-        window.MB.sendMessage("custom/myVTT/createtoken",atts);
+        atts['left'] = centerX;
+        atts['top'] = centerY;
+        console.log(`sending message for DM to drop aoe token: color ${color}, shape ${shape}, feet ${feet}`);
+        window.MB.sendMessage("custom/myVTT/createtoken", atts);
     }
 }

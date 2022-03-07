@@ -2626,24 +2626,29 @@ function paste_selected_tokens() {
 }
 
 function delete_selected_tokens() {
-	if (!window.DM) return;
-	window.TOKEN_OBJECTS_RECENTLY_DELETED = {};
 	// move all the tokens into a separate list so the DM can "undo" the deletion
 	let tokensToDelete = [];
 	for (id in window.TOKEN_OBJECTS) {
 		let token = window.TOKEN_OBJECTS[id];
 		if (token.selected) {
-			window.TOKEN_OBJECTS_RECENTLY_DELETED[id] = Object.assign({}, token.options);
-			tokensToDelete.push(token);
+			if (window.DM || token.options.deleteableByPlayers) {
+				window.TOKEN_OBJECTS_RECENTLY_DELETED[id] = Object.assign({}, token.options);
+				tokensToDelete.push(token);
+			}
 		}
 	}
+
+	if (tokensToDelete.length == 0) {
+		// nothing to do so no need to continue
+		return;
+	}
+	window.TOKEN_OBJECTS_RECENTLY_DELETED = {};
 
 	if(window.CLOUD){
 		for (let i = 0; i < tokensToDelete.length; i++) {
 			tokensToDelete[i].delete(); // don't persist on each token delete, we'll do that next
 		}
-	}
-	else{
+	} else {
 		// delete these in a separate loop to prevent altering the array while iterating over it
 		for (let i = 0; i < tokensToDelete.length; i++) {
 			tokensToDelete[i].delete(false); // don't persist on each token delete, we'll do that next
