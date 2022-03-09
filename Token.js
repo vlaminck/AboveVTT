@@ -259,36 +259,65 @@ class Token {
 
 			this.options.hp = old.find(".hp").val();
 			this.options.max_hp = old.find(".max_hp").val();
-
-			let scale = (((this.options.size - 15) * 100) / this.options.size) / 100;
-			
-			if (!(this.options.max_hp) > 0 || (this.options.disableaura))
-				scale = 1;
-			
-			// HEALTH AURA
-			if (this.options.max_hp > 0 && !this.options.disableaura) {
-				if (this.options.max_hp > 0 && parseInt(this.options.hp) === 0) {
-					const deadCross = old.find('.dead');
-					if (deadCross.length > 0) {
-						deadCross.attr("style", `--size: ${parseInt(this.options.size) / 10}px;`)
-					} else {
-						console.log(this.options);
-						old.prepend(`<div class="dead" style="transform:scale(${scale});--size: ${parseInt(this.options.size) / 10}px;"></div>`);
-					}
-				} else {
-					old.find('.dead').remove();
-				}
-
-				old.find(".token-image").css('box-shadow',
-					`${token_health_aura(
-						Math.round((this.options.hp / this.options.max_hp) * 100)
-					)} 0px 0px 7px 7px`
-				);
-			}
+			this.update_dead_cross(old);
+			this.update_aura(old);
 		}
 
 	}
 
+	update_aura(tokenHtml) {
+
+		var aura = tokenHtml.find('.aura');
+		if (aura.length == 0) {
+			// make sure every token has an aura element
+			aura = $(`<div class="aura"></div>`);
+			tokenHtml.append(aura);
+		}
+
+		if (this.options.square) {
+			aura.removeClass('token-round');
+		} else {
+			aura.addClass('token-round');
+		}
+
+		if (this.options.disableaura || data.max_hp <= 0) {
+			aura.hide();
+		} else {
+			aura.show();
+			const data = window.PLAYER_STATS[this.options.id] || this.options;
+			let scale = (((data.size - 15) * 100) / data.size) / 100;
+			aura.css({
+				'box-shadow': `${token_health_aura(Math.round((data.hp / data.max_hp) * 100))} 0px 0px 7px 7px`,
+				'style': `transform:scale(${scale});--size: ${parseInt(data.size) / 10}px;`
+			});
+		}
+	}
+
+	update_dead_cross(tokenHtml) {
+		var deadCross = tokenHtml.find('.dead');
+		if (deadCross.length == 0) {
+			// make sure every token has a deadCross element
+			deadCross = $(`<div class="dead"></div>`);
+			tokenHtml.prepend(deadCross);
+		}
+
+		// if this is for a pc, make sure we merge player stats into the options object, but use a separate object so we don't accidentally mess with either object
+		let data = Object.assign({}, this.options);
+		data = Object.assign(data, window.PLAYER_STATS[this.options.id]);
+
+		let scale = 1; // (((data.size - 15) * 100) / data.size) / 100;
+		if (!(data.max_hp) > 0 || (data.disableaura)) {
+			scale = 1;
+		}
+		
+		deadCross.attr("style", `transform:scale(${scale});--size: ${parseInt(data.size) / 10}px;`);
+
+		if (data.max_hp > 0 && parseInt(data.hp) === 0) {
+			deadCross.show();
+		} else {
+			deadCross.hide();
+		}
+	}
 
 	update_and_sync(e) {
 		self = this;
@@ -614,25 +643,8 @@ class Token {
 			old.find("img").css("transform", "scale(" + scale + ") rotate("+rotation+"deg)");
 
 			// HEALTH AURA / DEAD CROSS
-			if (this.options.max_hp > 0) {
-				const pData=this.options;
-				if (pData.max_hp > 0 && parseInt(pData.hp) === 0) {
-					const deadCross = old.find('.dead');
-					if (deadCross.length > 0) {
-						deadCross.attr("style", `transform:scale(${scale});--size: ${parseInt(pData.size) / 10}px;`)
-					} else {
-						old.prepend(`<div class="dead" style="transform:scale(${scale});--size: ${parseInt(pData.size) / 10}px;"></div>`);
-					}
-				} else {
-					old.find('.dead').remove();
-				}
-
-				old.find(".token-image").css('box-shadow',
-					`${token_health_aura(
-						Math.round((pData.hp / pData.max_hp) * 100)
-					)} 0px 0px 7px 7px`
-				);
-			}
+			this.update_dead_cross(old);
+			this.update_aura(old);
 						
 			if (old.attr('name') != this.options.name) {
 				var selector = "tr[data-target='"+this.options.id+"']";
@@ -808,27 +820,8 @@ class Token {
 				tok.find(".elev").show();
 			}
 
-			// HEALTH AURA / DEAD CROSS
-			console.log("AURAO - ", this.options);
-			if (this.options.max_hp > 0 && !(this.options.disableaura)) {
-				const pData = window.PLAYER_STATS[this.options.id] || this.options;
-				if (pData.max_hp > 0 && parseInt(pData.hp) === 0) {
-					const deadCross = tok.find('.dead');
-					if (deadCross.length > 0) {
-						deadCross.attr("style", `--size: ${parseInt(pData.size) / 10}px;`)
-					} else {
-						tok.prepend(`<div class="dead" style="transform:scale(${scale});--size: ${parseInt(pData.size) / 10}px;"></div>`);
-					}
-				} else {
-					tok.find('.dead').remove();
-				}
-
-				tok.find(".token-image").css('box-shadow',
-					`${token_health_aura(
-						Math.round((pData.hp / pData.max_hp) * 100)
-					)} 0px 0px 7px 7px`
-				);
-			}
+			this.update_dead_cross(tok);
+			this.update_aura(tok);
 
 			tok.attr("data-id", this.options.id);
 			tokimg.attr("src", this.options.imgsrc);
