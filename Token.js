@@ -160,6 +160,7 @@ class Token {
 			}
 			draw_selected_token_bounding_box(); // redraw the selection box
 		}
+		update_pc_token_rows();
 	}
 	rotate(newRotation) {
 		if ((!window.DM && this.options.restrictPlayerMove) || this.options.locked) return; // don't allow rotating if the token is locked
@@ -1379,17 +1380,21 @@ function default_options() {
 			feet: "0",
 			color: "rgba(255, 255, 0, 0.1)"
 		},
-		auraVisible: true,
-		legacyaspectratio: window.TOKEN_SETTINGS['legacyaspectratio']
+		auraVisible: false
 	};
 }
 
-function place_token_in_center_of_map(tokenObject) {
+function center_of_view() {
 	let centerX = $(window).scrollLeft() + Math.round(+$(window).width() / 2) - 200;
 	let centerY = $(window).scrollTop() + Math.round($(window).height() / 2) - 200;
 	centerX = Math.round(centerX * (1.0 / window.ZOOM));
 	centerY = Math.round(centerY * (1.0 / window.ZOOM));
-	place_token_at_point(tokenObject, centerX, centerY);
+	return { x: centerX, y: centerY };
+}
+
+function place_token_in_center_of_map(tokenObject) {
+	let center = center_of_view();
+	place_token_at_point(tokenObject, center.x, center.y);
 }
 
 function place_token_under_cursor(tokenObject, eventPageX, eventPageY) {
@@ -1429,10 +1434,11 @@ function place_token_at_point(tokenObject, x, y) {
 		return;
 	}
 
-	// overwrite the defaults with global settings
-	let options = Object.assign(default_options(), window.TOKEN_SETTINGS);
-	// now overwrite with anything that we were given
-	options = Object.assign(options, tokenObject);
+	let options = {
+		...default_options(),
+		...window.TOKEN_SETTINGS,
+		...tokenObject
+	};
 	options.imgsrc = parse_img(options.imgsrc);
 
 	options.left = `${x}px`;
@@ -1452,14 +1458,30 @@ function place_token_at_point(tokenObject, x, y) {
 				// default to small/medium size
 				options.size = Math.round(window.CURRENT_SCENE_DATA.hpps) * 1;
 			}
-		} else if (options.tokenSize != undefined && parseInt(options.tokenSize) != NaN) {
+		} else if (options.tokenSize != undefined && parseFloat(options.tokenSize) != NaN) {
 			// tokenSize was specified, convert it to size. tokenSize is the number of squares this token fills
-			options.size = Math.round(window.CURRENT_SCENE_DATA.hpps) * parseInt(options.tokenSize);
+			options.size = Math.round(window.CURRENT_SCENE_DATA.hpps) * parseFloat(options.tokenSize);
 		} else {
 			// default to small/medium size
 			options.size = Math.round(window.CURRENT_SCENE_DATA.hpps) * 1;
 		}
 	}
+
+	// set reasonable defaults for any global settings that aren't already set
+	const setReasonableDefault = function(optionName, reasonableDefault) {
+		if (options[optionName] === undefined) {
+			options[optionName] = window.TOKEN_SETTINGS[optionName];
+			if (options[optionName] === undefined) {
+				options[optionName] = reasonableDefault;
+			}
+		}
+	}
+	for (let i = 0; i < token_setting_options.length; i++) {
+		// all global token settings default to false
+		setReasonableDefault(token_setting_options[i].name, false);
+	}
+	// unless otherwise specified, tokens should not be hidden when they are placed
+	setReasonableDefault("hidden", false);
 
 	// place the token
 	window.ScenesHandler.create_update_token(options);
@@ -1470,6 +1492,7 @@ function place_token_at_point(tokenObject, x, y) {
 
 	
 	window.EncounterHandler.update_avtt_encounter_with_players_and_monsters();
+	update_pc_token_rows();
 }
 
 function array_remove_index_by_value(arr, item) {
