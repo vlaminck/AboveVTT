@@ -496,8 +496,23 @@ function create_and_place_token(listItem, hidden = undefined, specificImage= und
                 .filter(item => item.folderPath === fullPath);
         } else if (listItem.isTypeEncounter()) {
             let encounterId = listItem.encounterId;
-            tokensToPlace = encounter_monster_items[encounterId];
-            // TODO: figure out multiples
+            let encounterMonsterItems = encounter_monster_items[encounterId];
+            if (encounterMonsterItems === undefined || encounterMonsterItems.length === 0) {
+                let encounterRow = tokensPanel.body.find(`[data-encounter-id='${encounterId}']`);
+                encounterRow.find(".tokens-panel-row-item").addClass("button-loading");
+                refresh_encounter(encounterRow, listItem, function (response) {
+                    encounterRow.find(".tokens-panel-row-item").removeClass("button-loading");
+                    if (response === true) {
+                        create_and_place_token(listItem, hidden, specificImage, eventPageX, eventPageY);
+                    }
+                })
+                return;
+            }
+            window.EncounterHandler.encounters[encounterId].monsters.forEach(shortMonster => {
+                let matchingItem = encounterMonsterItems.find(item => item.monsterData.id === shortMonster.id);
+                // we only have one of each monster so make new ones
+                tokensToPlace.push(SidebarListItem.Monster(matchingItem.monsterData))
+            });
         }
 
         // What's the threshold we should prompt for?
@@ -1476,16 +1491,21 @@ function fetch_encounter_monsters_if_necessary(clickedRow, clickedItem) {
     }
 }
 
-function refresh_encounter(clickedRow, clickedItem) {
+function refresh_encounter(clickedRow, clickedItem, callback) {
+    if (typeof callback !== 'function') {
+        callback = function(){};
+    }
     window.EncounterHandler.fetch_encounter(clickedItem.encounterId, function(response) {
         if (response === false) {
             console.warn("Failed to refresh encounter", response);
+            callback(false);
         } else {
             fetch_and_inject_encounter_monsters(clickedRow, clickedItem);
             clickedItem.name = response.name;
             clickedItem.description = response.flavorText;
             clickedRow.find(".tokens-panel-row-details-title").text(response.name);
             clickedRow.find(".tokens-panel-row-details-subtitle").text(response.flavorText);
+            callback(true);
         }
     });
 }
