@@ -343,17 +343,20 @@ class SidebarListItem {
   static TypePC = "pc";
   static TypeMonster = "monster";
   static TypeBuiltinToken = "builtinToken";
+  static TypeEncounter = "encounter";
 
   static PathRoot = "/";
   static PathPlayers = "/Players";
   static PathMonsters = "/Monsters";
   static PathMyTokens = "/My Tokens";
   static PathAboveVTT = "/AboveVTT Tokens";
+  static PathEncounters = "/Encounters";
 
   static NamePlayers = "Players";
   static NameMonsters = "Monsters";
   static NameMyTokens = "My Tokens";
   static NameAboveVTT = "AboveVTT Tokens";
+  static NameEncounters = "Encounters";
 
   /** Do not call this directly! It is a generic constructor for a SidebarListItem. Use one of the static functions instead.
    * @param name {string} the name displayed to the user
@@ -373,13 +376,15 @@ class SidebarListItem {
    * @param folderPath {string} the path that the folder is in (not including the name of this folder)
    * @param name {string} the name of the folder
    * @param collapsed {boolean} whether or not the folder is open or closed.
+   * @param subtitle {string|undefined} a subtitle to be displayed. defaults to undefined
    * @returns {SidebarListItem} the list item this creates
    * @constructor
    */
-  static Folder(folderPath, name, collapsed) {
+  static Folder(folderPath, name, collapsed, subtitle = undefined) {
     console.debug(`SidebarListItem.Folder ${folderPath}/${name}, collapsed: ${collapsed}`);
     let item = new SidebarListItem(name, `${window.EXTENSION_PATH}assets/folder.svg`, SidebarListItem.TypeFolder, folderPath);
     item.collapsed = collapsed;
+    item.subtitle = subtitle;
     return item;
   }
 
@@ -434,6 +439,28 @@ class SidebarListItem {
   }
 
   /**
+   * Creates a Encounter list item. These act like folders but with extra behaviors specific to Encounters
+   * @param encounter {object} the Encounter object this item represents. These are stored in window.EncounterHandler.encounters
+   * @param collapsed {boolean} whether or not the folder is open or closed. defaults to true
+   * @returns {SidebarListItem} the list item this creates
+   * @constructor
+   */
+  static Encounter(encounter, collapsed = true) {
+    let name = "Untitled Encounter";
+    if ((typeof encounter.name == 'string') && encounter.name.length > 0) {
+      name = encounter.name;
+    }
+    console.debug(`SidebarListItem.Encounter ${SidebarListItem.PathEncounters}/${name}, collapsed: ${collapsed}`);
+    let item = new SidebarListItem(name, `${window.EXTENSION_PATH}assets/folder.svg`, SidebarListItem.TypeEncounter, SidebarListItem.PathEncounters);
+    if ((typeof encounter.description == 'string') && encounter.description.length > 0) {
+      item.description = encounter.description;
+    }
+    item.collapsed = collapsed;
+    item.encounterId = encounter.id;
+    return item;
+  }
+
+  /**
    * A comparator for sorting by folder, then alphabetically.
    * @param lhs {SidebarListItem}
    * @param rhs {SidebarListItem}
@@ -484,13 +511,16 @@ class SidebarListItem {
   /** @returns {boolean} whether or not this item represents a Builtin Token */
   isTypeBuiltinToken() { return this.type === SidebarListItem.TypeBuiltinToken }
 
+  /** @returns {boolean} whether or not this item represents an encounter */
+  isTypeEncounter() { return this.type === SidebarListItem.TypeEncounter }
+
   /** @returns {boolean} whether or not this item is listed in the tokens panel */
   isTokensPanelItem() {
     if (this.isTypeFolder()) {
       if (this.folderPath === SidebarListItem.PathRoot) {
-        return this.name === SidebarListItem.NamePlayers || this.name === SidebarListItem.NameMonsters || this.name === SidebarListItem.NameMyTokens || this.name === SidebarListItem.NameAboveVTT;
+        return this.name === SidebarListItem.NamePlayers || this.name === SidebarListItem.NameMonsters || this.name === SidebarListItem.NameMyTokens || this.name === SidebarListItem.NameAboveVTT || this.name === SidebarListItem.NameEncounters;
       } else {
-        return this.folderPath.startsWith(SidebarListItem.PathPlayers) || this.folderPath.startsWith(SidebarListItem.PathMonsters) || this.folderPath.startsWith(SidebarListItem.PathMyTokens) || this.folderPath.startsWith(SidebarListItem.PathAboveVTT);
+        return this.folderPath.startsWith(SidebarListItem.PathPlayers) || this.folderPath.startsWith(SidebarListItem.PathMonsters) || this.folderPath.startsWith(SidebarListItem.PathMyTokens) || this.folderPath.startsWith(SidebarListItem.PathAboveVTT) || this.folderPath.startsWith(SidebarListItem.PathEncounters);
       }
     }
     return this.isTypeMyToken() || this.isTypePC() || this.isTypeMonster() || this.isTypeBuiltinToken()
@@ -504,6 +534,7 @@ class SidebarListItem {
       case SidebarListItem.TypeMyToken:
       case SidebarListItem.TypePC:
       case SidebarListItem.TypeMonster:
+      case SidebarListItem.TypeEncounter:
         return true;
       case SidebarListItem.TypeBuiltinToken:
       default:
@@ -521,6 +552,7 @@ class SidebarListItem {
       case SidebarListItem.TypePC:
       case SidebarListItem.TypeMonster:
       case SidebarListItem.TypeBuiltinToken:
+      case SidebarListItem.TypeEncounter: // we technically could support this, but I don't think we should
       default:
         return false;
     }
@@ -695,6 +727,7 @@ function build_sidebar_list_row(listItem) {
   }
 
   switch (listItem.type) {
+    case SidebarListItem.TypeEncounter: // explicitly allowing encounter to fall through because we want them to be treated like folders
     case SidebarListItem.TypeFolder:
       subtitle.hide();
       row.append(`<div class="folder-token-list"></div>`);
@@ -733,6 +766,13 @@ function build_sidebar_list_row(listItem) {
           clickEvent.stopPropagation();
           display_monster_filter_modal();
         });
+      } else if (listItem.isTypeEncounter()) {
+        // we explicitly allowed encounter types to fall through as folders. now we want to do encounter customizations here
+        row.attr("data-encounter-id", listItem.encounterId);
+        if (listItem.description !== undefined) {
+          subtitle.show();
+          subtitle.text(listItem.description);
+        }
       }
       break;
     case SidebarListItem.TypeMyToken:
@@ -824,6 +864,15 @@ function build_sidebar_list_row(listItem) {
         subtitle.append(`<div class="subtitle-attibute"><span class="material-icons" style="color:darkred">block</span>No Access</div>`);
       }
 
+      if ((typeof listItem.monsterData.quantity == "number") && listItem.monsterData.quantity > 1 && title.find(".monster-quantity").length === 0) {
+        title.prepend(`
+            <div class="monster-quantity">
+              <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><g transform="rotate(-45 50 50)"><rect x="0" y="40" width="100" height="20"></rect></g><g transform="rotate(45 50 50)"><rect x="0" y="40" width="100" height="20"></rect></g></svg>
+              <span aria-label="quantity">${listItem.monsterData.quantity}</span>
+            </div>
+        `);
+      }
+
       break;
     case SidebarListItem.TypeBuiltinToken:
       subtitle.hide();
@@ -857,6 +906,7 @@ function did_click_row(clickEvent) {
   console.log("did_click_row", clickedItem);
 
   switch (clickedItem.type) {
+    case SidebarListItem.TypeEncounter:
     case SidebarListItem.TypeFolder:
       if (clickedRow.hasClass("collapsed")) {
         clickedRow.removeClass("collapsed");
@@ -874,6 +924,10 @@ function did_click_row(clickEvent) {
       }
       if (clickedItem.isTokensPanelItem()) {
         persist_token_folders_remembered_state();
+      }
+      if (clickedItem.isTypeEncounter()) {
+        // we explicitly allowed it to pass through and be treated like a folder so now we need to act on it
+        fetch_encounter_monsters_if_necessary(clickedRow, clickedItem);
       }
       break;
     case SidebarListItem.TypeMyToken:

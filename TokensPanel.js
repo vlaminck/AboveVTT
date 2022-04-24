@@ -3,6 +3,7 @@ mytokens = [];
 mytokensfolders = [];
 tokens_rootfolders = [];
 monster_search_filters = {};
+encounter_monster_items = {}; // encounterId: SidebarTokenItem[]
 
 /** Reads in tokendata, and writes to mytokens and mytokensfolders; marks tokendata objects with didMigrateToMyToken = false; */
 function migrate_to_my_tokens() {
@@ -203,6 +204,14 @@ function rebuild_token_items_list() {
         tokenItems.push(SidebarListItem.BuiltinToken(builtInTokens[i]));
     }
 
+    // Encounters and Encounter Monsters
+    for (const encounterId in window.EncounterHandler.encounters) {
+        let encounter = window.EncounterHandler.encounters[encounterId];
+        if (encounter.name === "AboveVTT") continue; // don't display our backing encounter
+        tokenItems.push(SidebarListItem.Encounter(encounter));
+        // encounter_monster_items[encounterId]?.forEach(monsterItem => tokenItems.push(monsterItem));
+    }
+
     window.tokenListItems = tokenItems;
     console.groupEnd();
 }
@@ -291,7 +300,8 @@ function init_tokens_panel() {
         SidebarListItem.Folder(SidebarListItem.PathRoot, SidebarListItem.NamePlayers, false),
         SidebarListItem.Folder(SidebarListItem.PathRoot, SidebarListItem.NameMyTokens, false),
         SidebarListItem.Folder(SidebarListItem.PathRoot, SidebarListItem.NameAboveVTT, false),
-        SidebarListItem.Folder(SidebarListItem.PathRoot, SidebarListItem.NameMonsters, false)
+        SidebarListItem.Folder(SidebarListItem.PathRoot, SidebarListItem.NameMonsters, false),
+        SidebarListItem.Folder(SidebarListItem.PathRoot, SidebarListItem.NameEncounters, false)
     ];
 
     if(localStorage.getItem('MyTokens') != null){
@@ -373,6 +383,7 @@ function redraw_token_list(searchTerm) {
     tokensPanel.body.empty();
     tokensPanel.body.append(list);
     update_pc_token_rows();
+    inject_encounter_monsters();
     console.groupEnd()
 }
 
@@ -803,8 +814,9 @@ function display_token_item_configuration_modal(listItem) {
     switch (listItem.type) {
         case SidebarListItem.TypeFolder:
             if (listItem.folderPath.startsWith(SidebarListItem.PathMyTokens)) {
-                console.log("TODO: handle folder editing")
                 display_folder_configure_modal(listItem);
+            } else if (listItem.folderPath.startsWith(SidebarListItem.PathMyTokens)) {
+                console.log("TODO: handle encounter editing");
             } else {
                 console.warn("Only allowed to folders within the My Tokens folder");
                 return;
@@ -1409,15 +1421,14 @@ function persist_my_tokens() {
 }
 
 function persist_token_folders_remembered_state() {
+    if (window.tokenListItems === undefined) return;
     let rememberedFolderState = {};
     let foldersToRemember = window.tokenListItems
         .filter(item => item.isTypeFolder() && item.fullPath().startsWith(SidebarListItem.PathAboveVTT))
         .concat(tokens_rootfolders);
     foldersToRemember.forEach(f => {
-        console.log("saving remembered state for item", f.collapsed, f);
         rememberedFolderState[f.fullPath()] = f.collapsed
     });
-    console.log("saving remembered state object", rememberedFolderState);
     localStorage.setItem("TokensFolderRememberedState", JSON.stringify(rememberedFolderState));
 }
 
@@ -1425,13 +1436,54 @@ function update_token_folders_remembered_state() {
     let tokenItems = window.tokenListItems.concat(tokens_rootfolders);
     if(localStorage.getItem('TokensFolderRememberedState') != null){
         let rememberedStates = JSON.parse(localStorage.getItem('TokensFolderRememberedState'));
-        console.log("read remembered state object", rememberedStates);
         tokenItems.forEach(item => {
             let state = rememberedStates[item.fullPath()];
             if (state === true || state === false) {
                 item.collapsed = state;
-                console.log("setting remembered state on item", state, item);
             }
+        });
+    }
+}
+
+function fetch_encounter_monsters_if_necessary(clickedRow, clickedItem) {
+    if (clickedItem.isTypeEncounter() && !clickedRow.hasClass("collapsed") && clickedRow.find(".folder-token-list").is(":empty") && !clickedItem.activelyFetchingMonsters && clickedItem.encounterId !== undefined) {
+        clickedItem.activelyFetchingMonsters = true;
+        window.EncounterHandler.fetch_encounter_monsters(clickedItem.encounterId, function (response, errorType) {
+            if (response === false) {
+                console.warn("Failed to fetch encounter monsters", errorType);
+            } else {
+                encounter_monster_items[clickedItem.encounterId] = response
+                    .map(monsterData => SidebarListItem.Monster(monsterData))
+                    .sort(SidebarListItem.sortComparator);
+                inject_encounter_monsters();
+            }
+        });
+    }
+}
+
+function inject_encounter_monsters() {
+    for (const encounterId in encounter_monster_items) {
+        let monsterItems = encounter_monster_items[encounterId];
+        let encounter = window.EncounterHandler.encounters[encounterId];
+        let encounterRow = tokensPanel.body.find(`[data-encounter-id='${encounterId}']`);
+        let encounterMonsterList = encounterRow.find(`> .folder-token-list`);
+        encounterMonsterList.empty();
+        encounter.groups.forEach(encounterGroup => {
+            let groupDiv = $(`<div class="encounter-monster-group"></div>`);
+            encounterMonsterList.append(groupDiv);
+            let monsters = encounter.monsters.filter(m => m.groupId === encounterGroup.id)
+            if (monsters.length > 1) {
+                groupDiv.addClass("grouped");
+                if (typeof encounterGroup.name == "string" && encounter.name.length > 0) {
+                    groupDiv.append(`<div>${encounterGroup.name}</div>`);
+                }
+            }
+            monsters.forEach(shortMonster => {
+                let monsterItem = monsterItems.find(item => item.monsterData.id === shortMonster.id);
+                let monsterRow = build_sidebar_list_row(monsterItem);
+                enable_draggable_token_creation(monsterRow);
+                groupDiv.append(monsterRow);
+            });
         });
     }
 }

@@ -2315,6 +2315,12 @@ h5.token-image-modal-footer-title:after {
 .tokens-panel-row.folder > .tokens-panel-row-item {
     height: 30px; /* folders are shorter than everything else */
 }
+.tokens-panel-row.folder > .folder-token-list > .encounter-monster-group.grouped {
+    border: 2px dashed #1b9af0;
+    border-radius: 3px;
+    padding: 0px 2px;
+    margin: 2px 0px;
+}
 
 .sidebar-panel-content {
     align-items: center;

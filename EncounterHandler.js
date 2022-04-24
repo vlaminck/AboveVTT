@@ -285,6 +285,9 @@ class EncounterHandler {
 					// there are no more pages of encounter to fetch so call our callback
 					console.log(`fetch_all_encounters successfully fetched all encounters; pageNumber: ${[pageNumber]}`);
 					callback(true);
+					if (is_encounters_page()) {
+						did_change_mytokens_items(); // there's probably a better way to do this ¯\_(ツ)_/¯
+					}
 				}
 			},
 			error: function (errorMessage) {
@@ -415,6 +418,33 @@ class EncounterHandler {
 				callback(false, errorMessage?.responseJSON?.type);
 			}
 		});
+	}
+
+	fetch_encounter_monsters(encounterId, callback) {
+		if (typeof callback !== 'function') {
+			callback = function(){};
+		}
+		let encounter = this.encounters[encounterId];
+		if (encounter?.monsters === undefined || encounter.monsters === null || encounter.monsters.length === 0) {
+			// nothing to fetch
+			callback([]);
+			return;
+		}
+		console.log("fetch_encounter_monsters starting");
+		let uniqueMonsterIds = [...new Set(encounter.monsters.map(m => m.id))];
+		let queryParam = uniqueMonsterIds.map(id => `ids=${id}`).join("&");
+		window.ajaxQueue.addDDBRequest({
+			url: `https://monster-service.dndbeyond.com/v1/Monster?${queryParam}`,
+			success: function (responseData) {
+				console.log(`fetch_encounter_monsters succeeded`);
+				callback(responseData.data);
+				// callback(encounter.monsters.map(encounterMonster => responseData.data.find(responseMonster => responseMonster.id === encounterMonster.id )));
+			},
+			error: function (errorMessage) {
+				console.warn("fetch_encounter_monsters failed", errorMessage);
+				callback(false, errorMessage?.responseJSON?.type);
+			}
+		})
 	}
 
 	/// every time a scene is loaded or a monster is added to a scene this will update our backing encounter with any new monster types, but won't do anything if nothing new has been added.
