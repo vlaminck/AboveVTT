@@ -719,7 +719,7 @@ function search_monsters(searchTerm, skip, callback) {
         url: `https://monster-service.dndbeyond.com/v1/Monster?skip=${offset}&take=10${searchParam}`,
         success: function (responseData) {
             console.log(`search_monsters succeeded`, responseData);
-            callback(responseData); // TODO: return normalized data vs raw data?
+            callback(responseData);
         },
         failure: function (errorMessage) {
             console.warn(`search_monsters failed`, errorMessage);
@@ -746,7 +746,8 @@ function register_token_row_context_menu() {
 
             let menuItems = {};
 
-            let rowItem = find_sidebar_list_item($(element));
+            let rowHtml = $(element);
+            let rowItem = find_sidebar_list_item(rowHtml);
             if (rowItem === undefined) {
                 console.warn("register_token_row_context_menu failed to find row item", element, e)
                 menuItems["unexpected-error"] = {
@@ -793,6 +794,15 @@ function register_token_row_context_menu() {
                 };
             }
 
+            if (rowItem.isTypeEncounter()) {
+                menuItems["refresh"] = {
+                    name: "Refresh",
+                    callback: function(itemKey, opt, originalEvent) {
+                        refresh_encounter(rowHtml, rowItem);
+                    }
+                };
+            }
+
             if (rowItem.canDelete() ) {
 
                 menuItems["border"] = "---";
@@ -806,6 +816,7 @@ function register_token_row_context_menu() {
                     }
                 };
             }
+
 
             if (Object.keys(menuItems).length === 0) {
                 menuItems["not-allowed"] = {
@@ -824,11 +835,13 @@ function register_token_row_context_menu() {
  */
 function display_token_item_configuration_modal(listItem) {
     switch (listItem.type) {
+        case SidebarListItem.TypeEncounter:
+            // TODO: support editing in an iframe on the page?
+            window.open(`https://www.dndbeyond.com/encounters/${listItem.encounterId}/edit`, '_blank');
+            break;
         case SidebarListItem.TypeFolder:
             if (listItem.folderPath.startsWith(SidebarListItem.PathMyTokens)) {
                 display_folder_configure_modal(listItem);
-            } else if (listItem.folderPath.startsWith(SidebarListItem.PathMyTokens)) {
-                console.log("TODO: handle encounter editing");
             } else {
                 console.warn("Only allowed to folders within the My Tokens folder");
                 return;
@@ -1458,19 +1471,40 @@ function update_token_folders_remembered_state() {
 }
 
 function fetch_encounter_monsters_if_necessary(clickedRow, clickedItem) {
-    if (clickedItem.isTypeEncounter() && !clickedRow.hasClass("collapsed") && clickedRow.find(".folder-token-list").is(":empty") && !clickedItem.activelyFetchingMonsters && clickedItem.encounterId !== undefined) {
-        clickedItem.activelyFetchingMonsters = true;
-        window.EncounterHandler.fetch_encounter_monsters(clickedItem.encounterId, function (response, errorType) {
-            if (response === false) {
-                console.warn("Failed to fetch encounter monsters", errorType);
-            } else {
-                encounter_monster_items[clickedItem.encounterId] = response
-                    .map(monsterData => SidebarListItem.Monster(monsterData))
-                    .sort(SidebarListItem.sortComparator);
-                inject_encounter_monsters();
-            }
-        });
+    if (clickedItem.isTypeEncounter() && clickedRow.find(".folder-token-list").is(":empty") && !clickedItem.activelyFetchingMonsters && clickedItem.encounterId !== undefined) {
+        fetch_and_inject_encounter_monsters(clickedRow, clickedItem);
     }
+}
+
+function refresh_encounter(clickedRow, clickedItem) {
+    window.EncounterHandler.fetch_encounter(clickedItem.encounterId, function(response) {
+        if (response === false) {
+            console.warn("Failed to refresh encounter", response);
+        } else {
+            fetch_and_inject_encounter_monsters(clickedRow, clickedItem);
+            clickedItem.name = response.name;
+            clickedItem.description = response.flavorText;
+            clickedRow.find(".tokens-panel-row-details-title").text(response.name);
+            clickedRow.find(".tokens-panel-row-details-subtitle").text(response.flavorText);
+        }
+    });
+}
+
+function fetch_and_inject_encounter_monsters(clickedRow, clickedItem) {
+    clickedItem.activelyFetchingMonsters = true;
+    clickedRow.find(".tokens-panel-row-item").addClass("button-loading");
+    window.EncounterHandler.fetch_encounter_monsters(clickedItem.encounterId, function (response, errorType) {
+        clickedItem.activelyFetchingMonsters = true;
+        clickedRow.find(".tokens-panel-row-item").removeClass("button-loading");
+        if (response === false) {
+            console.warn("Failed to fetch encounter monsters", errorType);
+        } else {
+            encounter_monster_items[clickedItem.encounterId] = response
+                .map(monsterData => SidebarListItem.Monster(monsterData))
+                .sort(SidebarListItem.sortComparator);
+            inject_encounter_monsters();
+        }
+    });
 }
 
 function inject_encounter_monsters() {
@@ -1479,17 +1513,25 @@ function inject_encounter_monsters() {
         let encounter = window.EncounterHandler.encounters[encounterId];
         let encounterRow = tokensPanel.body.find(`[data-encounter-id='${encounterId}']`);
         let encounterMonsterList = encounterRow.find(`> .folder-token-list`);
+        if (encounter?.groups === undefined || encounter.groups === null || encounterMonsterList.length === 0 || encounterRow.length === 0 || monsterItems === undefined) {
+            continue;
+        }
         encounterMonsterList.empty();
-        encounter.groups.forEach(encounterGroup => {
+        encounter.groups.sort((lhs, rhs) => lhs.order - rhs.order).forEach(encounterGroup => {
             let groupDiv = $(`<div class="encounter-monster-group"></div>`);
             encounterMonsterList.append(groupDiv);
-            let monsters = encounter.monsters.filter(m => m.groupId === encounterGroup.id)
+
+            let monsters = encounter.monsters
+                .filter(m => m.groupId === encounterGroup.id)
+                .sort((lhs, rhs) => lhs.order - rhs.order);
+
             if (monsters.length > 1) {
                 groupDiv.addClass("grouped");
                 if (typeof encounterGroup.name == "string" && encounter.name.length > 0) {
                     groupDiv.append(`<div>${encounterGroup.name}</div>`);
                 }
             }
+
             monsters.forEach(shortMonster => {
                 let monsterItem = monsterItems.find(item => item.monsterData.id === shortMonster.id);
                 let monsterRow = build_sidebar_list_row(monsterItem);

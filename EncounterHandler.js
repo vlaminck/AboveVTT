@@ -263,6 +263,26 @@ class EncounterHandler {
 		}
 	}
 
+	/// We build an encounter named `AboveVTT` this will fetch it if it exists, and create it if it doesn't
+	fetch_encounter(encounterId, callback) {
+		if (typeof callback !== 'function') {
+			callback = function(){};
+		}
+		window.ajaxQueue.addDDBRequest({
+			url: `https://encounter-service.dndbeyond.com/v1/encounters/${encounterId}`,
+			success: function (responseData) {
+				let encounter = responseData.data;
+				console.log(`fetch_encounter succeeded`);
+				window.EncounterHandler.encounters[encounter.id] = encounter;
+				callback(encounter);
+			},
+			error: function (errorMessage) {
+				console.warn(`fetch_all_encounters failed; ${errorMessage}`);
+				callback(false, errorMessage?.responseJSON?.type);
+			}
+		});
+	}
+
 	/// this fetches all encounters associated with the current campaign
 	fetch_all_encounters(callback, pageNumber = 0) {
 		if (typeof callback !== 'function') {

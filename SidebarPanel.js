@@ -452,8 +452,8 @@ class SidebarListItem {
     }
     console.debug(`SidebarListItem.Encounter ${SidebarListItem.PathEncounters}/${name}, collapsed: ${collapsed}`);
     let item = new SidebarListItem(name, `${window.EXTENSION_PATH}assets/folder.svg`, SidebarListItem.TypeEncounter, SidebarListItem.PathEncounters);
-    if ((typeof encounter.description == 'string') && encounter.description.length > 0) {
-      item.description = encounter.description;
+    if ((typeof encounter.flavorText == 'string') && encounter.flavorText.length > 0) {
+      item.description = encounter.flavorText;
     }
     item.collapsed = collapsed;
     item.encounterId = encounter.id;
@@ -586,7 +586,17 @@ function sanitize_folder_path(dirtyPath) {
  */
 function find_sidebar_list_item(html) {
   if (html === undefined) return undefined;
+
   let foundItem;
+
+  let encounterId = html.attr("data-encounter-id");
+  if (encounterId !== undefined && encounterId !== null && encounterId !== "") {
+    let foundItem = window.tokenListItems.find(item => item.isTypeEncounter() && item.encounterId === encounterId);
+    if (foundItem !== undefined) {
+      return foundItem;
+    }
+  }
+
   let fullPath = harvest_full_path(html);
   if (html.attr("data-monster") !== undefined) {
     // explicitly using '==' instead of '===' to allow (33253 == '33253') to return true
