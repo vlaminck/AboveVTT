@@ -375,7 +375,9 @@ function redraw_token_list(searchTerm) {
         .sort(SidebarListItem.sortComparator)
         .forEach(item => {
             let row = build_sidebar_list_row(item);
-            enable_draggable_token_creation(row);
+            if (!item.isTypeEncounter()) {
+                enable_draggable_token_creation(row);
+            }
             console.debug("appending item", item);
             find_html_row_from_path(item.folderPath, list).find(` > .folder-token-list`).append(row);
         });
@@ -482,12 +484,22 @@ function create_and_place_token(listItem, hidden = undefined, specificImage= und
         return;
     }
 
-    if (listItem.isTypeFolder()) {
-        let fullPath = listItem.fullPath();
-        // find and place all items in this folder... but not subfolders
-        let tokensToPlace = (listItem.folderPath.startsWith(SidebarListItem.PathMonsters) ? window.monsterListItems : window.tokenListItems)
-            .filter(item => !item.isTypeFolder()) // if we ever want to add everything at every subfolder depth, remove this line
-            .filter(item => item.folderPath === fullPath);
+    if (listItem.isTypeFolder() || listItem.isTypeEncounter()) {
+
+        let tokensToPlace = [];
+
+        if (listItem.isTypeFolder()) {
+            let fullPath = listItem.fullPath();
+            // find and place all items in this folder... but not subfolders
+            tokensToPlace = (listItem.folderPath.startsWith(SidebarListItem.PathMonsters) ? window.monsterListItems : window.tokenListItems)
+                .filter(item => !item.isTypeFolder()) // if we ever want to add everything at every subfolder depth, remove this line
+                .filter(item => item.folderPath === fullPath);
+        } else if (listItem.isTypeEncounter()) {
+            let encounterId = listItem.encounterId;
+            tokensToPlace = encounter_monster_items[encounterId];
+            // TODO: figure out multiples
+        }
+
         // What's the threshold we should prompt for?
         if (tokensToPlace.length < 20 || confirm(`This will add ${tokensToPlace.length} tokens which could lead to unexpected results. Are you sure you want to add all of these tokens?`)) {
             // place all tokens fanned out from the center of the view
@@ -745,7 +757,7 @@ function register_token_row_context_menu() {
             }
 
             menuItems["place"] = {
-                name: rowItem.isTypeFolder() ? "Place Tokens" : "Place Token",
+                name: (rowItem.isTypeFolder() || rowItem.isTypeEncounter()) ? "Place Tokens" : "Place Token",
                 callback: function(itemKey, opt, originalEvent) {
                     let itemToPlace = find_sidebar_list_item(opt.$trigger);
                     create_and_place_token(itemToPlace);
@@ -753,14 +765,14 @@ function register_token_row_context_menu() {
             };
 
             menuItems["placeHidden"] = {
-                name: rowItem.isTypeFolder() ? "Place Hidden Tokens" : "Place Hidden Token",
+                name: (rowItem.isTypeFolder() || rowItem.isTypeEncounter()) ? "Place Hidden Tokens" : "Place Hidden Token",
                 callback: function(itemKey, opt, originalEvent) {
                     let itemToPlace = find_sidebar_list_item(opt.$trigger);
                     create_and_place_token(itemToPlace, true);
                 }
             };
 
-            if (!rowItem.isTypeFolder()) {
+            if (!rowItem.isTypeFolder() && !rowItem.isTypeEncounter()) {
                 // copy url doesn't make sense for folders
                 menuItems["copyUrl"] = {
                     name: "Copy Url",
