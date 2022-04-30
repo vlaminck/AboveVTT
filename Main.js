@@ -11,8 +11,7 @@ window.onbeforeunload = function(event)
 };
 
 function parse_img(url){
-	if (url === undefined) {
-		console.warn("parse_img was called without a url");
+	if (typeof url !== "string") {
 		return "";
 	}
 	retval = url;
@@ -424,11 +423,6 @@ function change_sidbar_tab(clickedTab, isCharacterSheetInfo = false) {
 
 	close_sidebar_modal();
 	$(clickedTab.attr("data-target")).addClass('selected-tab');
-
-	if (clickedTab.attr("data-target") == "#monsters-panel" && !window.MONSTERPANEL_LOADED) {
-		console.log('in teoria fatto show');
-		init_monster_panel();
-	}
 
 	// switch back to gamelog if they change tabs
 	if (!isCharacterSheetInfo) {
@@ -1652,7 +1646,6 @@ function init_things() {
 	window.TOKEN_OBJECTS = {};
 	window.REVEALED = [];
 	window.DRAWINGS = [];
-	window.MONSTERPANEL_LOADED = false;
 	window.PLAYER_STATS = {};
 	window.CONNECTED_PLAYERS = {};
 	window.TOKEN_SETTINGS = $.parseJSON(localStorage.getItem('TokenSettings' + gameId)) || {};
@@ -2353,7 +2346,6 @@ function init_ui() {
 
 	token_menu();
 	load_custom_monster_image_mapping();
-	register_player_token_customization_context_menu();
 
 
 	window.WaypointManager=new WaypointManagerClass();

@@ -761,7 +761,7 @@ class Token {
 			// No scene loaded!
 			return;
 		}
-		console.group("place")
+		// console.group("place")
 		if (animationDuration == undefined || parseFloat(animationDuration) == NaN) {
 			animationDuration = 1000;
 		}
@@ -919,10 +919,10 @@ class Token {
 			if (typeof this.options.tokendataname !== "undefined") {
 				old.attr("data-tokendataname", this.options.tokendataname);
 			}
-			console.groupEnd()
+			// console.groupEnd()
 		}
 		else { // adding a new token
-			console.group("new token")
+			// console.group("new token")
 			var tok = $("<div/>");
 			var hpbar = $("<input class='hpbar'>");
 			let scale = this.get_token_scale()
@@ -1385,26 +1385,17 @@ function default_options() {
 }
 
 function center_of_view() {
-	let centerX = $(window).scrollLeft() + Math.round(+$(window).width() / 2) - 200;
-	let centerY = $(window).scrollTop() + Math.round($(window).height() / 2) - 200;
-	centerX = Math.round(centerX * (1.0 / window.ZOOM));
-	centerY = Math.round(centerY * (1.0 / window.ZOOM));
+	let centerX = ($(window).width() / 2) + window.scrollX;
+	let centerY = ($(window).height() / 2) + window.scrollY;
 	return { x: centerX, y: centerY };
 }
 
-function place_token_in_center_of_map(tokenObject) {
-	let center = center_of_view();
-	place_token_at_point(tokenObject, center.x, center.y);
-}
-
-function place_token_under_cursor(tokenObject, eventPageX, eventPageY) {
+function convert_point_from_view_to_map(pageX, pageY, forceNoSnap = false) {
 	// adjust for map offset and zoom
-	let mouseX = (eventPageX - 200) * (1.0 / window.ZOOM);
-	let mouseY = (eventPageY - 200) * (1.0 / window.ZOOM);
-	let fogOverlay = $("#fog_overlay"); // not sure if there's a better way to find this...
-	if (mouseX <= 0 || mouseY <= 0 || mouseX >= fogOverlay.width() || mouseY >= fogOverlay.height()) {
-		console.log("not dropping token outside of the scene");
-		return;
+	let mapX = (pageX - 200) * (1.0 / window.ZOOM);
+	let mapY = (pageY - 200) * (1.0 / window.ZOOM);
+	if (forceNoSnap === true) {
+		return { x: mapX, y: mapY };
 	}
 	// this was copied the place function in this file. We should make this a single function to be used in other places
 	let shallwesnap = (window.CURRENT_SCENE_DATA.snap == "1"  && !(window.toggleSnap)) || ((window.CURRENT_SCENE_DATA.snap != "1") && window.toggleSnap);
@@ -1412,16 +1403,29 @@ function place_token_under_cursor(tokenObject, eventPageX, eventPageY) {
 		// adjust to the nearest square coordinate
 		const startX = window.CURRENT_SCENE_DATA.offsetx;
 		const startY = window.CURRENT_SCENE_DATA.offsety;
-		const selectedNewtop = Math.round((mouseY - startY) / window.CURRENT_SCENE_DATA.vpps) * window.CURRENT_SCENE_DATA.vpps + startY;
-		const selectedNewleft = Math.round((mouseX - startX) / window.CURRENT_SCENE_DATA.hpps) * window.CURRENT_SCENE_DATA.hpps + startX;
-		place_token_at_point(tokenObject, selectedNewleft, selectedNewtop);
-	} else {
-		// drop it exactly where it is
-		place_token_at_point(tokenObject, mouseX, mouseY);
+		mapX = Math.round((mapX - startY) / window.CURRENT_SCENE_DATA.vpps) * window.CURRENT_SCENE_DATA.vpps + startY;
+		mapY = Math.round((mapY - startX) / window.CURRENT_SCENE_DATA.hpps) * window.CURRENT_SCENE_DATA.hpps + startX;
 	}
+	return { x: mapX, y: mapY };
 }
 
-function place_token_at_point(tokenObject, x, y) {
+function convert_point_from_map_to_view(mapX, mapY) {
+	let pageX = mapX / (1 / window.ZOOM) + 200;
+	let pageY = mapY / (1 / window.ZOOM) + 200;
+	return { x: pageX, y: pageY };
+}
+
+function place_token_in_center_of_view(tokenObject) {
+	let center = center_of_view();
+	place_token_at_view_point(tokenObject, center.x, center.y);
+}
+
+function place_token_at_view_point(tokenObject, pageX, pageY) {
+	let mapPosition = convert_point_from_view_to_map(pageX, pageY);
+	place_token_at_map_point(tokenObject, mapPosition.x, mapPosition.y);
+}
+
+function place_token_at_map_point(tokenObject, x, y) {
 
 	console.log(`attempting to place token at ${x}, ${y}; options: ${JSON.stringify(tokenObject)}`);
 
@@ -1492,6 +1496,7 @@ function place_token_at_point(tokenObject, x, y) {
 
 	
 	window.EncounterHandler.update_avtt_encounter_with_players_and_monsters();
+	fetch_and_cache_scene_monster_items();
 	update_pc_token_rows();
 }
 
@@ -1569,20 +1574,8 @@ function menu_callback(key, options, event) {
 
 	if (key === "imgsrcSelect") {
 		id = $(this).attr("data-id");
-		if (!(id in window.TOKEN_OBJECTS)) {
-			return;
-		}
-		let tok = window.TOKEN_OBJECTS[id];
-		let monsterId = $(options.$trigger).attr("data-monster");
-		let name = $(options.$trigger).data("name");
-		if (tok.isPlayer()) {
-			display_player_token_customization_modal(id, tok);
-		} else if (monsterId !== undefined) {
-			window.StatHandler.getStat(monsterId, function(stat) {
-				display_monster_customization_modal(tok, monsterId, name, stat.data.avatarUrl);
-			});
-		} else {
-			display_placed_token_customization_modal(tok);
+		if (id in window.TOKEN_OBJECTS) {
+			display_change_image_modal(window.TOKEN_OBJECTS[id])
 		}
 	}
 

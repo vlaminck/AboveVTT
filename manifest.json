@@ -76,7 +76,6 @@
 		"jitsi_external_api.js",
 		"MessageBroker.js",
 		"ScenesHandler.js",
-		"MonsterPanel.js",
 		"ScenesPanel.js",
 		"TokensPanel.js",
 		"built-in-tokens.js",

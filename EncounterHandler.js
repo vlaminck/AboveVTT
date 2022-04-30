@@ -440,9 +440,35 @@ class EncounterHandler {
 		});
 	}
 
+	fetch_monsters(monsterIds, callback) {
+		if (typeof callback !== 'function') {
+			console.warn("fetch_monsters was called without a callback.");
+			return;
+		}
+		if (typeof monsterIds === undefined || monsterIds.length === 0) {
+			callback([]);
+			return;
+		}
+		console.log("fetch_monsters starting");
+		let uniqueMonsterIds = [...new Set(monsterIds)];
+		let queryParam = uniqueMonsterIds.map(id => `ids=${id}`).join("&");
+		window.ajaxQueue.addDDBRequest({
+			url: `https://monster-service.dndbeyond.com/v1/Monster?${queryParam}`,
+			success: function (responseData) {
+				console.log(`fetch_monsters succeeded`);
+				callback(responseData.data);
+			},
+			error: function (errorMessage) {
+				console.warn("fetch_monsters failed", errorMessage);
+				callback(false, errorMessage?.responseJSON?.type);
+			}
+		})
+	}
+
 	fetch_encounter_monsters(encounterId, callback) {
 		if (typeof callback !== 'function') {
-			callback = function(){};
+			console.warn("fetch_encounter_monsters was called without a callback");
+			return;
 		}
 		let encounter = this.encounters[encounterId];
 		if (encounter?.monsters === undefined || encounter.monsters === null || encounter.monsters.length === 0) {
@@ -450,22 +476,14 @@ class EncounterHandler {
 			callback([]);
 			return;
 		}
-		console.log("fetch_encounter_monsters starting");
-		let uniqueMonsterIds = [...new Set(encounter.monsters.map(m => m.id))];
-		let queryParam = uniqueMonsterIds.map(id => `ids=${id}`).join("&");
-		window.ajaxQueue.addDDBRequest({
-			url: `https://monster-service.dndbeyond.com/v1/Monster?${queryParam}`,
-			success: function (responseData) {
-				console.log(`fetch_encounter_monsters succeeded`);
-				callback(responseData.data);
-				// callback(encounter.monsters.map(encounterMonster => responseData.data.find(responseMonster => responseMonster.id === encounterMonster.id )));
-			},
-			error: function (errorMessage) {
-				console.warn("fetch_encounter_monsters failed", errorMessage);
-				callback(false, errorMessage?.responseJSON?.type);
-			}
-		})
+		let monsterIds = encounter.monsters.map(m => m.id);
+		if (monsterIds.length > 0) {
+			console.log("fetch_encounter_monsters starting");
+			this.fetch_monsters(monsterIds, callback);
+		}
 	}
+
+
 
 	/// every time a scene is loaded or a monster is added to a scene this will update our backing encounter with any new monster types, but won't do anything if nothing new has been added.
 	update_avtt_encounter_with_players_and_monsters(callback) {

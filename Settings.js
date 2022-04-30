@@ -173,27 +173,30 @@ function init_settings(){
 		body.append(inputWrapper);
 	}
 
+	const build_example_token = function(imageUrl) {
+		return $(`
+			<div class="custom-token-image-item">
+				<div class="token-image-sizing-dummy"></div>
+				<img alt="example-token-img" class="token-image token-round" src="${imageUrl}" />
+			</div>
+		`);
+	}
+
 	// Build example tokens to show the settings changes
 	body.append(`<div class="token-image-modal-footer-title">Example Tokens</div>`);
 	let tokenExamplesWrapper = $(`<div class="example-tokens-wrapper"></div>`);
-	// not square image to show aspect ratio
-	let example1 = build_custom_token_item("example 1", "https://www.dndbeyond.com/avatars/thumbnails/6/359/420/618/636272697874197438.png", 1, -1);
-	example1.draggable('disable');
-	tokenExamplesWrapper.append(example1);
-	// perectly square image
-	let example2 = build_custom_token_item("example 2", "https://www.dndbeyond.com/avatars/8/441/636306375308314493.jpeg", 1, -1);
-	example2.draggable("disable");
-	tokenExamplesWrapper.append(example2);
-	// idk, something else I guess
-	let example3 = build_custom_token_item("example 3", "https://i.imgur.com/2Lglcip.png", 1, -1);
-	example3.draggable("disable");
-	tokenExamplesWrapper.append(example3);
 	body.append(tokenExamplesWrapper);
+	// not square image to show aspect ratio
+	tokenExamplesWrapper.append(build_example_token("https://www.dndbeyond.com/avatars/thumbnails/6/359/420/618/636272697874197438.png"));
+	// perfectly square image
+	tokenExamplesWrapper.append(build_example_token("https://www.dndbeyond.com/avatars/8/441/636306375308314493.jpeg"));
+	// idk, something else I guess
+	tokenExamplesWrapper.append(build_example_token("https://i.imgur.com/2Lglcip.png"));
 
 	let resetToDefaults = $(`<button class="token-image-modal-remove-all-button" title="Reset all token settings back to their default values." style="width:100%;padding:8px;margin:10px 0px 30px 0px;">Reset Token Settings to Defaults</button>`);
-	resetToDefaults.click(function () {
-		for (let i = 0; i < token_settings.length; i++) {
-			let setting = token_settings[i];
+	resetToDefaults.on("click", function () {
+		for (let i = 0; i < token_setting_options.length; i++) {
+			let setting = token_setting_options[i];
 			let toggle = body.find(`button[name=${setting.name}]`);
 			if (toggle.hasClass("rc-switch-checked")) {
 				toggle.click();

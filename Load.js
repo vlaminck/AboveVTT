@@ -58,7 +58,6 @@ let scripts = [
 	{ src: "KeypressHandler.js" },
 	{ src: "MessageBroker.js" },
 	{ src: "MonsterDice.js" },
-	{ src: "MonsterPanel.js" },
 	{ src: "PlayerPanel.js" },
 	{ src: "SceneData.js" },
 	{ src: "ScenesHandler.js" },

@@ -171,7 +171,7 @@ function drop_aoe_token(color, shape, feet) {
     };
 
     if(window.DM){
-        place_token_in_center_of_map(atts);
+        place_token_in_center_of_view(atts);
     }
     else{
         let center = center_of_view();

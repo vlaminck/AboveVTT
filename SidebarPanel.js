@@ -6,22 +6,16 @@ function init_sidebar_tabs() {
   
   // gamelog doesn't use it yet, maybe never
 
-  $("#players-panel").remove();
-  playersPanel = new SidebarPanel("players-panel", false);
-  sidebarContent.append(playersPanel.build());
-  init_pclist();
-
   if (window.DM) {
-    $("#monsters-panel").remove();
-    monstersPanel = new SidebarPanel("monsters-panel", false);
-    sidebarContent.append(monstersPanel.build());
-    // monstersPanel.hide();
-    init_monster_panel();
-
     $("#tokens-panel").remove();
     tokensPanel = new SidebarPanel("tokens-panel", false);
     sidebarContent.append(tokensPanel.build());
     init_tokens_panel();
+  } else {
+    $("#players-panel").remove();
+    playersPanel = new SidebarPanel("players-panel", false);
+    sidebarContent.append(playersPanel.build());
+    update_pclist();
   }
 
   $("#sounds-panel").remove();
@@ -38,10 +32,12 @@ function init_sidebar_tabs() {
     window.JOURNAL.build_journal()
   }
 
-  $("#settings-panel").remove();
-  settingsPanel = new SidebarPanel("settings-panel", false);
-  sidebarContent.append(settingsPanel.build());
-  init_settings();
+  if (window.DM) {
+    $("#settings-panel").remove();
+    settingsPanel = new SidebarPanel("settings-panel", false);
+    sidebarContent.append(settingsPanel.build());
+    init_settings();
+  }
 }
 
 function sidebar_modal_is_open() {
@@ -50,14 +46,12 @@ function sidebar_modal_is_open() {
 
 function close_sidebar_modal() {
 	$("#VTTWRAPPER .sidebar-modal").remove();
+    window.current_sidebar_modal = undefined;
 }
 
 function display_sidebar_modal(sidebarPanel) {
   $("#VTTWRAPPER").append(sidebarPanel.build());
-}
-
-function current_modal() {
-  $("#VTTWRAPPER .sidebar-modal");
+  window.current_sidebar_modal = sidebarPanel;
 }
 
 class SidebarPanel {
@@ -602,9 +596,18 @@ function find_sidebar_list_item(html) {
     // explicitly using '==' instead of '===' to allow (33253 == '33253') to return true
     foundItem = window.monsterListItems.find(item => item.monsterData.id == html.attr("data-monster"));
   }
-  if (foundItem === undefined) {
-    foundItem = tokens_rootfolders.find(item => item.fullPath() === fullPath);
+  if (foundItem !== undefined) {
+    return foundItem;
   }
+  return find_sidebar_list_item_from_path(fullPath);
+}
+
+/**
+ * @param fullPath {string} the full path of the item
+ * @returns {SidebarListItem|undefined} SidebarListItem if found, else undefined
+ */
+function find_sidebar_list_item_from_path(fullPath) {
+  let foundItem = tokens_rootfolders.find(item => item.fullPath() === fullPath);
   if (foundItem === undefined) {
     foundItem = window.tokenListItems.find(item => item.fullPath() === fullPath);
   }
@@ -612,10 +615,14 @@ function find_sidebar_list_item(html) {
     foundItem = window.monsterListItems.find(item => item.fullPath() === fullPath);
   }
   if (foundItem === undefined) {
+    foundItem = cached_monster_items.find(item => item.fullPath() === fullPath);
+  }
+  if (foundItem === undefined) {
     console.warn(`find_sidebar_list_item found nothing at path: ${fullPath}`);
   }
   return foundItem;
 }
+
 
 /**
  * locates the html the given item represents in the list of items

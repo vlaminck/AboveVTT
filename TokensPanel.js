@@ -4,6 +4,7 @@ mytokensfolders = [];
 tokens_rootfolders = [];
 monster_search_filters = {};
 encounter_monster_items = {}; // encounterId: SidebarTokenItem[]
+cached_monster_items = []; // SidebarTokenItem[]
 
 /** Reads in tokendata, and writes to mytokens and mytokensfolders; marks tokendata objects with didMigrateToMyToken = false; */
 function migrate_to_my_tokens() {
@@ -94,6 +95,56 @@ function rollback_from_my_tokens() {
     rollbackFolderAtPath(SidebarListItem.PathRoot);
     persist_customtokens();
     console.groupEnd();
+}
+
+function list_item_from_monster_id(monsterId) {
+    let found = cached_monster_items.find(i => i.monsterData.id === monsterId);
+    if (found === undefined) {
+        found = window.monsterListItems.find(i => i.monsterData.id === monsterId);
+    }
+    if (found === undefined) {
+        for (let encounterId in encounter_monster_items) {
+            if (found === undefined) {
+                let encounterMonsters = encounter_monster_items[encounterId];
+                found = encounterMonsters.find(i => i.monsterData.id === monsterId);
+            }
+        }
+    }
+    return found;
+}
+
+function list_item_from_player_id(playerId) {
+    let pc = window.pcs.find(p => p.sheet = playerId);
+    if (pc === undefined) return undefined;
+    let fullPath = sanitize_folder_path(`${SidebarListItem.PathPlayers}/${pc.name}`);
+    return find_sidebar_list_item_from_path(fullPath);
+}
+
+function list_item_from_token(placedToken) {
+    let listItemPath = placedToken.options.listItemPath;
+    if (listItemPath !== undefined && listItemPath.length > 0) {
+        // this token was placed after we unified tokens
+        return find_sidebar_list_item_from_path(listItemPath);
+    }
+
+    if (placedToken.isMonster()) {
+        // we can't figure this one out synchronously
+        return list_item_from_monster_id(placedToken.options.monster);
+    } else if (placedToken.isPlayer()) {
+        return list_item_from_player_id(placedToken.options.id);
+    } else {
+        // need to migrate from the old custom_tokens
+        let tokenDataPath = placedToken.options.tokendatapath !== undefined ? placedToken.options.tokendatapath : "";
+        let tokenDataName = placedToken.options.tokendataname !== undefined ? placedToken.options.tokendataname : placedToken.options.name;
+        if (tokenDataPath.startsWith("/AboveVTT BUILTIN")) {
+            let convertedPath = tokenDataPath.replace("/AboveVTT BUILTIN", SidebarListItem.PathAboveVTT);
+            let fullPath = sanitize_folder_path(`${convertedPath}/${tokenDataName}`);
+            return find_sidebar_list_item_from_path(fullPath);
+        } else {
+            let fullPath = sanitize_folder_path(`${SidebarListItem.PathMyTokens}/${tokenDataPath}/${tokenDataName}`);
+            return find_sidebar_list_item_from_path(fullPath);
+        }
+    }
 }
 
 /**
@@ -255,6 +306,10 @@ function filter_token_list(searchTerm) {
  * @param skip {number} the pagination offset. This function will inject a "Load More" button with the skip details embedded. You don't need to pass anything for this.
  */
 function inject_monster_tokens(searchTerm, skip) {
+    if (searchTerm === undefined || searchTerm === "") {
+        inject_monster_list_items(cached_monster_items);
+        return;
+    }
     search_monsters(searchTerm, skip, function (monsterSearchResponse) {
         let listItems = [];
 
@@ -266,13 +321,7 @@ function inject_monster_tokens(searchTerm, skip) {
         }
         console.log("converted", listItems);
         let monsterFolder = find_html_row_from_path('/Monsters', tokensPanel.body);
-        for (let i = 0; i < listItems.length; i++) {
-            let item = listItems[i];
-            let row = build_sidebar_list_row(item);
-            enable_draggable_token_creation(row);
-            row.click();
-            monsterFolder.find(`> .folder-token-list`).append(row);
-        }
+        inject_monster_list_items(listItems);
         if (searchTerm.length > 0) {
             monsterFolder.removeClass("collapsed");
         }
@@ -289,6 +338,16 @@ function inject_monster_tokens(searchTerm, skip) {
             monsterFolder.find(`> .folder-token-list`).append(loadMoreButton);
         }
     });
+}
+
+function inject_monster_list_items(listItems) {
+    let monsterFolder = find_html_row_from_path('/Monsters', tokensPanel.body);
+    for (let i = 0; i < listItems.length; i++) {
+        let item = listItems[i];
+        let row = build_sidebar_list_row(item);
+        enable_draggable_token_creation(row);
+        monsterFolder.find(`> .folder-token-list`).append(row);
+    }
 }
 
 /** Called on startup. It reads from localStorage, and initializes all the things needed for the TokensPanel to function properly */
@@ -330,8 +389,8 @@ function init_tokens_panel() {
     }, 500));
     header.append(searchInput);
 
-    register_token_row_context_menu();             // context menu for each row
-    register_custom_monster_image_context_menu();  // context menu for images within the customization modal
+    register_token_row_context_menu();          // context menu for each row
+    register_custom_token_image_context_menu(); // context menu for images within the customization modal
 
     read_local_monster_search_filters();
 }
@@ -427,6 +486,13 @@ function enable_draggable_token_creation(html, specificImage = undefined) {
                 top: Math.floor(ui.helper.height() / 2)
             };
         },
+        drag: function (event, ui) {
+            if (event.shiftKey) {
+                $(ui.helper).css("opacity", 0.5);
+            } else {
+                $(ui.helper).css("opacity", 1);
+            }
+        },
         stop: function (event, ui) {
             event.stopPropagation(); // prevent the mouseup event from closing the modal
             // place a token where this was dropped
@@ -477,7 +543,7 @@ function update_pc_token_rows() {
  * @param eventPageX {number} MouseEvent.pageX if supplied, the token will be placed at this x coordinate, else centered in the view
  * @param eventPageY {number} MouseEvent.pageY if supplied, the token will be placed at this y coordinate, else centered in the view
  */
-function create_and_place_token(listItem, hidden = undefined, specificImage= undefined, eventPageX = undefined, eventPageY = undefined) {
+function create_and_place_token(listItem, hidden = undefined, specificImage= undefined, eventPageX = undefined, eventPageY = undefined, disableSnap = false) {
 
     if (listItem === undefined) {
         console.warn("create_and_place_token was called without a listItem");
@@ -519,12 +585,15 @@ function create_and_place_token(listItem, hidden = undefined, specificImage= und
         if (tokensToPlace.length < 20 || confirm(`This will add ${tokensToPlace.length} tokens which could lead to unexpected results. Are you sure you want to add all of these tokens?`)) {
             // place all tokens fanned out from the center of the view
             let center = center_of_view();
+            let mapPoint = convert_point_from_view_to_map(center.x, center.y, false); // do our math on the map coordinate space
             let gridSize = Math.min(window.CURRENT_SCENE_DATA.hpps, window.CURRENT_SCENE_DATA.vpps);
-            let spaced = (gridSize * 5) / 2;
+            let distanceFromCenter = gridSize * Math.ceil(tokensToPlace.length / 8); // this creates a pretty decent spacing that grows with the size of the token list
             tokensToPlace.forEach((item, index) => {
-                let left = (center.x + spaced * Math.cos(2 * Math.PI * index / tokensToPlace.length));
-                let top = (center.y + spaced * Math.sin(2 * Math.PI * index / tokensToPlace.length));
-                create_and_place_token(item, hidden, undefined, left - spaced, top - (spaced / 2));
+                let radius = index / tokensToPlace.length;
+                let left = mapPoint.x + (distanceFromCenter * Math.cos(2 * Math.PI * radius));
+                let top = mapPoint.y + (distanceFromCenter * Math.sin(2 * Math.PI * radius));
+                let viewPoint = convert_point_from_map_to_view(left, top); // convert back to view coordinate space because `create_and_place_token` expects view coordinates to be passed in
+                create_and_place_token(item, hidden, undefined, viewPoint.x, viewPoint.y, true);
             });
         }
         return;
@@ -604,9 +673,10 @@ function create_and_place_token(listItem, hidden = undefined, specificImage= und
     console.log("create_and_place_token about to place token with options", options);
 
     if (eventPageX === undefined || eventPageY === undefined) {
-        place_token_in_center_of_map(options);
+        place_token_in_center_of_view(options);
     } else {
-        place_token_under_cursor(options, eventPageX, eventPageY);
+        let mapPosition = convert_point_from_view_to_map(eventPageX, eventPageY, disableSnap);
+        place_token_at_map_point(options, mapPosition.x, mapPosition.y);
     }
 }
 
@@ -641,6 +711,30 @@ function token_size_for_item(listItem) {
     }
 }
 
+function alternative_images_for_item(listItem) {
+    let alternativeImages;
+    switch (listItem.type) {
+        case SidebarListItem.TypeMyToken:
+            alternativeImages = find_my_token(listItem.fullPath())?.alternativeImages;
+            break;
+        case SidebarListItem.TypePC:
+            alternativeImages = get_player_image_mappings(listItem.sheet);
+            break;
+        case SidebarListItem.TypeMonster:
+            alternativeImages = get_custom_monster_images(listItem.monsterData.id);
+            break;
+        case SidebarListItem.TypeBuiltinToken:
+            alternativeImages = builtInTokens.find(bt => listItem.fullPath() === sanitize_folder_path(`${SidebarListItem.PathAboveVTT}${bt.folderPath}/${bt.name}`) )?.alternativeImages;
+            break;
+    }
+
+    if (alternativeImages === undefined) {
+        alternativeImages = [];
+    }
+
+    return alternativeImages;
+}
+
 /**
  * finds a random image for the given item
  * @param listItem {SidebarListItem} the item you need a random image for
@@ -653,57 +747,15 @@ function random_image_for_item(listItem, specificImage) {
         console.debug("random_image_for_item validSpecifiedImage", validSpecifiedImage);
         return validSpecifiedImage
     }
-    switch (listItem.type) {
-        case SidebarListItem.TypeMyToken:
-            let myToken = find_my_token(listItem.fullPath());
-            let myTokenAltImages = myToken.alternativeImages;
-            if (myTokenAltImages !== undefined && myTokenAltImages.length > 0) {
-                let randomIndex = getRandomInt(0, myTokenAltImages.length);
-                console.debug("random_image_for_item myTokenAltImages", myTokenAltImages, randomIndex);
-                return myTokenAltImages[randomIndex];
-            } else {
-                console.debug("random_image_for_item myTokenAltImages empty, returning", listItem.image);
-                return listItem.image;
-            }
-        case SidebarListItem.TypePC:
-            console.debug("random_image_for_item calling random_image_for_player_token with", listItem.sheet);
-            let randomPlayerImage = parse_img(random_image_for_player_token(listItem.sheet));
-            if (randomPlayerImage !== undefined && randomPlayerImage.length > 0) {
-                console.debug("random_image_for_item randomPlayerImage", randomPlayerImage);
-                return randomPlayerImage;
-            } else {
-                console.debug("random_image_for_item randomPlayerImage not found, returning", listItem.image);
-                return listItem.image;
-            }
-        case SidebarListItem.TypeMonster:
-            let randomMonsterImage = get_random_custom_monster_image(listItem.monsterData.id);
-            if (randomMonsterImage !== undefined && randomMonsterImage.length > 0) {
-                console.debug("random_image_for_item randomMonsterImage", randomMonsterImage);
-                return randomMonsterImage;
-            } else {
-                console.debug("random_image_for_item randomMonsterImage not found, returning", listItem.image);
-                return listItem.image;
-            }
-        case SidebarListItem.TypeBuiltinToken:
-            let bt = builtInTokens.find(bt => {
-                console.debug("random_image_for_item TypeBuiltinToken", listItem.fullPath(), sanitize_folder_path(`${SidebarListItem.PathAboveVTT}${bt.folderPath}/${bt.name}`), listItem, bt);
-                return listItem.fullPath() === sanitize_folder_path(`${SidebarListItem.PathAboveVTT}${bt.folderPath}/${bt.name}`)
-            });
-            console.log("random_image_for_item TypeBuiltinToken found", bt);
-            if (bt?.alternativeImages !== undefined && bt.alternativeImages.length > 0) {
-                let randomIndex = getRandomInt(0, bt.alternativeImages.length);
-                console.debug("random_image_for_item listItem.alternativeImages", bt.alternativeImages, randomIndex, bt.alternativeImages[randomIndex]);
-                return bt.alternativeImages[randomIndex];
-            } else {
-                console.debug("random_image_for_item listItem.alternativeImages not found, returning", listItem.image);
-                return listItem.image;
-            }
-        case SidebarListItem.TypeFolder:
-            console.debug("random_image_for_item folder returning", listItem.image);
-            return listItem.image;
-        default:
-            console.warn("random_image_for_item unknown item type", listItem);
-            return listItem.image;
+
+    let alternativeImages = alternative_images_for_item(listItem);
+    if (alternativeImages !== undefined && alternativeImages.length > 0) {
+        let randomIndex = getRandomInt(0, alternativeImages.length);
+        console.debug("random_image_for_item", alternativeImages, randomIndex);
+        return alternativeImages[randomIndex];
+    } else {
+        console.debug("random_image_for_item alternativeImages empty, returning", listItem.image);
+        return listItem.image;
     }
 }
 
@@ -866,15 +918,12 @@ function display_token_item_configuration_modal(listItem) {
             display_builtin_token_details_modal(listItem);
             break;
         case SidebarListItem.TypeMyToken:
-            display_my_token_configuration_modal(listItem);
-            break;
         case SidebarListItem.TypePC:
-            display_player_token_customization_modal(listItem.sheet);
-            break;
         case SidebarListItem.TypeMonster:
-            // TODO: rebuild this to use listItem like the others do
-            display_monster_customization_modal(undefined, listItem.monsterData.id, listItem.name, listItem.image);
+            display_token_configuration_modal(listItem);
             break;
+        default:
+            console.warn("display_token_item_configuration_modal not supported for listItem", listItem);
     }
 }
 
@@ -1076,7 +1125,7 @@ function delete_folder_and_move_children_up_one_level(listItem) {
  * @param listItem {SidebarListItem} the folder item to create a token in
  */
 function create_token_inside(listItem) {
-    if (!listItem.isTypeFolder() || !listItem.folderPath.startsWith(SidebarListItem.PathMyTokens)) {
+    if (!listItem.isTypeFolder() || !listItem.fullPath().startsWith(SidebarListItem.PathMyTokens)) {
         console.warn("create_token_inside called with an incorrect item type", listItem);
         return;
     }
@@ -1105,40 +1154,77 @@ function create_token_inside(listItem) {
     console.log("create_token_inside created a new item", newItem);
     mytokens.push(myToken);
     did_change_mytokens_items()
-    display_my_token_configuration_modal(newItem);
+    display_token_configuration_modal(newItem)
 }
 
 /**
  * presents a SidebarPanel modal for configuring the given item
  * @param listItem {SidebarListItem} the item to configure
+ * @param placedToken {undefined|Token} the token object that is on the scene
  */
-function display_my_token_configuration_modal(listItem) {
-    if (!listItem?.isTypeMyToken()) {
-        console.warn("display_my_token_configuration_modal was called with incorrect item type", listItem);
-        return;
+function display_token_configuration_modal(listItem, placedToken = undefined) {
+    switch (listItem?.type) {
+        case SidebarListItem.TypeMyToken:
+        case SidebarListItem.TypeMonster:
+        case SidebarListItem.TypePC:
+            break;
+        default:
+            console.warn("display_token_configuration_modal was called with incorrect item type", listItem);
+            return;
     }
 
     // close any that are already open just to be safe
     close_sidebar_modal();
-    let sidebarPanel = new SidebarPanel("mytokens-customization-modal");
+    let sidebarPanel = new SidebarPanel("token-configuration-modal");
     display_sidebar_modal(sidebarPanel);
 
     let name = listItem.name;
-    let tokenSize = listItem.tokenSize;
-    if (tokenSize === undefined) {
-        // we haven't figured out the tokenSize yet so default to 1
-        tokenSize = 1;
-    }
+    let tokenSize = token_size_for_item(listItem);
 
     sidebarPanel.updateHeader(name, "", "When placing tokens, one of these images will be chosen at random. Right-click an image for more options.");
-    redraw_token_images_in_modal(sidebarPanel, listItem);
+    redraw_token_images_in_modal(sidebarPanel, listItem, placedToken);
 
-    // MyToken footer form
+    // add a "remove all" button between the body and the footer
+    let removeAllButton = build_remove_all_images_button(sidebarPanel, listItem, placedToken);
+    sidebarPanel.body.after(removeAllButton);
+    if (alternative_images_for_item(listItem).length === 0) {
+        removeAllButton.hide();
+    }
 
-    let myToken = find_my_token(listItem.fullPath());
+    let inputWrapper = sidebarPanel.inputWrapper;
 
-    const buildOptionSelect = function(name, disabledLabel, enabledLabel) {
-        let inputElement = $(`
+    // images
+    let addImageUrl = function (newImageUrl) {
+        if (listItem.isTypeMonster()) {
+            add_custom_monster_image_mapping(listItem.monsterData.id, parse_img(newImageUrl));
+        } else if (listItem.isTypePC()) {
+            add_player_image_mapping(listItem.sheet, parse_img(newImageUrl));
+        } else if (listItem.isTypeMyToken()) {
+            let myToken = find_my_token(listItem.fullPath());
+            if (myToken.image === undefined || myToken.image === "") {
+                // this is a new token. Replace the default image
+                myToken.image = newImageUrl;
+                listItem.image = newImageUrl;
+            }
+            if (myToken.alternativeImages === undefined) {
+                myToken.alternativeImages = [];
+            }
+            myToken.alternativeImages.push(newImageUrl);
+            did_change_mytokens_items();
+        }
+        redraw_token_images_in_modal(sidebarPanel, listItem, placedToken);
+        removeAllButton.show();
+    };
+    let imageUrlInput = sidebarPanel.build_image_url_input("Add More Images", addImageUrl);
+    inputWrapper.append(imageUrlInput);
+
+    if (listItem.isTypeMyToken()) {
+
+        // MyToken footer form
+        let myToken = find_my_token(listItem.fullPath());
+
+        const buildOptionSelect = function (name, disabledLabel, enabledLabel) {
+            let inputElement = $(`
             <select name="${name}">
                 <option value="default">Default</option>
                 <option value="disabled">${disabledLabel}</option>
@@ -1146,111 +1232,101 @@ function display_my_token_configuration_modal(listItem) {
             </select>
         `);
 
-        // explicitly look for true/false because the default value is undefined
-        let configuredValue = myToken[name];
-        if (configuredValue === true) {
-            inputElement.val("enabled");
-        } else if (configuredValue === false) {
-            inputElement.val("disabled");
-        } else {
-            inputElement.val("default");
-        }
-        inputElement.change(function(event) {
-            console.log("update", event.target.name , "to", event.target.value);
-            if (event.target.value === "enabled") {
-                myToken[name] = true;
-            } else if (event.target.value === "disabled") {
-                myToken[name] = false;
+            // explicitly look for true/false because the default value is undefined
+            let configuredValue = myToken[name];
+            if (configuredValue === true) {
+                inputElement.val("enabled");
+            } else if (configuredValue === false) {
+                inputElement.val("disabled");
             } else {
-                delete myToken[name];
+                inputElement.val("default");
             }
-            persist_my_tokens();
-            decorate_modal_images(sidebarPanel, listItem);
+            inputElement.change(function (event) {
+                console.log("update", event.target.name, "to", event.target.value);
+                if (event.target.value === "enabled") {
+                    myToken[name] = true;
+                } else if (event.target.value === "disabled") {
+                    myToken[name] = false;
+                } else {
+                    delete myToken[name];
+                }
+                persist_my_tokens();
+                decorate_modal_images(sidebarPanel, listItem, placedToken);
+            });
+            return inputElement;
+        };
+
+        // token name
+        inputWrapper.append($(`<div class="token-image-modal-footer-title" style="width:100%;padding-left:0px">Token Name</div>`));
+        let nameInput = $(`<input data-previous-name="${name}" title="token name" placeholder="my token name" name="addCustomName" type="text" style="width:100%" value="${name === undefined ? '' : name}" />`);
+        nameInput.on('keyup', function (event) {
+            if (event.key === "Enter" && event.target.value !== undefined && event.target.value.length > 0) {
+                console.log("update token name to", event.target.value);
+                let renameSucceeded = rename_my_token(myToken, event.target.value, true);
+                if (renameSucceeded) {
+                    did_change_mytokens_items();
+                    listItem.name = event.target.value;
+                    sidebarPanel.updateHeader(event.target.value, "", "When placing tokens, one of these images will be chosen at random. Right-click an image for more options.");
+                    redraw_token_images_in_modal(sidebarPanel, listItem, placedToken);
+                } else {
+                    $(event.target).select();
+                }
+            }
         });
-        return inputElement;
-    };
+        inputWrapper.append(nameInput);
 
-    let inputWrapper = sidebarPanel.inputWrapper;
+        // token size
+        let tokenSizeInput = build_token_size_input(tokenSize, function (newSize) {
+            console.log("do something with new token size", newSize)
+        });
+        inputWrapper.append(tokenSizeInput);
+        inputWrapper.append(`<div class="sidebar-panel-header-explanation" style="padding-bottom:6px;">The following will override global settings for this token. Global settings can be changed in the settings tab.</div>`)
 
-    // images
-    let imageUrlInput = sidebarPanel.build_image_url_input("Add More Images", function (newImageUrl) {
-        if (myToken.image === undefined || myToken.image === "") {
-            // this is a new token. Replace the default image
-            myToken.image = newImageUrl;
-            listItem.image = newImageUrl;
-        }
-        if (myToken.alternativeImages === undefined) {
-            myToken.alternativeImages = [];
-        }
-        myToken.alternativeImages.push(newImageUrl);
-        persist_my_tokens();
-        redraw_token_images_in_modal(sidebarPanel, listItem);
-    });
-    inputWrapper.append(imageUrlInput);
+        // token type
+        let tokenTypeInput = buildOptionSelect("square", "Round", "Square");
+        let tokenTypeInputWrapper = build_select_input("Token Shape", tokenTypeInput);
+        inputWrapper.append(tokenTypeInputWrapper);        // adds class token-round
 
+        // token border
+        let hideBorderInput = buildOptionSelect("disableborder", "Border", "No Border");
+        let hideBorderInputWrapper = build_select_input("Border Visibility", hideBorderInput);
+        inputWrapper.append(hideBorderInputWrapper); // sets border-width: 4
 
-    // token name
-    inputWrapper.append($(`<div class="token-image-modal-footer-title" style="width:100%;padding-left:0px">Token Name</div>`));
-    let nameInput = $(`<input data-previous-name="${name}" title="token name" placeholder="my token name" name="addCustomName" type="text" style="width:100%" value="${name === undefined ? '' : name}" />`);
-    nameInput.on('keyup', function(event) {
-        if (event.key === "Enter" && event.target.value !== undefined && event.target.value.length > 0) {
-            console.log("update token name to", event.target.value);
-            let renameSucceeded = rename_my_token(myToken, event.target.value, true);
-            if (renameSucceeded) {
-                did_change_mytokens_items();
-                listItem.name = event.target.value;
-                sidebarPanel.updateHeader(event.target.value, "", "When placing tokens, one of these images will be chosen at random. Right-click an image for more options.");
-                redraw_token_images_in_modal(sidebarPanel, listItem);
-            } else {
-                $(event.target).select();
+        // token aspect ratio
+        let aspectRatioInput = buildOptionSelect("legacyaspectratio", "Maintain", "Stretch")
+        let aspectRatioInputWrapper = build_select_input("Aspect Ratio", aspectRatioInput);
+        inputWrapper.append(aspectRatioInputWrapper);     // adds class preserve-aspect-ratio
+
+        // submit form button
+        let saveButton = $(`<button class="sidebar-panel-footer-button" style="width:100%;padding:8px;margin-top:8px;margin-left:0px;">Save Token</button>`);
+        saveButton.on("click", function (event) {
+            let nameInput = $(event.target).parent().find("input[name='addCustomName']");
+            let updatedName = nameInput.val();
+            let previousName = nameInput.attr("data-previous-name");
+            if (updatedName !== previousName) {
+                let renameSucceeded = rename_my_token(myToken, updatedName, true);
+                if (renameSucceeded) {
+                    listItem.name = updatedName;
+                } else {
+                    // we can't save this token until they change the name
+                    nameInput.select();
+                    return;
+                }
             }
-        }
-    });
-    inputWrapper.append(nameInput);
 
-    // token size
-    let tokenSizeInput = temp_build_token_size_input(tokenSize, function (newSize) {
-        console.log("do something with new token size", newSize)
-    });
-    inputWrapper.append(tokenSizeInput);
-    inputWrapper.append(`<div class="sidebar-panel-header-explanation" style="padding-bottom:6px;">The following will override global settings for this token. Global settings can be changed in the settings tab.</div>`)
-
-    // token type
-    let tokenTypeInput = buildOptionSelect("square", "Round", "Square");
-    let tokenTypeInputWrapper = build_select_input("Token Shape", tokenTypeInput);
-    inputWrapper.append(tokenTypeInputWrapper);        // adds class token-round
-
-    // token border
-    let hideBorderInput = buildOptionSelect("disableborder", "Border", "No Border");
-    let hideBorderInputWrapper = build_select_input("Border Visibility", hideBorderInput);
-    inputWrapper.append(hideBorderInputWrapper); // sets border-width: 4
-
-    // token aspect ratio
-    let aspectRatioInput = buildOptionSelect("legacyaspectratio", "Maintain", "Stretch")
-    let aspectRatioInputWrapper = build_select_input("Aspect Ratio", aspectRatioInput);
-    inputWrapper.append(aspectRatioInputWrapper);     // adds class preserve-aspect-ratio
-
-    // submit form button
-    let saveButton = $(`<button class="sidebar-panel-footer-button" style="width:100%;padding:8px;margin-top:8px;margin-left:0px;">Save Token</button>`);
-    saveButton.on("click", function(event) {
-        console.log("submit token form?", event);
-        let nameInput = $(event.target).parent().find("input[name='addCustomName']");
-        let updatedName = nameInput.val();
-        let previousName = nameInput.attr("data-previous-name");
-        if (updatedName !== previousName) {
-            let renameSucceeded = rename_my_token(myToken, updatedName, true);
-            if (renameSucceeded) {
-                listItem.name = updatedName;
-            } else {
-                // we can't save this token until they change the name
-                nameInput.select();
-                return;
+            // just in case, they pasted a url, but didn't press the enter key or click the Add button, we should grab the url and save it
+            if (listItem.image === undefined || listItem.image.length === 0) {
+                let imageUrl = $(event.target).parent().find(`input[name='addCustomImage']`)[0].value;
+                if (imageUrl !== undefined && imageUrl.length > 0) {
+                    addImageUrl(imageUrl);
+                }
             }
-        }
-        did_change_mytokens_items();
-        close_sidebar_modal();
-    });
-    inputWrapper.append(saveButton);
+
+            did_change_mytokens_items();
+            close_sidebar_modal();
+        });
+        inputWrapper.append(saveButton);
+    }
 }
 
 /**
@@ -1278,8 +1354,9 @@ function rename_my_token(myToken, newName, alertUser) {
 /**
  * displays a SidebarPanel modal with the details of the given Builtin token. This is not editable, but shows multiple images, that can be drag and dropped onto the scene
  * @param listItem {SidebarListItem} the builtin item to display a modal for
+ * @param placedToken {Token|undefined} undefined if this modal does not represnet a token that is placed on the scene; else the Token object that corresponds to a token that is placed on the scene
  */
-function display_builtin_token_details_modal(listItem) {
+function display_builtin_token_details_modal(listItem, placedToken) {
     if (!listItem?.isTypeBuiltinToken()) {
         console.warn("display_builtin_token_details_modal was called with incorrect item type", listItem);
         return;
@@ -1292,7 +1369,7 @@ function display_builtin_token_details_modal(listItem) {
     display_sidebar_modal(sidebarPanel);
     sidebarPanel.updateHeader(listItem.name, "", "When placing tokens, one of these images will be chosen at random. Right-click an image for more options.");
 
-    redraw_token_images_in_modal(sidebarPanel, listItem);
+    redraw_token_images_in_modal(sidebarPanel, listItem, placedToken);
 }
 
 /**
@@ -1302,36 +1379,53 @@ function display_builtin_token_details_modal(listItem) {
  * @param placedToken {Token|undefined} undefined if this modal does not represnet a token that is placed on the scene; else the Token object that corresponds to a token that is placed on the scene
  */
 function redraw_token_images_in_modal(sidebarPanel, listItem, placedToken) {
-    sidebarPanel.body.empty();
+    if (sidebarPanel === undefined) {
+        console.warn("redraw_token_images_in_modal was called without a sidebarPanel");
+        return;
+    }
+    if (listItem === undefined) {
+        console.warn("redraw_token_images_in_modal was called without a listItem");
+        return;
+    }
 
-    let image = parse_img(listItem.image);
+    sidebarPanel.body.empty();
+    let modalBody = sidebarPanel.body
+
+    const buildTokenDiv = function(imageUrl) {
+        let parsedImage = parse_img(imageUrl);
+        let tokenDiv = build_alternative_image_for_modal(parsedImage, placedToken);
+        if (placedToken?.isMonster()) {
+            tokenDiv.attr("data-monster", placedToken.options.monster);
+        }
+        set_full_path(tokenDiv, listItem.fullPath());
+        enable_draggable_token_creation(tokenDiv, parsedImage);
+        return tokenDiv;
+    }
 
     // clone our images array instead of using a reference so we don't accidentally change the current images for all tokens
     // we also need to parse and compare every image to know if we need to add the placedToken image
-    let images = alternative_images(listItem).map(image => parse_img(image));
+    let alternativeImages = alternative_images(listItem).map(image => parse_img(image));
 
-    if (image !== undefined && !images.includes(image)) {
-        // the main image somehow isn't in the list so put it at the front. This can happen when you update the image for a placed token but not saving it
-        images.unshift(image);
+    let placedImg = parse_img(placedToken?.options?.imgsrc);
+    if (placedImg.length > 0 && !alternativeImages.includes(placedImg)) {
+        // the placedToken image has been changed by the user so put it at the front
+        let tokenDiv = buildTokenDiv(placedImg);
+        tokenDiv.attr("data-token-id", placedToken.options.id);
+        modalBody.append(tokenDiv);
     }
 
-    if (placedToken !== undefined) {
-        let placedImg = parse_img(placedToken.options.imgsrc);
-        if (placedImg !== undefined && placedImg !== "" && !images.includes(placedImg)) {
-            // the placedToken image has been changed by the user so put it at the front
-            images.unshift(placedImg);
-        }
+    if (alternativeImages.length === 0 && placedImg !== parse_img(listItem.image)) {
+        // if we don't have any alternative images, show the default image
+        let tokenDiv = buildTokenDiv(listItem.image);
+        modalBody.append(tokenDiv);
     }
 
-    for (let i = 0; i < images.length; i++) {
-        let imageUrl = images[i];
-        let tokenDiv = build_alternative_image_for_modal(imageUrl, placedToken);
-        set_full_path(tokenDiv, listItem.fullPath());
-        enable_draggable_token_creation(tokenDiv, imageUrl);
-        sidebarPanel.body.append(tokenDiv);
+    for (let i = 0; i < alternativeImages.length; i++) {
+        let tokenDiv = buildTokenDiv(alternativeImages[i]);
+        modalBody.append(tokenDiv);
     }
 
-    decorate_modal_images(sidebarPanel, listItem);
+    decorate_modal_images(sidebarPanel, listItem, placedToken);
 }
 
 /**
@@ -1350,6 +1444,7 @@ function build_alternative_image_for_modal(image, placedToken) {
     if (placedToken !== undefined) {
         // the user is changing their token image, allow them to simply click an image
         // we don't want to allow drag and drop from this modal
+        tokenDiv.attr("data-token-id", placedToken.options.id);
         tokenDiv.on("click", function() {
             placedToken.options.imgsrc = parse_img(image);
             close_sidebar_modal();
@@ -1362,60 +1457,59 @@ function build_alternative_image_for_modal(image, placedToken) {
 /**
  * iterates over all the images in a sidebarPanel modal and udpates them to match the settings of the given listItem.
  * @param sidebarPanel {SidebarPanel} the modal to update
- * @param listItem {SidebarListItem} the item the modal represents
+ * @param listItem {SidebarListItem|undefined} the item the modal represents
+ * @param placedToken {Token|undefined} the token on the scene
  */
-function decorate_modal_images(sidebarPanel, listItem) {
+function decorate_modal_images(sidebarPanel, listItem, placedToken) {
 
-    if (listItem === undefined) {
-        console.warn("decorate_modal_images was called without a listItem");
+    if (listItem === undefined && placedToken === undefined) {
+        console.warn("decorate_modal_images was called without a listItem or a placedToken");
         return;
     }
 
     let myToken = undefined;
-    if (listItem.isTypeMyToken()) {
+    if (listItem?.isTypeMyToken()) {
         // use myToken overrides if they exist, else fall back to global setting
         myToken = find_my_token(listItem.fullPath());
     }
 
     let items = sidebarPanel.body.find(".custom-token-image-item");
 
-    let tokenSquareSetting = myToken?.square;
-    let globalSquareSetting = window.TOKEN_SETTINGS["square"];
-    if (tokenSquareSetting === true) {
-        items.find("img").removeClass("token-round");
-    } else if (tokenSquareSetting === false) {
-        items.find("img").addClass("token-round");
-    } else if (globalSquareSetting === true) {
+    const getSettingValue = function(settingName) {
+        if (myToken !== undefined && myToken[settingName] !== undefined) {
+            return myToken[settingName];
+        } else if (placedToken !== undefined) {
+            return placedToken.options[settingName];
+        } else {
+            return window.TOKEN_SETTINGS[settingName];
+        }
+    }
+
+    let squareSetting = getSettingValue("square");
+    if (squareSetting === true) {
         items.find("img").removeClass("token-round");
     } else {
         items.find("img").addClass("token-round");
     }
 
-    let tokenBorderSetting = myToken?.disableborder;
-    let globalBorderSetting = window.TOKEN_SETTINGS["disableborder"];
-    if (tokenBorderSetting === true) {
-        items.find("img").css("border", "0px solid #000")
-    } else if (tokenBorderSetting === false) {
-        items.find("img").css("border", "4px solid #000")
-    } else if (globalBorderSetting === true) {
+    let borderSetting = getSettingValue("disableborder");
+    if (borderSetting === true) {
         items.find("img").css("border", "0px solid #000")
     } else {
         items.find("img").css("border", "4px solid #000")
     }
 
-    let tokenLegacyaspectratio = myToken?.legacyaspectratio;
-    let globalLegacyaspectratio = window.TOKEN_SETTINGS["legacyaspectratio"];
-    if (tokenLegacyaspectratio === true) {
-        items.find("img").removeClass("preserve-aspect-ratio");
-    } else if (tokenLegacyaspectratio === false) {
-        items.find("img").addClass("preserve-aspect-ratio");
-    } else if (globalLegacyaspectratio === true) {
+    let legacyaspectratio = getSettingValue("legacyaspectratio");
+    if (legacyaspectratio === true) {
         items.find("img").removeClass("preserve-aspect-ratio");
     } else {
         items.find("img").addClass("preserve-aspect-ratio");
     }
 
-    let tokenSize = myToken?.tokenSize;
+    let tokenSize = token_size_for_item(listItem);
+    if (tokenSize === undefined && placedToken !== undefined) {
+        placedToken.gridSize();
+    }
     if (tokenSize === undefined) {
         tokenSize = 1;
     }
@@ -1701,72 +1795,6 @@ function convert_challenge_rating_id(crId) {
     }
 }
 
-/// this is a duplicate from a different PR that will be replaced once https://github.com/cyruzzo/AboveVTT/pull/314 is merged
-function temp_build_token_size_input(currentTokenSize, changeHandler) {
-    let sizeNumber = parseInt(currentTokenSize); // 0, 1, 2, 3, 4, 5, etc
-    if (isNaN(sizeNumber)) {
-        sizeNumber = 1;
-    }
-
-    let upsq = window.CURRENT_SCENE_DATA.upsq;
-    if (upsq === undefined || upsq.length === 0) {
-        upsq = "ft";
-    }
-
-    let customStyle = sizeNumber > 4 ? "display:flex;" : "display:none;"
-
-    let output = $(`
- 		<div class="token-image-modal-footer-select-wrapper">
- 			<div class="token-image-modal-footer-title">Token Size</div>
- 			<select name="data-token-size">
- 				<option value="0">Tiny (2.5${upsq})</option>
- 				<option value="1">Small/Medium (5${upsq})</option>
- 				<option value="2">Large (10${upsq})</option>
- 				<option value="3">Huge (15${upsq})</option>
- 				<option value="4">Gargantuan (20${upsq})</option>
- 				<option value="custom">Custom</option>
- 			</select>
- 		</div>
- 		<div class="token-image-modal-footer-select-wrapper" style="${customStyle}">
- 			<div class="token-image-modal-footer-title">Number Of Squares</div>
- 			<input type="text" name="data-token-size-custom" placeholder="5" style="width: 3rem;">
- 		</div>
- 	`);
-
-    let tokenSizeInput = output.find("select");
-    let customSizeInput = output.find("input");
-    if (sizeNumber > 4) {
-        tokenSizeInput.val("custom");
-        customSizeInput.val(`${sizeNumber}`);
-    } else {
-        tokenSizeInput.val(`${sizeNumber}`);
-    }
-
-    tokenSizeInput.change(function(changeEvent) {
-        let selectInput = $(changeEvent.target);
-        let newValue = selectInput.val();
-        let customInputWrapper = selectInput.parent().next();
-        console.log("tokenSizeInput changed");
-        if (newValue === "custom") {
-            customInputWrapper.show();
-        } else {
-            customInputWrapper.hide();
-            changeHandler(parseInt(newValue));
-        }
-    });
-
-    customSizeInput.change(function(changeEvent) {
-        console.log("customSizeInput changed");
-        let textInput = $(changeEvent.target);
-        let numberOfSquares = parseInt(textInput.val());
-        if (!isNaN(numberOfSquares)) {
-            changeHandler(numberOfSquares);
-        }
-    });
-
-    return output;
-}
-
 function display_monster_filter_modal() {
 
     let iframe = $(`<iframe id='monster-filter-iframe'></iframe>`);
@@ -1880,4 +1908,285 @@ function monster_search_filter_query_param() {
         }
     }
     return queryParams.join("&");
+}
+
+function register_custom_token_image_context_menu() {
+    $.contextMenu({
+        selector: ".custom-token-image-item",
+        items: {
+            place: {
+                name: "Place Token",
+                callback: function (itemKey, opt, originalEvent) {
+                    let itemToPlace = find_sidebar_list_item(opt.$trigger);
+                    let specificImage = undefined;
+                    let imgSrc = opt.$trigger.find("img.token-image").attr("src");
+                    if (imgSrc !== undefined && imgSrc.length > 0) {
+                        specificImage = imgSrc;
+                    }
+                    create_and_place_token(itemToPlace, false, specificImage);
+                }
+            },
+            placeHidden: {
+                name: "Place Hidden Token",
+                callback: function (itemKey, opt, originalEvent) {
+                    let itemToPlace = find_sidebar_list_item(opt.$trigger);
+                    let specificImage = undefined;
+                    let imgSrc = opt.$trigger.find("img.token-image").attr("src");
+                    if (imgSrc !== undefined && imgSrc.length > 0) {
+                        specificImage = imgSrc;
+                    }
+                    create_and_place_token(itemToPlace, true, specificImage);
+                }
+            },
+            copy: {
+                name: "Copy Url",
+                callback: function (itemKey, opt, e) {
+                    let selectedItem = $(opt.$trigger[0]);
+                    let imgSrc = selectedItem.find("img").attr("src");
+                    copy_to_clipboard(imgSrc);
+                }
+            },
+            border: "---",
+            remove: {
+                name: "Remove",
+                callback: function (itemKey, opt, originalEvent) {
+                    let selectedItem = $(opt.$trigger[0]);
+                    let imgSrc = selectedItem.find("img").attr("src");
+                    let listItem = find_sidebar_list_item(opt.$trigger);
+
+                    // if they are removing the image that is set on a token, ask them if they really want to remove it
+                    let placedTokenId = selectedItem.attr("data-token-id");
+                    let placedToken = window.TOKEN_OBJECTS[placedTokenId];
+                    if (placedToken !== undefined && placedToken.options.imgsrc === imgSrc) {
+                        let continueRemoving = confirm("This image is set on the token. Removing it will remove the image on the token as well. Are you sure you want to remove this image?")
+                        if (!continueRemoving) {
+                            return;
+                        }
+                        placedToken.options.imgsrc = "";
+                        placedToken.place_sync_persist();
+                    }
+
+                    if (listItem?.isTypeMyToken()) {
+                        let myToken = find_my_token(listItem.fullPath());
+                        if (myToken.alternativeImages !== undefined) {
+                            array_remove_index_by_value(myToken.alternativeImages, imgSrc);
+                        }
+                        if (myToken.image === imgSrc) {
+                            if (myToken.alternativeImages !== undefined && myToken.alternativeImages.length > 0) {
+                                myToken.image = myToken.alternativeImages[0];
+                            } else {
+                                myToken.image = "";
+                            }
+                        }
+                        did_change_mytokens_items();
+                    } else if (listItem?.isTypeMonster()) {
+                        let monsterId = listItem.monsterData.id;
+                        let customImages = get_custom_monster_images(monsterId);
+                        let imageIndex = customImages.findIndex(image => image === imgSrc);
+                        if (imageIndex >= 0) {
+                            remove_custom_monster_image(monsterId, imageIndex);
+                            if (get_custom_monster_images(monsterId).length === 0) {
+                                redraw_token_images_in_modal(window.current_sidebar_modal, listItem, placedToken);
+                            }
+                        }
+                    } else if (listItem?.isTypePC()) {
+                        let playerId = listItem.sheet;
+                        let customImages = get_player_image_mappings(playerId);
+                        let imageIndex = customImages.findIndex(image => image === imgSrc);
+                        if (imageIndex >= 0) {
+                            remove_player_image_mapping(playerId, imageIndex);
+                            if (get_player_image_mappings(playerId).length === 0) {
+                                redraw_token_images_in_modal(window.current_sidebar_modal, listItem, placedToken);
+                            }
+                        }
+                    } else {
+                        alert("An unexpected error occurred");
+                    }
+
+                    selectedItem.remove();
+                }
+            }
+        }
+    });
+}
+
+function remove_all_images_for_my_token(listItem) {
+    if (!listItem.isTypeMyToken()) {
+        console.warn("remove_all_images_for_my_token was called with the wrong item type", listItem);
+        return;
+    }
+    let myToken = find_my_token(listItem.fullPath());
+    if (myToken === undefined) {
+        console.warn("remove_all_images_for_my_token could not find mytoken matching item", listItem);
+        return;
+    }
+    myToken.alternativeImages = [];
+    myToken.image = "";
+    did_change_mytokens_items();
+}
+
+function build_remove_all_images_button(sidebarPanel, listItem, placedToken) {
+    // add a "remove all" button between the body and the footer
+    let removeAllButton = $(`<button class="token-image-modal-remove-all-button" title="Reset this token back to the default image.">Remove All Custom Images</button>`);
+    removeAllButton.on("click", function(event) {
+        let tokenName = listItem !== undefined ? listItem.name : placedToken.options.name
+        if (window.confirm(`Are you sure you want to remove all custom images for ${tokenName}?\nThis will reset the token images back to the default`)) {
+            if (listItem?.isTypeMonster() || placedToken?.isMonster()) {
+                let monsterId = listItem !== undefined ? listItem.monsterData.id : placedToken.options.monster;
+                remove_all_custom_monster_images(monsterId);
+            } else if (listItem?.isTypePC() || placedToken?.isPlayer()) {
+                let playerId = listItem !== undefined ? listItem.sheet : placedToken.options.id;
+                remove_all_player_image_mappings(playerId);
+            } else if (listItem.isTypeMyToken()) {
+                remove_all_images_for_my_token(listItem);
+                listItem.image = "";
+            } else {
+                alert("An unexpected error occurred");
+            }
+            redraw_token_images_in_modal(sidebarPanel, listItem, placedToken);
+            $(event.currentTarget).hide();
+        }
+    });
+    return removeAllButton;
+}
+
+function display_change_image_modal(placedToken) {
+    if (placedToken === undefined) {
+        console.warn("Attempted to call display_change_image_modal without a token");
+        return;
+    }
+
+    close_sidebar_modal();
+    let sidebarPanel = new SidebarPanel("token-change-image-modal");
+    display_sidebar_modal(sidebarPanel);
+    let modalBody = sidebarPanel.body;
+
+    /// update the modal header
+    sidebarPanel.updateHeader(placedToken.options.name, "Token Images", "Click an image below to update your token or enter a new image URL at the bottom.");
+
+    /// draw tokens in the body
+    let listItem = list_item_from_token(placedToken);
+    redraw_token_images_in_modal(sidebarPanel, listItem, placedToken);
+
+    // add a "remove all" button between the body and the footer
+    let removeAllButton = build_remove_all_images_button(sidebarPanel, listItem, placedToken);
+    modalBody.after(removeAllButton);
+
+    /// build the footer
+
+    // we want this as a function so we can easily get the updated list as the user adds/removes images
+    const findAlternativeImages = function() {
+        let alternativeImages;
+        if (placedToken.isMonster()) {
+            alternativeImages = get_custom_monster_images(placedToken.options.monster);
+        } else if (placedToken.isPlayer()) {
+            alternativeImages = get_player_image_mappings(placedToken.options.id);
+        } else {
+            alternativeImages = alternative_images_for_item(listItem);
+        }
+        if (alternativeImages === undefined) {
+            alternativeImages = [];
+        }
+        return alternativeImages;
+    };
+
+    // we want this as a function so we can easily update the label as the user adds/removes images
+    const determineLabelText = function() {
+        if (findAlternativeImages().length === 0) {
+            return "Replace The Default Image";
+        } else {
+            return "Add More Custom Images";
+        }
+    }
+
+    // this will be called when the user enters a new url
+    const add_token_customization_image = function(imageUrl) {
+        if(imageUrl.startsWith("data:")){
+            alert("You cannot use urls starting with data:");
+            return;
+        }
+        if (findAlternativeImages().length === 0) {
+            // this is the first custom image so remove the default image before appending the new one
+            sidebarPanel.body.empty();
+        }
+        if (placedToken.isMonster()) {
+            add_custom_monster_image_mapping(placedToken.options.monster, parse_img(imageUrl));
+        } else if (placedToken.isPlayer()) {
+            add_player_image_mapping(placedToken.options.id, parse_img(imageUrl));
+        } else if (listItem?.isTypeMyToken()) {
+            let myToken = find_my_token(listItem.fullPath());
+            if (myToken.image === undefined || myToken.image === "") {
+                myToken.image = parse_img(imageUrl);
+            }
+            myToken.alternativeImages.push(parse_img(imageUrl));
+            did_change_mytokens_items();
+        }
+        let tokenDiv = build_alternative_image_for_modal(imageUrl, placedToken);
+        modalBody.append(tokenDiv);
+        footerLabel.text(determineLabelText())
+        removeAllButton.show();
+        decorate_modal_images(sidebarPanel, listItem, placedToken);
+    };
+    if (alternative_images_for_item(listItem).length === 0) {
+        removeAllButton.hide();
+    }
+
+    let imageUrlInput = sidebarPanel.build_image_url_input(determineLabelText(), add_token_customization_image);
+    sidebarPanel.inputWrapper.append(imageUrlInput);
+    let footerLabel = imageUrlInput.find("div.token-image-modal-footer-title");
+
+    let inputWrapper = sidebarPanel.inputWrapper;
+    sidebarPanel.footer.find(`.token-image-modal-add-button`).remove();
+    // allow them to use the new url for the placed token without saving the url for all future tokens
+    let onlyForThisTokenButton = $(`<button class="sidebar-panel-footer-button" title="This url will be used for this token only. New tokens will continue to use the images shown above.">Set for this token only</button>`);
+    onlyForThisTokenButton.on("click", function(event) {
+        let imageUrl = $(`input[name='addCustomImage']`)[0].value;
+        if (imageUrl !== undefined && imageUrl.length > 0) {
+            placedToken.options.imgsrc = parse_img(imageUrl);
+            close_sidebar_modal();
+            placedToken.place_sync_persist();
+        }
+    });
+    inputWrapper.append(onlyForThisTokenButton);
+    let addForAllButton = $(`<button class="sidebar-panel-footer-button" title="New tokens will use this new image instead of the default image. If you have more than one custom image, one will be chosen at random when you place a new token.">Add for all future tokens</button>`);
+    addForAllButton.on("click", function(event) {
+        let imageUrl = $(`input[name='addCustomImage']`)[0].value;
+        if (imageUrl !== undefined && imageUrl.length > 0) {
+            add_token_customization_image(parse_img(imageUrl));
+        }
+    });
+    inputWrapper.append(addForAllButton);
+    inputWrapper.append($(`<div class="sidebar-panel-header-explanation" style="padding:4px;">You can access this modal from the Tokens tab by clicking the gear button on the right side of the token row.</div>`));
+}
+
+
+function fetch_and_cache_scene_monster_items(clearCache = false) {
+    if (clearCache) {
+        cached_monster_items = [];
+    }
+    let monsterIds = [];
+    for (let id in window.TOKEN_OBJECTS) {
+        let token = window.TOKEN_OBJECTS[id];
+        if (token.isMonster()) {
+            let alreadyCached = cached_monster_items.find(cachedItem => cachedItem.monsterData.id === token.options.monster);
+            if (!alreadyCached) {
+                // we only want monsters that we haven't already cached. no need to keep fetching the same things
+                monsterIds.push(token.options.monster);
+            }
+        }
+    }
+    if (monsterIds.length === 0) {
+        return;
+    }
+    console.log("fetch_encounter_monsters starting");
+    window.EncounterHandler.fetch_monsters(monsterIds, function (response) {
+        if (response !== false) {
+            cached_monster_items = cached_monster_items.concat(response.map(m => SidebarListItem.Monster(m)));
+            let monsterFolder = find_html_row_from_path(SidebarListItem.PathMonsters, tokensPanel.body);
+            if (monsterFolder.is(":empty")) {
+                let currentSearchTerm = tokensPanel.header.find("input[name='token-search']").val();
+                inject_monster_tokens(currentSearchTerm, 0);
+            }
+        }
+    });
 }
