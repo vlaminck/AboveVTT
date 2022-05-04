@@ -10,20 +10,20 @@ function is_campaign_page() {
 }
 
 function encounter_builder_dice_supported() {
-    // this function should be deleted once PR #399, and PR #408 have been merged.
-    // For now, we'll just always return false to make everything act as if it isn't here
-    return false;
+	// this function should be deleted once PR #399, and PR #408 have been merged.
+	// For now, we'll just always return false to make everything act as if it isn't here
+	return false;
 }
 
 function get_campaign_id() {
-    // this function is redundant and should be deleted once PR #400 has been merged
-    return find_game_id();
+	// this function is redundant and should be deleted once PR #400 has been merged
+	return find_game_id();
 }
 
 class EncounterHandler {
 
-    encounters = {};
-    campaign = {};
+	encounters = {};
+	campaign = {};
 
 	constructor(callback) {
 		if (typeof callback !== 'function') {
@@ -39,8 +39,8 @@ class EncounterHandler {
 			this.fetch_avtt_encounter(this.avttId, function (fetchSucceeded) {
 				callback(fetchSucceeded);
 			});
-            this.fetch_all_encounters(); // we'll eventually want these around so queue these requests as well
-            this.fetch_campaign_info(); // we'll eventually want these around so queue these requests as well
+			this.fetch_all_encounters(); // we'll eventually want these around so queue these requests as well
+			this.fetch_campaign_info(); // we'll eventually want these around so queue these requests as well
 		} else {
 			// fetch all encounters, grab our AboveVTT encounter, delete any duplicates, and then move on.
 			// We only care if the final fetch_or_create_avtt_encounter fails
@@ -210,7 +210,7 @@ class EncounterHandler {
 		}
 		console.log(`fetch_campaign_info starting`);
 		window.ajaxQueue.addDDBRequest({
-            url: `https://www.dndbeyond.com/api/campaign/stt/active-campaigns/${find_game_id()}`,
+			url: `https://www.dndbeyond.com/api/campaign/stt/active-campaigns/${find_game_id()}`,
 			success: function (responseData) {
 				console.log(`fetch_campaign_info succeeded`);
 				window.EncounterHandler.campaign = responseData.data;
@@ -230,29 +230,29 @@ class EncounterHandler {
 		}
 		console.log(`create_avtt_encounter starting`);
 
-			window.ajaxQueue.addDDBRequest({
-				type: "POST",
-				contentType: "application/json; charset=utf-8",
-				dataType: "json",
-				url: `https://encounter-service.dndbeyond.com/v1/encounters`,
-				data: JSON.stringify({
-					"name": "AboveVTT",
-					"flavorText": "This encounter is maintained by AboveVTT",
-                "description": "If you delete this encounter, a new one will be created the next time you DM a game. If you edit this encounter, your changes will be overwritten by AboveVTT."
-				}),
-				success: function (responseData) {
-					console.log(`create_avtt_encounter successfully created encounter`);
-					let avttEncounter = responseData.data;
-					console.log(JSON.stringify(avttEncounter));
-					window.EncounterHandler.avttId = avttEncounter.id;
-					window.EncounterHandler.encounters[avttEncounter.id] = avttEncounter;
-					callback(avttEncounter);
-				},
-				error: function (errorMessage) {
-					console.warn(`create_avtt_encounter failed ${errorMessage}`);
-					callback(false, errorMessage?.responseJSON?.type);
-				}
-			});
+		window.ajaxQueue.addDDBRequest({
+			type: "POST",
+			contentType: "application/json; charset=utf-8",
+			dataType: "json",
+			url: `https://encounter-service.dndbeyond.com/v1/encounters`,
+			data: JSON.stringify({
+				"name": "AboveVTT",
+				"flavorText": "This encounter is maintained by AboveVTT",
+				"description": "If you delete this encounter, a new one will be created the next time you DM a game. If you edit this encounter, your changes will be overwritten by AboveVTT."
+			}),
+			success: function (responseData) {
+				console.log(`create_avtt_encounter successfully created encounter`);
+				let avttEncounter = responseData.data;
+				console.log(JSON.stringify(avttEncounter));
+				window.EncounterHandler.avttId = avttEncounter.id;
+				window.EncounterHandler.encounters[avttEncounter.id] = avttEncounter;
+				callback(avttEncounter);
+			},
+			error: function (errorMessage) {
+				console.warn(`create_avtt_encounter failed ${errorMessage}`);
+				callback(false, errorMessage?.responseJSON?.type);
+			}
+		});
 	}
 
 	/// This fetches all the characters associated with the campaign. It isn't currently used, but could potentially replace part of DDBCharacterData.js
@@ -262,7 +262,7 @@ class EncounterHandler {
 		}
 		console.log(`fetch_campaign_characters starting`);
 		window.ajaxQueue.addDDBRequest({
-            url: `https://www.dndbeyond.com/api/campaign/stt/active-short-characters/${find_game_id()}`,
+			url: `https://www.dndbeyond.com/api/campaign/stt/active-short-characters/${find_game_id()}`,
 			success: function (responseData) {
 				console.log(`fetch_campaign_characters succeeded`);
 				window.EncounterHandler.campaignShortCharacters = responseData.data;
