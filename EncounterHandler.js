@@ -36,9 +36,7 @@ class EncounterHandler {
 		if (is_encounters_page()) {
 			// we really only care about the encounter that we're currently on the page of
 			this.avttId = window.location.pathname.substring(window.location.pathname.lastIndexOf("/") + 1);
-			this.fetch_avtt_encounter(this.avttId, function (fetchSucceeded) {
-				callback(fetchSucceeded);
-			});
+			this.fetch_avtt_encounter(this.avttId, callback);
 			this.fetch_all_encounters(); // we'll eventually want these around so queue these requests as well
 			this.fetch_campaign_info(); // we'll eventually want these around so queue these requests as well
 		} else {
@@ -156,7 +154,8 @@ class EncounterHandler {
 					console.log(`fetch_all_encounters successfully fetched all encounters; pageNumber: ${[pageNumber]}`);
 					callback(true);
 					if (is_encounters_page()) {
-						did_change_mytokens_items(); // there's probably a better way to do this ¯\_(ツ)_/¯
+						// this will be called once PR 394 is merged
+						// did_change_mytokens_items(); // there's probably a better way to do this ¯\_(ツ)_/¯
 					}
 				}
 			},

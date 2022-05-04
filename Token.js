@@ -760,7 +760,7 @@ class Token {
 			// No scene loaded!
 			return;
 		}
-		console.group("place")
+		// console.group("place")
 		if (animationDuration == undefined || parseFloat(animationDuration) == NaN) {
 			animationDuration = 1000;
 		}
@@ -1469,7 +1469,7 @@ function place_token_at_point(tokenObject, x, y) {
 	window.MB.sendMessage('custom/myVTT/token', options);
 
 	
-	window.EncounterHandler.update_avtt_encounter_with_players_and_monsters();
+
 }
 
 function array_remove_index_by_value(arr, item) {

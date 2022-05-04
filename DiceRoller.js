@@ -3,9 +3,8 @@ $(function() {
     window.diceRoller = new DiceRoller();
 
     // TODO: remove this once PR #394 is merged
-    if (!window.addDDBRequest) {
-        window.addDDBRequest = function(options) {
-            options.getCobaltToken = true;
+    if (!window.ajaxQueue.addDDBRequest) {
+        window.ajaxQueue.addDDBRequest = function(options) {
             get_cobalt_token(function (token) {
                 let previousBeforeSend = self.options.beforeSend;
                 options.beforeSend = function (xhr) {
