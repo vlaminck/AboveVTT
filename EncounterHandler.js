@@ -9,6 +9,12 @@ function is_campaign_page() {
 	return window.location.pathname.includes("/campaigns/");
 }
 
+const DEFAULT_AVTT_ENCOUNTER_DATA = {
+	"name": "AboveVTT",
+	"flavorText": "This encounter is maintained by AboveVTT",
+	"description": "If you delete this encounter, a new one will be created the next time you DM a game. If you edit this encounter, your changes may be lost. AboveVTT automatically deletes encounters that it had previously created."
+};
+
 /**
  * Finds the id of the campaign in a normalized way that is safe to call from anywhere at any time
  * @returns {String} The id of the DDB campaign we're playing in
@@ -27,15 +33,24 @@ class EncounterHandler {
 
 		if (is_encounters_page()) {
 			// we really only care about the encounter that we're currently on the page of
-			this.avttId = window.location.pathname.substring(window.location.pathname.lastIndexOf("/") + 1);
-			this.fetch_avtt_encounter(this.avttId, function (fetchSucceeded) {
-				callback(fetchSucceeded);
-				window.EncounterHandler.fetch_all_encounters(); // we'll eventually want these around
+			let urlId = window.location.pathname.substring(window.location.pathname.lastIndexOf("/") + 1);
+			this.avttId = urlId;
+			this.fetch_all_encounters(function () {
+				if (window.EncounterHandler.encounters[urlId] !== undefined) {
+					callback(window.EncounterHandler.encounters[urlId]);
+				} else {
+					callback(false);
+				}
 			});
 		} else {
-			// fetch all encounters, grab our AboveVTT encounter, delete any duplicates, and then move on.
+			// fetch all encounters, delete any AboveVTT encounters, create a new one for this campaign.
 			// We only care if the final fetch_or_create_avtt_encounter fails
-			this.fetch_or_create_avtt_encounter(callback);
+			this.fetch_all_encounters(function () {
+				console.log(`about to delete all except ${window.EncounterHandler.avttId}`);
+				window.EncounterHandler.delete_all_avtt_encounters(function () {
+					window.EncounterHandler.fetch_or_create_avtt_encounter(callback);
+				});
+			});
 		}
 	}
 
@@ -85,11 +100,9 @@ class EncounterHandler {
 		} else {
 			// we don't have it locally, so fetch all encounters and see if we have it locally then
 			this.fetch_all_encounters(function () {
-				console.log(`returning ${window.EncounterHandler.encounters[window.EncounterHandler.avttId]}`);
 				let avttEncounter = window.EncounterHandler.encounters[window.EncounterHandler.avttId];
 				if (avttEncounter !== undefined) {
 					// we found it!
-					console.log(`returning ${this.encounters[this.avttId]}`);
 					callback(avttEncounter);
 				} else {
 					// there isn't an encounter for this campaign with the name AboveVTT so let's create one
@@ -103,6 +116,10 @@ class EncounterHandler {
 	fetch_encounter(encounterId, callback) {
 		if (typeof callback !== 'function') {
 			callback = function(){};
+		}
+		if (this.encounters[encounterId] !== undefined) {
+			callback(this.encounters[encounterId]);
+			return;
 		}
 		window.ajaxQueue.addDDBRequest({
 			url: `https://encounter-service.dndbeyond.com/v1/encounters/${encounterId}`,
@@ -164,7 +181,10 @@ class EncounterHandler {
 
 		for (let encounterId in window.EncounterHandler.encounters) {
 			let encounter = window.EncounterHandler.encounters[encounterId];
-			if (encounter.name === "AboveVTT" && encounter.id !== window.EncounterHandler.avttId) {
+			if (
+				encounter.id !== window.EncounterHandler.avttId        // we don't want to delete the encounter that we're currently on
+				&& encounter.name === DEFAULT_AVTT_ENCOUNTER_DATA.name // we ONLY want to delete encounters named AboveVTT because we created those
+			) {
 				console.log(`attempting to delete AboveVTT encounter! id: ${encounterId}`);
 				window.ajaxQueue.addDDBRequest({
 					type: "DELETE",
@@ -210,7 +230,7 @@ class EncounterHandler {
 		});
 	}
 
-	/// This will create our `AboveVTT` backing encounter
+	/// This will create our `AboveVTT` backing encounter. It MUST be for the current campaign or the DDB dice will not go to the gamelog. Also a bunch of other errors happen, etc, etc ¯\_(ツ)_/¯
 	create_avtt_encounter(callback) {
 		if (typeof callback !== 'function') {
 			callback = function(){};
