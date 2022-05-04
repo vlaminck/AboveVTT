@@ -6,7 +6,7 @@ $(function() {
     if (!window.ajaxQueue.addDDBRequest) {
         window.ajaxQueue.addDDBRequest = function(options) {
             get_cobalt_token(function (token) {
-                let previousBeforeSend = self.options.beforeSend;
+                let previousBeforeSend = options.beforeSend;
                 options.beforeSend = function (xhr) {
                     if (previousBeforeSend) {
                         previousBeforeSend(xhr);
@@ -16,7 +16,7 @@ $(function() {
                 options.xhrFields = {
                     withCredentials: true
                 };
-                window.ajaxQueue.addRequest(options);
+                $.ajax(options);
             });
         }
     }

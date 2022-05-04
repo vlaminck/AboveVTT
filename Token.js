@@ -1481,7 +1481,7 @@ function array_remove_index_by_value(arr, item) {
 function menu_callback(key, options, event) {
 	if (key == "view") {
 		if (typeof $(this).attr('data-monster') !== "undefined") {
-			load_monster_stat($(this).attr('data-monster'), token_id=$(this).attr('data-id'));
+			load_monster_stat($(this).attr('data-monster'), $(this).attr('data-id'));
 		}
 		else {
 			//load_frame($(this).attr('data-id'));
