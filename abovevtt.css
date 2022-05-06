@@ -1433,49 +1433,99 @@ body:not(.body-rpgcampaign-details) .sidebar__pane-content {
 .context-menu-item.context-menu-input {
     padding: 0.3em !important;
 }
+
+#conditions-flyout li {
+    position: relative;
+    -webkit-box-sizing: content-box;
+    -moz-box-sizing: content-box;
+    box-sizing: content-box;
+    padding: 0.2em 2em;
+    color: #2f2f2f;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    background-color: #fff;
+}
+#conditions-flyout li::before {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 2em;
+    font-family: "context-menu-icons";
+    font-size: 1em;
+    font-style: normal;
+    font-weight: normal;
+    line-height: 1;
+    color: #2980b9;
+    text-align: center;
+    -webkit-transform: translateY(-50%);
+    -ms-transform: translateY(-50%);
+    -o-transform: translateY(-50%);
+    transform: translateY(-50%);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+#conditions-flyout li:hover {
+    background-color: rgba(41, 128, 185) !important;
+}
+
+.icon-condition.material-icon:before,
 .context-menu-icon.material-icon:before {
     left: -8px !important;
     font-family: "Material Icons", sans-serif !important;
     font-size: 20px !important;
 }
+.icon-edit:before,
 .context-menu-icon-edit:before {
     content: "\e3c9" !important;
 }
+.icon-delete-red:before,
 .context-menu-icon-delete-red:before {
     content: "\e872" !important;
     color: #e40712 !important;
 }
+.icon-close-red:before,
 .context-menu-icon-close-red:before {
     content: "\e5cd" !important;
     color: #e40712 !important;
 }
+.icon-note:before,
 .context-menu-icon-note:before {
     content: "\e745" !important;
 }
+.icon-person:before,
 .context-menu-icon-person:before {
     content: "\e7fd" !important;
 }
+.icon-person-add:before,
 .context-menu-icon-person-add:before {
     content: "\e7fe" !important;
 }
+.icon-person-remove:before,
 .context-menu-icon-person-remove:before {
     content: "\ef66" !important;
 }
+.icon-view:before,
 .context-menu-icon-view:before {
     content: "\f22e" !important;
 }
+.icon-add-circle:before,
 .context-menu-icon-add-circle:before {
     content: "\e148" !important;
 }
 
+.icon-condition,
 .context-menu-icon-condition {
     margin: 4px;
     border: 1px solid white;
 }
+.icon-condition:before,
 .context-menu-icon-condition:before {
     width: 1.4em !important;
     margin-left: 0.2em;
 }
+.icon-condition:after,
 .context-menu-icon-condition:after {
     float: right;
     margin-right: -20px;
@@ -1484,64 +1534,84 @@ body:not(.body-rpgcampaign-details) .sidebar__pane-content {
     margin-top: -5px;
     margin-bottom: -10px;
 }
+.icon-condition.single-active:after,
 .context-menu-icon-condition.single-active:after {
     content: "\e876";
 }
+.icon-condition.all-active:after,
 .context-menu-icon-condition.all-active:after {
     content: "\e6b1";
 }
+.icon-condition.some-active:after,
 .context-menu-icon-condition.some-active:after {
     content: "\f1c2";
 }
+.icon-blinded:before,
 .context-menu-icon-blinded:before {
     content: url(https://www.dndbeyond.com/content/1-0-1849-0/skins/waterdeep/images/icons/conditions/blinded.svg);
 }
+.icon-charmed:before,
 .context-menu-icon-charmed:before {
     content: url(https://www.dndbeyond.com/content/1-0-1849-0/skins/waterdeep/images/icons/conditions/charmed.svg);
 }
+.icon-deafened:before,
 .context-menu-icon-deafened:before {
     content: url(https://www.dndbeyond.com/content/1-0-1849-0/skins/waterdeep/images/icons/conditions/deafened.svg);
 }
+.icon-exhaustion:before,
 .context-menu-icon-exhaustion:before {
     content: url(https://www.dndbeyond.com/content/1-0-1849-0/skins/waterdeep/images/icons/conditions/exhaustion.svg);
 }
+.icon-frightened:before,
 .context-menu-icon-frightened:before {
     content: url(https://www.dndbeyond.com/content/1-0-1849-0/skins/waterdeep/images/icons/conditions/frightened.svg);
 }
+.icon-grappled:before,
 .context-menu-icon-grappled:before {
     content: url(https://www.dndbeyond.com/content/1-0-1849-0/skins/waterdeep/images/icons/conditions/grappled.svg);
 }
+.icon-incapacitated:before,
 .context-menu-icon-incapacitated:before {
     content: url(https://www.dndbeyond.com/content/1-0-1849-0/skins/waterdeep/images/icons/conditions/incapacitated.svg);
 }
+.icon-invisible:before,
 .context-menu-icon-invisible:before {
     content: url(https://www.dndbeyond.com/content/1-0-1849-0/skins/waterdeep/images/icons/conditions/invisible.svg);
 }
+.icon-paralyzed:before,
 .context-menu-icon-paralyzed:before {
     content: url(https://www.dndbeyond.com/content/1-0-1849-0/skins/waterdeep/images/icons/conditions/paralyzed.svg);
 }
+.icon-petrified:before,
 .context-menu-icon-petrified:before {
     content: url(https://www.dndbeyond.com/content/1-0-1849-0/skins/waterdeep/images/icons/conditions/petrified.svg);
 }
+.icon-poisoned:before,
 .context-menu-icon-poisoned:before {
     content: url(https://www.dndbeyond.com/content/1-0-1849-0/skins/waterdeep/images/icons/conditions/poisoned.svg);
 }
+.icon-prone:before,
 .context-menu-icon-prone:before {
     content: url(https://www.dndbeyond.com/content/1-0-1849-0/skins/waterdeep/images/icons/conditions/prone.svg);
 }
+.icon-restrained:before,
 .context-menu-icon-restrained:before {
     content: url(https://www.dndbeyond.com/content/1-0-1849-0/skins/waterdeep/images/icons/conditions/restrained.svg);
 }
+.icon-stunned:before,
 .context-menu-icon-stunned:before {
     content: url(https://www.dndbeyond.com/content/1-0-1849-0/skins/waterdeep/images/icons/conditions/stunned.svg);
 }
+.icon-unconscious:before,
 .context-menu-icon-unconscious:before {
     content: url(https://www.dndbeyond.com/content/1-0-1849-0/skins/waterdeep/images/icons/conditions/unconscious.svg);
 }
+.icon-unconscious:before,
 .context-menu-icon-unconscious:before {
     content: url(https://www.dndbeyond.com/content/1-0-1849-0/skins/waterdeep/images/icons/conditions/unconscious.svg);
 }
 
+.markers-icon:before,
 .context-menu-markers-icon:before {
     display: inline-block;
     width: 16px;
@@ -1553,42 +1623,55 @@ body:not(.body-rpgcampaign-details) .sidebar__pane-content {
     background-position-y: 0;
     background-repeat: no-repeat;
 }
+.icon-advantage:before,
 .context-menu-icon-advantage:before {
     background-image: url(../assets/conditons/advantage.png);
 }
+.icon-baned:before,
 .context-menu-icon-baned:before {
     background-image: url(../assets/conditons/baned.png);
 }
+.icon-bardic-inspiration:before,
 .context-menu-icon-bardic-inspiration:before {
     background-image: url(../assets/conditons/bardic_inspiration.png);
 }
+.icon-bardic-inspiration:before,
 .context-menu-icon-bardic-inspiration:before {
     background-image: url(../assets/conditons/bardic_inspiration.png);
 }
+.icon-blessed:before,
 .context-menu-icon-blessed:before {
     background-image: url(../assets/conditons/blessed.png);
 }
+.icon-bloodied:before,
 .context-menu-icon-bloodied:before {
     background-image: url(../assets/conditons/bloodied.png);
 }
+.icon-concentration-reminder:before,
 .context-menu-icon-concentration-reminder:before {
     background-image: url(../assets/conditons/concentration\(reminder\).png);
 }
+.icon-disadvantage:before,
 .context-menu-icon-disadvantage:before {
     background-image: url(../assets/conditons/disadvantage.png);
 }
+.icon-flamed:before,
 .context-menu-icon-flamed:before {
     background-image: url(../assets/conditons/flamed.png);
 }
+.icon-flying:before,
 .context-menu-icon-flying:before {
     background-image: url(../assets/conditons/flying.png);
 }
+.icon-hasted:before,
 .context-menu-icon-hasted:before {
     background-image: url(../assets/conditons/hasted.png);
 }
+.icon-inspiration:before,
 .context-menu-icon-inspiration:before {
     background-image: url(../assets/conditons/inspiration.png);
 }
+.icon-rage:before,
 .context-menu-icon-rage:before {
     background-image: url(../assets/conditons/rage.png);
 }

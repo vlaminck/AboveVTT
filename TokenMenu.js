@@ -1761,11 +1761,10 @@ function context_menu_flyout(id, hoverEvent, buildFunction) {
 		});
 		flyout.hover(function (flyoutHoverEvent) {
 			if (flyoutHoverEvent.type === "mouseenter") {
-				flyout.addClass("is-hovering");
+				$(flyoutHoverEvent.currentTarget).addClass("is-hovering");
 			}
 			if (flyoutHoverEvent.type === "mouseleave") {
-				flyout.removeClass("is-hovering");
-				flyout.remove();
+				$(flyoutHoverEvent.currentTarget).remove();
 			}
 		});
 	} else if (hoverEvent.type === "mouseleave") {
@@ -1807,6 +1806,8 @@ function token_context_menu_expanded(tokenIds, e) {
 		$("#tokenOptionsPopup").remove();
 		$('.context-menu-list').trigger('contextmenu:hide')
 		tokenOptionsClickCloseDiv.remove();
+		$(".sp-container").spectrum("destroy");
+		$(".sp-container").remove();
 	});
 
 	let moveableTokenOptions = $("<div id='tokenOptionsPopup'></div>");
@@ -2022,7 +2023,7 @@ function token_context_menu_expanded(tokenIds, e) {
 	`);
 	borderColorWrapper.append(borderColorInput); 
 	body.append(borderColorWrapper);
-	colorPicker = $(".border-color-input");
+	let colorPicker = $(".border-color-input");
 	colorPicker.spectrum({
 		type: "color",
 		showInput: true,
@@ -2304,14 +2305,43 @@ function build_token_auras_inputs(tokens) {
 
 function build_conditions_and_markers_flyout_menu(tokenIds) {
 
-	let foo = $(`<div>booya!</div>`);
-	foo.css({
-		height: "100%",
-		width: "300px",
-		padding: "5px",
-		"text-align": "center"
+	let tokens = tokenIds.map(id => window.TOKEN_OBJECTS[id]).filter(t => t !== undefined);
+	let body = $("<div></div>");
+	body.css({
+		width: "190px", // "370px", // once we add Markers, make this wide enough to contain them all
+		padding: "5px"
 	})
-	return foo;
+
+	let conditionsList = $(`<ul></ul>`);
+	conditionsList.css("width", "180px");
+	body.append(conditionsList);
+
+	STANDARD_CONDITIONS.forEach(conditionName => {
+		//  single-active active-condition
+		let conditionItem = $(`
+			<li class="icon-condition ${determine_condition_item_classname(tokenIds, conditionName)} icon-${conditionName.toLowerCase()}">
+				<span>${conditionName}</span>
+			</li>
+		`);
+		conditionsList.append(conditionItem);
+		conditionItem.on("click", function (clickEvent) {
+			let deactivateAll = conditionItem.hasClass("some-active");
+			tokens.forEach(token => {
+				if (!token.isPlayer()) { // unfortunately, we can't set conditions on player tokens
+					if (deactivateAll || token.hasCondition(conditionName)) {
+						token.removeCondition(conditionName)
+					} else {
+						token.addCondition(conditionName)
+					}
+					token.place_sync_persist();
+				}
+			});
+			conditionItem.removeClass("single-active all-active some-active active-condition");
+			conditionItem.addClass(determine_condition_item_classname(tokenIds, conditionName));
+		});
+	});
+
+	return body;
 }
 
 function build_options_flyout_menu(tokenIds) {
