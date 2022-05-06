@@ -1941,12 +1941,16 @@ function token_menu() {
 
 	if (window.DM) {
 		$("#tokens").on("contextmenu", ".VTTToken", function(event) {
-			// event.preventDefault();
-			// event.stopPropagation();
-
-			token_context_menu_expanded(window.CURRENTLY_SELECTED_TOKENS, event);
+			console.log("context_menu_flyout contextmenu event", event);
+			event.preventDefault();
+			event.stopPropagation();
+			if (window.CURRENTLY_SELECTED_TOKENS.length > 0) {
+				token_context_menu_expanded(window.CURRENTLY_SELECTED_TOKENS, event);
+			} else {
+				token_context_menu_expanded([$(event.currentTarget).attr("data-id")], event);
+			}
 		});
-		// return;
+		return;
 	}
 
 

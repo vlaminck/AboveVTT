@@ -381,12 +381,18 @@ ul.context-menu-list.context-menu-root{
     height:  100vh;
     width:  100vw;
     display:  block !important;
-    z-indeX: 1000;
+    z-index: 1000;
     position:  fixed;
     top: 0;
     right: 0;
     left: 0;
     bottom: 0;
+}
+.context-menu-flyout {
+    display:  block !important;
+    z-index: 1000;
+    position:  absolute;
+    background: #fff;
 }
 
 
@@ -2622,7 +2628,7 @@ button.avtt-roll-button {
 }
 
 #tokenOptionsPopup{
-    position: fixed;
+    position: absolute;
     z-index: 59000;
     background: #fff;
     border-radius: 10px;
@@ -2656,6 +2662,7 @@ button.avtt-roll-button {
     align-self: center;
     line-height: 20px;
 }
+.context-menu-flyout,
 #tokenOptionsContainer input:not([type="range"]),
 #tokenOptionsContainer select{
     font-family: Roboto,Open Sans,Helvetica,sans-serif;
