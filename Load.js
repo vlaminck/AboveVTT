@@ -70,6 +70,7 @@ let scripts = [
 	{ src: "Token.js" },
 	{ src: "TokenMenu.js" },
 	{ src: "ChatObserver.js" },
+	{ src: "DiceContextMenu.js" },
 	// Files that execute when loaded
 	{ src: "ajaxQueue/ajaxQueueIndex.js", type: "module" },
 	{ src: "DiceRoller.js" },
