@@ -377,6 +377,19 @@ ul.context-menu-list.context-menu-root{
     left: 0;
     bottom: 0;
 }
+#tokenOptionsClickCloseDiv{
+    height:  100vh;
+    width:  100vw;
+    display:  block !important;
+    z-indeX: 1000;
+    position:  fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    bottom: 0;
+}
+
+
 
 div.top_menu.visible,
 .ddbc-tab-options--layout-pill{
@@ -2003,7 +2016,8 @@ h5.token-image-modal-footer-title:after {
     width: auto;
 }
 .sidebar-panel-footer-horizontal-wrapper,
-.token-image-modal-footer-select-wrapper {
+.token-image-modal-footer-select-wrapper,
+.token-image-modal-url-label-wrapper {
     display: flex;
     flex-direction: row;
     margin-bottom: 6px;
@@ -2022,7 +2036,6 @@ h5.token-image-modal-footer-title:after {
 }
 .token-image-modal-url-label-wrapper {
     display: flex;
-    flex-direction: column;
     flex-grow: 1;
 }
 .token-image-modal-url-label-add-wrapper {
@@ -2545,7 +2558,8 @@ button.avtt-roll-button {
 #combat_tracker_title_bar_exit,
 #monster_close_title_button,
 #player_close_title_button,
-#reload_player_frame_button {
+#reload_player_frame_button,
+#token_options_title_bar_exit {
     fill: #fff5;
     filter: drop-shadow(1px 1px 1px #000e);
     cursor: pointer;
@@ -2558,7 +2572,8 @@ button.avtt-roll-button {
 #monster_close_title_button:hover,
 #player_close_title_button:hover,
 #reload_player_frame_button:hover,
-#combat_tracker_title_bar_exit:hover {
+#combat_tracker_title_bar_exit:hover,
+#token_options_title_bar_exit:hover {
     background: #ddd3;
     transition: all linear 0.2s;
 }
@@ -2566,14 +2581,16 @@ button.avtt-roll-button {
 #combat_tracker_title_bar_exit svg,
 #monster_close_title_button svg,
 #player_close_title_button svg,
-#reload_player_frame_button svg {
+#reload_player_frame_button svg,
+#token_options_title_bar_exit svg {
     height: 20px;
     width: 20px;
 }
 
 #combat_tracker_title_bar_exit svg g rect,
 #monster_close_title_button svg g rect,
-#player_close_title_button svg g rect {
+#player_close_title_button svg g rect,
+#token_options_title_bar_exit svg g rect {
     height: 80px;
     width: 10px;
     fill: #ddd;
@@ -2582,7 +2599,8 @@ button.avtt-roll-button {
 
 #combat_tracker_title_bar_exit,
 #monster_close_title_button,
-#player_close_title_button {
+#player_close_title_button,
+#token_options_title_bar_exit {
     position: absolute;
     right: 5px;
     width: 20px;
@@ -2598,10 +2616,72 @@ button.avtt-roll-button {
 #monster_close_title_button,
 #player_close_title_button,
 #reload_player_frame_button,
-#combat_tracker_title_bar_exit {
+#combat_tracker_title_bar_exit,
+#token_options_title_bar_exit {
     top: 2px;
 }
 
+#tokenOptionsPopup{
+    position: fixed;
+    z-index: 59000;
+    background: #fff;
+    border-radius: 10px;
+    width: 300px;
+    overflow: hidden;
+    max-height: 100%;
+}
+
+#tokenOptionsContainer{
+    overflow: hidden auto;
+    padding: 5px;
+    width: 100%;
+    height: 100%;
+}
+#tokenOptionsContainer div, 
+#tokenOptionsContainer h3 {
+    font-size: 10px;
+}
+#tokenOptionsContainer h3,
+.token-config-aura-wrapper .token-image-modal-footer-select-wrapper,
+.token-image-modal-footer-title,
+.menu-outer-aura,
+.menu-inner-aura {
+    display: flex;
+    margin: 2px 2px;
+    align-self: center;
+    line-height: 20px;
+}   
+#tokenOptionsContainer div.token-image-modal-url-label-wrapper{
+    display: flex;
+    align-self: center;
+    line-height: 20px;
+}
+#tokenOptionsContainer input:not([type="range"]),
+#tokenOptionsContainer select{
+    font-family: Roboto,Open Sans,Helvetica,sans-serif;
+    padding: 1px 2px;
+    font-size: 14px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: inset 0 1px 1px rgb(0 0 0 / 8%);
+}
+
+.context-menu-list{
+    border-radius: 10px !important;
+}
+.context-menu-list li{
+    background: none;
+}
+
+.token-image-modal-footer-title,
+.token-image-modal-footer-select-wrapper{
+    min-width: fit-content;
+}
+
+.menu-outer-aura h3,
+.menu-inner-aura h3{
+    min-width: 50px;
+}
 
 #round_number_label{
     position: relative;
@@ -2991,21 +3071,26 @@ button.avtt-roll-button {
 
 .image-size-wrapper,
 .border-color-wrapper {
-    display: block;
+    display: block !important;
+}
+.border-color-wrapper,
+.token-config-aura-wrapper{
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 5px;
 }
 .image-size-title,
 .border-color-title {
-    display:  inline-block;
+    display:  inline-block !important;
 }
 .image-scale-input-number {
     float: right;
-    padding-left: 5px;
-    width: 48px;
-    height: 24px;
-    margin-top: 4px;
-    margin-bottom: 2px;
+    padding-left: 5px !important;
+    width: 48px !important;
+    height: 24px !important;
+    margin-top: 4px !important;
+    margin-bottom: 2px !important;
 }
-.border-color-input ~ .sp-replacer{
+.sp-replacer.sp-light{
     float:  right;
     width: 48px;
     height: 24px;

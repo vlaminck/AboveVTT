@@ -1939,8 +1939,8 @@ function build_hide_show_item(tokenIds) {
 function token_menu() {
 	$.contextMenu({
 		selector: '.VTTToken',
-
-		build: function(element, e) {
+	  
+		build: function(element, e) {	
 
 			if ($(element).hasClass("tokenselected") && window.MULTIPLE_TOKEN_SELECTED) {
 				if (!window.DM) {
@@ -1955,6 +1955,7 @@ function token_menu() {
 						}
 					}
 				}
+				token_context_menu_expanded(window.CURRENTLY_SELECTED_TOKENS, e);
 				ret = {
 					callback: multiple_callback,
 					items: {
@@ -1976,11 +1977,6 @@ function token_menu() {
 							icon: 'add-circle',
 							className: "material-icon"
 						},
-						configure: {
-							name: 'Configure',
-							icon: 'edit',
-							className: "material-icon"
-						},
 						sep: "---",
 						delete: {
 							name: 'Delete',
@@ -1989,9 +1985,11 @@ function token_menu() {
 						}
 					}
 				};
+
 				return ret;
 			}
 			else { // STANDARD SINGLE TOKEN MENU
+
 				id = $(element).attr('data-id');
 				cond_items = build_conditions_submenu([id]);
 				custom_cond_items = build_markers_submenu([id]);
@@ -2000,6 +1998,13 @@ function token_menu() {
 				is_player = window.TOKEN_OBJECTS[id].isPlayer();
 				has_note=id in window.JOURNAL.notes;
 
+				if (!window.DM && is_player) {
+					token_context_menu_expanded([$(element).attr("data-id")], e);
+				}
+				else if(window.DM) {
+					token_context_menu_expanded([$(element).attr("data-id")], e);
+				}
+				
 				if (!window.TOKEN_OBJECTS[id].options.aura1) {
 					window.TOKEN_OBJECTS[id].options = {
 						...window.TOKEN_OBJECTS[id].options,
@@ -2107,11 +2112,6 @@ function token_menu() {
 							className: "imgsrcSelect material-icon",
 							icon: "person"
 						},
-						configure: {
-							name: 'Configure',
-							icon: 'edit',
-							className: "material-icon"
-						},
 						sep4: '----------',
 						helptext: {
 							name: 'Player HP/conditions must be set in character sheet',
@@ -2175,7 +2175,6 @@ function token_menu() {
 					delete ret.items.delete;
 					delete ret.items.sep4;
 				}
-
 				return ret;
 			}
 		}

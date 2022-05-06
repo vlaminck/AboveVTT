@@ -1722,8 +1722,8 @@ function containing_folder_path(path) {
  * Opens a sidebar modal with token configuration options
  * @param tokenIds {Array<String>} an array of ids for the tokens being configured
  */
-function token_context_menu_expanded(tokenIds) {
 
+function token_context_menu_expanded(tokenIds, e) {
 	if (tokenIds === undefined || tokenIds.length === 0) {
 		console.warn(`token_context_menu_expanded was called without any token ids`);
 		return;
@@ -1735,13 +1735,23 @@ function token_context_menu_expanded(tokenIds) {
 		console.warn(`token_context_menu_expanded was called with ids: ${JSON.stringify(tokenIds)}, but no matching tokens could be found`);
 		return;
 	}
+	$("#tokenOptionsPopup").remove();
+	let tokenOptionsClickCloseDiv = $("<div id='tokenOptionsClickCloseDiv'></div>");
+	tokenOptionsClickCloseDiv.off().on("click", function(){
+		$("#tokenOptionsPopup").remove();
+		$('.context-menu-list').trigger('contextmenu:hide')
+		tokenOptionsClickCloseDiv.remove();
+	});
 
-	let sidebar = new SidebarPanel("token_context_menu_expanded");
-	display_sidebar_modal(sidebar);
-	let body = sidebar.body;
-	body.append("<h3 class='token-image-modal-footer-title'>Token Configuration</h3>");
+	let moveableTokenOptions = $("<div id='tokenOptionsPopup'></div>");
 
+	
+	let body = $("<div id='tokenOptionsContainer')></div>");
+	moveableTokenOptions.append(body);
 
+	$('body').append(moveableTokenOptions);
+	$('body').append(tokenOptionsClickCloseDiv);
+	
 	// name
 	let tokenNames = tokens.map(t => t.options.name);
 	let uniqueNames = [...new Set(tokenNames)];
@@ -1771,7 +1781,7 @@ function token_context_menu_expanded(tokenIds) {
 		}
 	});
 	let nameWrapper = $(`
-		<div class="token-image-modal-url-label-wrapper" style="margin: 10px 0 10px 0">
+		<div class="token-image-modal-url-label-wrapper">
 			<div class="token-image-modal-footer-title">Token Name</div>
 		</div>
 	`);
@@ -1867,7 +1877,7 @@ function token_context_menu_expanded(tokenIds) {
 		});
 	});
 	let imageSizeWrapper = $(`
-		<div class="token-image-modal-url-label-wrapper image-size-wrapper" style="margin: 10px 0 10px 0">
+		<div class="token-image-modal-url-label-wrapper image-size-wrapper">
 			<div class="token-image-modal-footer-title image-size-title">Token Image Scale</div>
 		</div>
 	`);
@@ -1882,7 +1892,7 @@ function token_context_menu_expanded(tokenIds) {
 		borderColorInput.val(tokenBorderColors[0] || "#dddddd");	
 	}
 	let borderColorWrapper = $(`
-		<div class="token-image-modal-url-label-wrapper border-color-wrapper" style="margin: 10px 0 10px 0">
+		<div class="token-image-modal-url-label-wrapper border-color-wrapper">
 			<div class="token-image-modal-footer-title border-color-title">Border Color</div>
 		</div>
 	`);
@@ -1894,15 +1904,15 @@ function token_context_menu_expanded(tokenIds) {
 		showInput: true,
 		showInitial: true,
 		containerClassName: 'prevent-sidebar-modal-close',
-		clickoutFiresChange: false,
+		clickoutFiresChange: true,
 		color: tokens[0].options.color
 	});
-	const borderColorPickerChange = function(e, tinycolor) {
+	const borderColorPickerChange = function(event, tinycolor) {
 		let borderColor = `rgba(${tinycolor._r}, ${tinycolor._g}, ${tinycolor._b}, ${tinycolor._a})`;
-		if (e.type === 'change') {
+		if (event.type === 'change') {
 			tokens.forEach(token => {
 				token.options.color = borderColor;
-				$("#combat_area tr[data-target=" + token.options.id + "] img[class*='Avatar']").css("border-color", borderColor);
+				$("#combat_area tr[data-target='" + token.options.id + "'] img[class*='Avatar']").css("border-color", borderColor);
 				token.place_sync_persist();
 			});
 		}
@@ -1920,57 +1930,99 @@ function token_context_menu_expanded(tokenIds) {
 	colorPicker.on('dragstop.spectrum', borderColorPickerChange);   // update the token as the player messes around with colors
 	colorPicker.on('change.spectrum', borderColorPickerChange); // commit the changes when the user clicks the submit button
 	colorPicker.on('hide.spectrum', borderColorPickerChange);   // the hide event includes the original color so let's change it back when we get it
-
-	// options
-	body.append("<h3 class='token-image-modal-footer-title' style='margin-top: 30px;'>Options</h3>");
-	const token_settings = [
-		{ name: "hidden", label: "Hide", enabledDescription:"Token is hidden to players", disabledDescription: "Token is visible to players" },
-		{ name: "square", label: "Square Token", enabledDescription:"Token is square", disabledDescription: "Token is round" },
-		{ name: "locked", label: "Lock Token in Position", enabledDescription:"Token is not moveable, Players can not select this token", disabledDescription: "Token is moveable by at least the DM, players can select it however" },
-		{ name: "restrictPlayerMove", label: "Restrict Player Movement", enabledDescription:"Token is not moveable by players", disabledDescription: "Token is moveable by any player" },
-		{ name: "disablestat", label: "Disable HP/AC", enabledDescription:"Token stats are not visible", disabledDescription: "Token stats are visible to at least the DM" },
-		{ name: "hidestat", label: "Hide Player HP/AC from players", enabledDescription:"Token stats are hidden from players", disabledDescription: "Token stats are visible to players" },
-		{ name: "disableborder", label: "Disable Border", enabledDescription:"Token has no border", disabledDescription: "Token has a random coloured border"  },
-		{ name: "disableaura", label: "Disable Health Meter", enabledDescription:"Token has no health glow", disabledDescription: "Token has health glow corresponding with their current health" },
-		{ name: "revealname", label: "Show name to players", enabledDescription:"Token on hover name is visible to players", disabledDescription: "Token name is hidden to players" },
-		{ name: "legacyaspectratio", label: "Ignore Image Aspect Ratio", enabledDescription:"Token will stretch non-square images to fill the token space", disabledDescription: "Token will respect the aspect ratio of the image provided" },
-		{ name: "player_owned", label: "Player access to sheet/stats", enabledDescription:"Tokens' sheet is accessible to players via RMB click on token. If token stats is visible to players, players can modify the hp of the token", disabledDescription: "Tokens' sheet is not accessible to players. Players can't modify token stats"}
-	];
-	for(let i = 0; i < token_settings.length; i++) {
-		let setting = token_settings[i];
-		let tokenSettings = tokens.map(t => t.options[setting.name]);
-		let uniqueSettings = [...new Set(tokenSettings)];
-		let currentValue = null; // passing null will set the switch as unknown; undefined is the same as false
-		if (uniqueSettings.length === 1) {
-			currentValue = uniqueSettings[0];
-		}
-		let inputWrapper = build_toggle_input(setting.name, setting.label, currentValue, setting.enabledDescription, setting.disabledDescription, function(name, newValue) {
-			console.log(`${name} setting is now ${newValue}`);
-			tokens.forEach(token => {
-				token.options[name] = newValue;
-				token.place_sync_persist();
+		// Auras (torch, lantern, etc)
+	body.append(build_token_auras_inputs(tokens));
+	if(window.DM) {
+		const token_settings = [
+			{ name: "hidden", label: "Hide", enabledDescription:"Token is hidden to players", disabledDescription: "Token is visible to players" },
+			{ name: "square", label: "Square Token", enabledDescription:"Token is square", disabledDescription: "Token is round" },
+			{ name: "locked", label: "Lock Token in Position", enabledDescription:"Token is not moveable, Players can not select this token", disabledDescription: "Token is moveable by at least the DM, players can select it however" },
+			{ name: "restrictPlayerMove", label: "Restrict Player Movement", enabledDescription:"Token is not moveable by players", disabledDescription: "Token is moveable by any player" },
+			{ name: "disablestat", label: "Disable HP/AC", enabledDescription:"Token stats are not visible", disabledDescription: "Token stats are visible to at least the DM" },
+			{ name: "hidestat", label: "Hide Player HP/AC from players", enabledDescription:"Token stats are hidden from players", disabledDescription: "Token stats are visible to players" },
+			{ name: "disableborder", label: "Disable Border", enabledDescription:"Token has no border", disabledDescription: "Token has a random coloured border"  },
+			{ name: "disableaura", label: "Disable Health Meter", enabledDescription:"Token has no health glow", disabledDescription: "Token has health glow corresponding with their current health" },
+			{ name: "revealname", label: "Show name to players", enabledDescription:"Token on hover name is visible to players", disabledDescription: "Token name is hidden to players" },
+			{ name: "legacyaspectratio", label: "Ignore Image Aspect Ratio", enabledDescription:"Token will stretch non-square images to fill the token space", disabledDescription: "Token will respect the aspect ratio of the image provided" },
+			{ name: "player_owned", label: "Player access to sheet/stats", enabledDescription:"Tokens' sheet is accessible to players via RMB click on token. If token stats is visible to players, players can modify the hp of the token", disabledDescription: "Tokens' sheet is not accessible to players. Players can't modify token stats"}
+		];
+		for(let i = 0; i < token_settings.length; i++) {
+			let setting = token_settings[i];
+			let tokenSettings = tokens.map(t => t.options[setting.name]);
+			let uniqueSettings = [...new Set(tokenSettings)];
+			let currentValue = null; // passing null will set the switch as unknown; undefined is the same as false
+			if (uniqueSettings.length === 1) {
+				currentValue = uniqueSettings[0];
+			}
+			let inputWrapper = build_toggle_input(setting.name, setting.label, currentValue, setting.enabledDescription, setting.disabledDescription, function(name, newValue) {
+				console.log(`${name} setting is now ${newValue}`);
+				tokens.forEach(token => {
+					token.options[name] = newValue;
+					token.place_sync_persist();
+				});
 			});
+			body.append(inputWrapper);
+		}
+
+		let resetToDefaults = $(`<button class='token-image-modal-remove-all-button' title="Reset all token settings back to their default values." style="width:100%;padding:8px;margin:10px 0px 30px 0px;">Reset Token Settings to Defaults</button>`);
+		resetToDefaults.on("click", function (clickEvent) {
+			for (let i = 0; i < token_settings.length; i++) {
+				let setting = token_settings[i];
+				let toggle = $(clickEvent.target).parent().find(`button[name=${setting.name}]`);
+				toggle.removeClass("rc-switch-checked");
+				toggle.removeClass("rc-switch-unknown");
+				tokens.forEach(token => token.options[setting.name] = false);
+			}
+			tokens.forEach(token => token.place_sync_persist());
 		});
-		body.append(inputWrapper);
+		body.append(resetToDefaults);
+	}
+	moveableTokenOptions.css("left", e.clientX - 310 + 'px');
+
+	if($(moveableTokenOptions).height() > window.innerHeight-e.clientY-20) {
+		moveableTokenOptions.css({
+	        "top": window.innerHeight-$(moveableTokenOptions).height()-20 + 'px',
+	    });
+	}
+	else {
+		moveableTokenOptions.css({
+        	"top": e.clientY + 'px',
+        });
 	}
 
-	let resetToDefaults = $(`<button class='token-image-modal-remove-all-button' title="Reset all token settings back to their default values." style="width:100%;padding:8px;margin:10px 0px 30px 0px;">Reset Token Settings to Defaults</button>`);
-	resetToDefaults.on("click", function (clickEvent) {
-		for (let i = 0; i < token_settings.length; i++) {
-			let setting = token_settings[i];
-			let toggle = $(clickEvent.target).parent().find(`button[name=${setting.name}]`);
-			toggle.removeClass("rc-switch-checked");
-			toggle.removeClass("rc-switch-unknown");
-			tokens.forEach(token => token.options[setting.name] = false);
-		}
-		tokens.forEach(token => token.place_sync_persist());
+	$("#tokenOptionsPopup").addClass("moveableWindow");
+	$("#tokenOptionsPopup").draggable({
+			addClasses: false,
+			scroll: false,
+			containment: "#windowContainment",
+			start: function () {
+				$("#resizeDragMon").append($('<div class="iframeResizeCover"></div>'));			
+				$("#sheet").append($('<div class="iframeResizeCover"></div>'));
+			},
+			stop: function () {
+				$('.iframeResizeCover').remove();
+
+			}
+		});
+	$("#tokenOptionsPopup").resizable({
+		addClasses: false,
+		handles: "all",
+		containment: "#windowContainment",
+		start: function () {
+			$("#resizeDragMon").append($('<div class="iframeResizeCover"></div>'));			
+			$("#sheet").append($('<div class="iframeResizeCover"></div>'));
+		},
+		stop: function () {
+			$('.iframeResizeCover').remove();
+		},
+		minWidth: 215,
+		minHeight: 200
 	});
-	body.append(resetToDefaults);
-
-
-	// Auras (torch, lantern, etc)
-	body.append(build_token_auras_inputs(tokens));
-
+	
+	$("#tokenOptionsPopup").mousedown(function() {
+		frame_z_index_when_click($(this));
+	});
+	
 }
 
 /**
@@ -2002,43 +2054,43 @@ function build_token_auras_inputs(tokens) {
 		upsq = window.CURRENT_SCENE_DATA.upsq;
 	}
 	let wrapper = $(`
-	<div>
-		<h3 class='token-image-modal-footer-title'>Auras</h3>
+		<div class="token-config-aura-input">
 
-		<div class="token-config-aura-wrapper">
-			<div class="token-image-modal-footer-select-wrapper">
-				<div class="token-image-modal-footer-title">Preset</div>
-				<select class="token-config-aura-preset">
-					<option value="none"></option>
-					<option value="candle">Candle (5/5)</option>
-					<option value="torch">Torch / Light (20/20)</option>
-					<option value="lamp">Lamp (15/30)</option>
-					<option value="lantern">Lantern (30/30)</option>
-				</select>
+			<div class="token-config-aura-wrapper">
+				<div class="token-image-modal-footer-select-wrapper">
+					<div class="token-image-modal-footer-title">Preset</div>
+					<select class="token-config-aura-preset">
+						<option value="none"></option>
+						<option value="candle">Candle (5/5)</option>
+						<option value="torch">Torch / Light (20/20)</option>
+						<option value="lamp">Lamp (15/30)</option>
+						<option value="lantern">Lantern (30/30)</option>
+					</select>
+				</div>
+				<div class="menu-inner-aura">
+					<h3 style="margin-bottom:0px;">Inner Aura</h3>
+					<div class="token-image-modal-footer-select-wrapper" style="padding-left: 2px">
+						<div class="token-image-modal-footer-title">Radius (${upsq})</div>
+						<input class="aura-radius" name="aura1" type="text" value="${uniqueAura1Feet}" style="width: 3rem" />
+					</div>
+					<div class="token-image-modal-footer-select-wrapper" style="padding-left: 2px">
+						<div class="token-image-modal-footer-title">Color</div>
+						<input class="spectrum" name="aura1Color" value="${uniqueAura1Color}" >
+					</div>
+				</div>
+				<div class="menu-outer-aura">
+					<h3 style="margin-bottom:0px;">Outer Aura</h3>
+					<div class="token-image-modal-footer-select-wrapper" style="padding-left: 2px">
+						<div class="token-image-modal-footer-title">Radius (${upsq})</div>
+						<input class="aura-radius" name="aura2" type="text" value="${uniqueAura2Feet}" style="width: 3rem" />
+					</div>
+					<div class="token-image-modal-footer-select-wrapper" style="padding-left: 2px">
+						<div class="token-image-modal-footer-title">Color</div>
+						<input class="spectrum" name="aura2Color" value="${uniqueAura1Color}" >
+					</div>
+				</div>
 			</div>
-
-			<h3 style="margin-bottom:0px;">Inner Aura</h3>
-			<div class="token-image-modal-footer-select-wrapper" style="padding-left: 20px">
-				<div class="token-image-modal-footer-title">Radius (${upsq})</div>
-				<input class="aura-radius" name="aura1" type="text" value="${uniqueAura1Feet}" style="width: 3rem" />
-			</div>
-			<div class="token-image-modal-footer-select-wrapper" style="padding-left: 20px">
-				<div class="token-image-modal-footer-title">Color</div>
-				<input class="spectrum" name="aura1Color" value="${uniqueAura1Color}" >
-			</div>
-			
-			<h3 style="margin-bottom:0px;">Outer Aura</h3>
-			<div class="token-image-modal-footer-select-wrapper" style="padding-left: 20px">
-				<div class="token-image-modal-footer-title">Radius (${upsq})</div>
-				<input class="aura-radius" name="aura2" type="text" value="${uniqueAura2Feet}" style="width: 3rem" />
-			</div>
-			<div class="token-image-modal-footer-select-wrapper" style="padding-left: 20px">
-				<div class="token-image-modal-footer-title">Color</div>
-				<input class="spectrum" name="aura2Color" value="${uniqueAura1Color}" >
-			</div>
-
 		</div>
-	</div>
 	`);
 
 	let enabledAurasInput = build_toggle_input("auraVisible", "Enable Token Auras", auraIsEnabled, undefined, undefined, function(name, newValue) {
@@ -2053,6 +2105,7 @@ function build_token_auras_inputs(tokens) {
 			wrapper.find(".token-config-aura-wrapper").hide();
 		}
 	});
+	wrapper.prepend(enabledAurasInput);
 	wrapper.find("h3.token-image-modal-footer-title").after(enabledAurasInput);
 	if (auraIsEnabled) {
 		wrapper.find(".token-config-aura-wrapper").show();
@@ -2088,7 +2141,7 @@ function build_token_auras_inputs(tokens) {
 		showInput: true,
 		showInitial: true,
 		containerClassName: 'prevent-sidebar-modal-close',
-		clickoutFiresChange: false
+		clickoutFiresChange: true
 	});
 	const colorPickerChange = function(e, tinycolor) {
 		let auraName = e.target.name.replace("Color", "");
