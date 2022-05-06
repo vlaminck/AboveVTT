@@ -1718,6 +1718,71 @@ function containing_folder_path(path) {
 	return path.substring(0, path.lastIndexOf("/"));
 }
 
+function context_menu_flyout(id, hoverEvent, buildFunction) {
+	let contextMenu = $("#tokenOptionsPopup");
+	if (contextMenu.length === 0) {
+		console.warn("context_menu_flyout, but #tokenOptionsPopup could not be found");
+		return;
+	}
+
+	if (hoverEvent.type === "mouseenter") {
+		let flyout = $(`<div id='${id}' class='context-menu-flyout'></div>`);
+		$(`.context-menu-flyout`).remove(); // never duplicate
+
+		buildFunction(flyout);
+		$("body").append(flyout);
+
+		let contextMenuCenter = (contextMenu.height() / 2) + contextMenu.position().top;
+		let flyoutHeight = flyout.height();
+		let flyoutTop = contextMenuCenter - (flyoutHeight / 2); // center alongside the contextmenu
+		let flyoutBottom = flyoutTop + flyoutHeight;
+
+		let diff = (contextMenu.height() - flyoutHeight);
+		if (diff > 0) {
+			// the flyout is smaller than the contextmenu. Make sure it's alongside the hovered row
+			let rowElement = $(hoverEvent.currentTarget);
+			let hoveredRowPosition = rowElement.position();
+			if (hoveredRowPosition !== undefined) {
+				let hoveredRowTop = hoveredRowPosition.top + contextMenu.position().top;
+				let hoveredRowBottom = hoveredRowTop + rowElement.height();
+				if (hoveredRowTop < flyoutTop) {
+					// align to the top of the row
+					flyoutTop = hoveredRowTop;
+				} else if (hoveredRowBottom > flyoutBottom) {
+					// align to the bottom of the row
+					flyoutTop = hoveredRowBottom - flyoutHeight;
+				}
+			}
+		}
+
+		flyout.css({
+			left: contextMenu.position().left + contextMenu.width(),
+			top: flyoutTop, // ($(hoverEvent.currentTarget).position()?.top || 0) + contextMenu.position().top
+		});
+		flyout.hover(function (flyoutHoverEvent) {
+			if (flyoutHoverEvent.type === "mouseenter") {
+				$(flyoutHoverEvent.currentTarget).addClass("is-hovering");
+			}
+			if (flyoutHoverEvent.type === "mouseleave") {
+				$(flyoutHoverEvent.currentTarget).remove();
+			}
+		});
+	} else if (hoverEvent.type === "mouseleave") {
+		try {
+			clearTimeout(window.context_menu_flyout_timer);
+		} catch (e) {
+			console.debug("failed to clear window.context_menu_flyout_timer", window.context_menu_flyout_timer);
+		}
+		window.context_menu_flyout_timer = setTimeout(function() {
+			window.context_menu_flyout_timer = null;
+			let flyoutToCancel = $(`#${id}`);
+			if (!flyoutToCancel.hasClass("is-hovering")) {
+				flyoutToCancel.remove();
+			}
+		}, 500); // give them half a second to mouse over the flyout before removing it
+	}
+}
+
 /**
  * Opens a sidebar modal with token configuration options
  * @param tokenIds {Array<String>} an array of ids for the tokens being configured
@@ -1741,6 +1806,8 @@ function token_context_menu_expanded(tokenIds, e) {
 		$("#tokenOptionsPopup").remove();
 		$('.context-menu-list').trigger('contextmenu:hide')
 		tokenOptionsClickCloseDiv.remove();
+		$(".sp-container").spectrum("destroy");
+		$(".sp-container").remove();
 	});
 
 	let moveableTokenOptions = $("<div id='tokenOptionsPopup'></div>");
@@ -1751,7 +1818,65 @@ function token_context_menu_expanded(tokenIds, e) {
 
 	$('body').append(moveableTokenOptions);
 	$('body').append(tokenOptionsClickCloseDiv);
-	
+
+	// stat block / character sheet
+	if (tokens.length === 1) {
+		let token = tokens[0];
+		if (token.isPlayer()) {
+			let button = $(`<button>Open Character Sheet</button>`);
+			button.on("click", function() {
+				open_player_sheet(token.options.id);
+			});
+			body.append(button);
+		} else if (token.isMonster()) {
+			let button = $(`<button>Open Monster Stat Block</button>`);
+			button.on("click", function() {
+				open_monster_stat_block_with_id(token.options.monster, token.options.id);
+				// load_monster_stat(token.options.monster, token.options.id);
+			});
+			body.append(button);
+		}
+	}
+
+
+	let addButtonInternals = `<span class="material-icons">person-add</span>Add to Combat Tracker`;
+	let removeButtonInternals = `<span class="material-icons">person-remove</span>Remove From Combat Tracker`;
+	let combatButton = $(`<button></button>`);
+	let inCombatStatuses = [...new Set(tokens.map(t => t.options.combat))];
+	if (inCombatStatuses.length === 1 && inCombatStatuses[0] === true) {
+		// they are all in the combat tracker. Make it a remove button
+		combatButton.addClass("remove-from-ct");
+		combatButton.html(removeButtonInternals);
+	} else {
+		// if any are not in the combat tracker, make it an add button.
+		combatButton.addClass("add-to-ct");
+		combatButton.html(addButtonInternals);
+	}
+	combatButton.on("click", function(clickEvent) {
+		let clickedButton = $(clickEvent.currentTarget);
+		if (clickedButton.hasClass("remove-from-ct")) {
+			clickedButton.removeClass("remove-from-ct").addClass("add-to-ct");
+			clickedButton.html(addButtonInternals);
+			tokens.forEach(t => ct_remove_token(t, false));
+		} else {
+			clickedButton.removeClass("add-to-ct").addClass("remove-from-ct");
+			clickedButton.html(removeButtonInternals);
+			tokens.forEach(t => ct_add_token(t, false));
+		}
+		ct_persist();
+	});
+	body.append(combatButton);
+
+
+	let conditionsRow = $(`<div class="token-image-modal-footer-select-wrapper"><div class="token-image-modal-footer-title">Conditions / Markers</div></div>`);
+	conditionsRow.hover(function (hoverEvent) {
+		context_menu_flyout("conditions-flyout", hoverEvent, function(flyout) {
+			flyout.append(build_conditions_and_markers_flyout_menu(tokenIds));
+		})
+	});
+	body.append(conditionsRow);
+
+
 	// name
 	let tokenNames = tokens.map(t => t.options.name);
 	let uniqueNames = [...new Set(tokenNames)];
@@ -1885,7 +2010,7 @@ function token_context_menu_expanded(tokenIds, e) {
 	imageSizeWrapper.append(imageSizeInputRange); // input below label
 	body.append(imageSizeWrapper);
 
-//border color selections
+	//border color selections
 	let borderColorInput = $(`<input class="border-color-input" type="color" value="#ddd"/>`);
 	let tokenBorderColors = tokens.map(t => t.options.color);
 	if(tokenBorderColors.length === 1) {
@@ -1898,7 +2023,7 @@ function token_context_menu_expanded(tokenIds, e) {
 	`);
 	borderColorWrapper.append(borderColorInput); 
 	body.append(borderColorWrapper);
-	colorPicker = $(".border-color-input");
+	let colorPicker = $(".border-color-input");
 	colorPicker.spectrum({
 		type: "color",
 		showInput: true,
@@ -1930,63 +2055,28 @@ function token_context_menu_expanded(tokenIds, e) {
 	colorPicker.on('dragstop.spectrum', borderColorPickerChange);   // update the token as the player messes around with colors
 	colorPicker.on('change.spectrum', borderColorPickerChange); // commit the changes when the user clicks the submit button
 	colorPicker.on('hide.spectrum', borderColorPickerChange);   // the hide event includes the original color so let's change it back when we get it
-		// Auras (torch, lantern, etc)
+	// Auras (torch, lantern, etc)
 	body.append(build_token_auras_inputs(tokens));
+
 	if(window.DM) {
-		const token_settings = [
-			{ name: "hidden", label: "Hide", enabledDescription:"Token is hidden to players", disabledDescription: "Token is visible to players" },
-			{ name: "square", label: "Square Token", enabledDescription:"Token is square", disabledDescription: "Token is round" },
-			{ name: "locked", label: "Lock Token in Position", enabledDescription:"Token is not moveable, Players can not select this token", disabledDescription: "Token is moveable by at least the DM, players can select it however" },
-			{ name: "restrictPlayerMove", label: "Restrict Player Movement", enabledDescription:"Token is not moveable by players", disabledDescription: "Token is moveable by any player" },
-			{ name: "disablestat", label: "Disable HP/AC", enabledDescription:"Token stats are not visible", disabledDescription: "Token stats are visible to at least the DM" },
-			{ name: "hidestat", label: "Hide Player HP/AC from players", enabledDescription:"Token stats are hidden from players", disabledDescription: "Token stats are visible to players" },
-			{ name: "disableborder", label: "Disable Border", enabledDescription:"Token has no border", disabledDescription: "Token has a random coloured border"  },
-			{ name: "disableaura", label: "Disable Health Meter", enabledDescription:"Token has no health glow", disabledDescription: "Token has health glow corresponding with their current health" },
-			{ name: "revealname", label: "Show name to players", enabledDescription:"Token on hover name is visible to players", disabledDescription: "Token name is hidden to players" },
-			{ name: "legacyaspectratio", label: "Ignore Image Aspect Ratio", enabledDescription:"Token will stretch non-square images to fill the token space", disabledDescription: "Token will respect the aspect ratio of the image provided" },
-			{ name: "player_owned", label: "Player access to sheet/stats", enabledDescription:"Tokens' sheet is accessible to players via RMB click on token. If token stats is visible to players, players can modify the hp of the token", disabledDescription: "Tokens' sheet is not accessible to players. Players can't modify token stats"}
-		];
-		for(let i = 0; i < token_settings.length; i++) {
-			let setting = token_settings[i];
-			let tokenSettings = tokens.map(t => t.options[setting.name]);
-			let uniqueSettings = [...new Set(tokenSettings)];
-			let currentValue = null; // passing null will set the switch as unknown; undefined is the same as false
-			if (uniqueSettings.length === 1) {
-				currentValue = uniqueSettings[0];
-			}
-			let inputWrapper = build_toggle_input(setting.name, setting.label, currentValue, setting.enabledDescription, setting.disabledDescription, function(name, newValue) {
-				console.log(`${name} setting is now ${newValue}`);
-				tokens.forEach(token => {
-					token.options[name] = newValue;
-					token.place_sync_persist();
-				});
-			});
-			body.append(inputWrapper);
-		}
-
-		let resetToDefaults = $(`<button class='token-image-modal-remove-all-button' title="Reset all token settings back to their default values." style="width:100%;padding:8px;margin:10px 0px 30px 0px;">Reset Token Settings to Defaults</button>`);
-		resetToDefaults.on("click", function (clickEvent) {
-			for (let i = 0; i < token_settings.length; i++) {
-				let setting = token_settings[i];
-				let toggle = $(clickEvent.target).parent().find(`button[name=${setting.name}]`);
-				toggle.removeClass("rc-switch-checked");
-				toggle.removeClass("rc-switch-unknown");
-				tokens.forEach(token => token.options[setting.name] = false);
-			}
-			tokens.forEach(token => token.place_sync_persist());
+		let optionsRow = $(`<div class="token-image-modal-footer-select-wrapper"><div class="token-image-modal-footer-title">Options</div></div>`);
+		optionsRow.hover(function (hoverEvent) {
+			context_menu_flyout("options-flyout", hoverEvent, function(flyout) {
+				flyout.append(build_options_flyout_menu(tokenIds));
+			})
 		});
-		body.append(resetToDefaults);
+		body.append(optionsRow);
 	}
-	moveableTokenOptions.css("left", e.clientX - 310 + 'px');
+	moveableTokenOptions.css("left", e.pageX - 310 + 'px');
 
-	if($(moveableTokenOptions).height() > window.innerHeight-e.clientY-20) {
+	if($(moveableTokenOptions).height() > window.innerHeight - e.pageY - 20) {
 		moveableTokenOptions.css({
-	        "top": window.innerHeight-$(moveableTokenOptions).height()-20 + 'px',
+	        "top": window.innerHeight - $(moveableTokenOptions).height() - 20 + 'px',
 	    });
 	}
 	else {
 		moveableTokenOptions.css({
-        	"top": e.clientY + 'px',
+        	"top": e.pageY + 'px',
         });
 	}
 
@@ -2211,4 +2301,98 @@ function build_token_auras_inputs(tokens) {
 	});
 
 	return wrapper;
+}
+
+function build_conditions_and_markers_flyout_menu(tokenIds) {
+
+	let tokens = tokenIds.map(id => window.TOKEN_OBJECTS[id]).filter(t => t !== undefined);
+	let body = $("<div></div>");
+	body.css({
+		width: "190px", // "370px", // once we add Markers, make this wide enough to contain them all
+		padding: "5px"
+	})
+
+	let conditionsList = $(`<ul></ul>`);
+	conditionsList.css("width", "180px");
+	body.append(conditionsList);
+
+	STANDARD_CONDITIONS.forEach(conditionName => {
+		//  single-active active-condition
+		let conditionItem = $(`
+			<li class="icon-condition ${determine_condition_item_classname(tokenIds, conditionName)} icon-${conditionName.toLowerCase()}">
+				<span>${conditionName}</span>
+			</li>
+		`);
+		conditionsList.append(conditionItem);
+		conditionItem.on("click", function (clickEvent) {
+			let deactivateAll = conditionItem.hasClass("some-active");
+			tokens.forEach(token => {
+				if (!token.isPlayer()) { // unfortunately, we can't set conditions on player tokens
+					if (deactivateAll || token.hasCondition(conditionName)) {
+						token.removeCondition(conditionName)
+					} else {
+						token.addCondition(conditionName)
+					}
+					token.place_sync_persist();
+				}
+			});
+			conditionItem.removeClass("single-active all-active some-active active-condition");
+			conditionItem.addClass(determine_condition_item_classname(tokenIds, conditionName));
+		});
+	});
+
+	return body;
+}
+
+function build_options_flyout_menu(tokenIds) {
+	let tokens = tokenIds.map(id => window.TOKEN_OBJECTS[id]).filter(t => t !== undefined);
+	let body = $("<div></div>");
+	body.css({
+		width: "320px",
+		padding: "5px"
+	})
+	const token_settings = [
+		{ name: "hidden", label: "Hide", enabledDescription:"Token is hidden to players", disabledDescription: "Token is visible to players" },
+		{ name: "square", label: "Square Token", enabledDescription:"Token is square", disabledDescription: "Token is round" },
+		{ name: "locked", label: "Lock Token in Position", enabledDescription:"Token is not moveable, Players can not select this token", disabledDescription: "Token is moveable by at least the DM, players can select it however" },
+		{ name: "restrictPlayerMove", label: "Restrict Player Movement", enabledDescription:"Token is not moveable by players", disabledDescription: "Token is moveable by any player" },
+		{ name: "disablestat", label: "Disable HP/AC", enabledDescription:"Token stats are not visible", disabledDescription: "Token stats are visible to at least the DM" },
+		{ name: "hidestat", label: "Hide Player HP/AC from players", enabledDescription:"Token stats are hidden from players", disabledDescription: "Token stats are visible to players" },
+		{ name: "disableborder", label: "Disable Border", enabledDescription:"Token has no border", disabledDescription: "Token has a random coloured border"  },
+		{ name: "disableaura", label: "Disable Health Meter", enabledDescription:"Token has no health glow", disabledDescription: "Token has health glow corresponding with their current health" },
+		{ name: "revealname", label: "Show name to players", enabledDescription:"Token on hover name is visible to players", disabledDescription: "Token name is hidden to players" },
+		{ name: "legacyaspectratio", label: "Ignore Image Aspect Ratio", enabledDescription:"Token will stretch non-square images to fill the token space", disabledDescription: "Token will respect the aspect ratio of the image provided" },
+		{ name: "player_owned", label: "Player access to sheet/stats", enabledDescription:"Tokens' sheet is accessible to players via RMB click on token. If token stats is visible to players, players can modify the hp of the token", disabledDescription: "Tokens' sheet is not accessible to players. Players can't modify token stats"}
+	];
+	for(let i = 0; i < token_settings.length; i++) {
+		let setting = token_settings[i];
+		let tokenSettings = tokens.map(t => t.options[setting.name]);
+		let uniqueSettings = [...new Set(tokenSettings)];
+		let currentValue = null; // passing null will set the switch as unknown; undefined is the same as false
+		if (uniqueSettings.length === 1) {
+			currentValue = uniqueSettings[0];
+		}
+		let inputWrapper = build_toggle_input(setting.name, setting.label, currentValue, setting.enabledDescription, setting.disabledDescription, function(name, newValue) {
+			console.log(`${name} setting is now ${newValue}`);
+			tokens.forEach(token => {
+				token.options[name] = newValue;
+				token.place_sync_persist();
+			});
+		});
+		body.append(inputWrapper);
+	}
+
+	let resetToDefaults = $(`<button class='token-image-modal-remove-all-button' title="Reset all token settings back to their default values." style="width:100%;padding:8px;margin:10px 0px;">Reset Token Settings to Defaults</button>`);
+	resetToDefaults.on("click", function (clickEvent) {
+		for (let i = 0; i < token_settings.length; i++) {
+			let setting = token_settings[i];
+			let toggle = $(clickEvent.target).parent().find(`button[name=${setting.name}]`);
+			toggle.removeClass("rc-switch-checked");
+			toggle.removeClass("rc-switch-unknown");
+			tokens.forEach(token => token.options[setting.name] = false);
+		}
+		tokens.forEach(token => token.place_sync_persist());
+	});
+	body.append(resetToDefaults);
+	return body;
 }
