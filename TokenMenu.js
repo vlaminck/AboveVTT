@@ -1751,7 +1751,56 @@ function token_context_menu_expanded(tokenIds, e) {
 
 	$('body').append(moveableTokenOptions);
 	$('body').append(tokenOptionsClickCloseDiv);
-	
+
+	// stat block / character sheet
+	if (tokens.length === 1) {
+		let token = tokens[0];
+		if (token.isPlayer()) {
+			let button = $(`<button>Open Character Sheet</button>`);
+			button.on("click", function() {
+				open_player_sheet(token.options.id);
+			});
+			body.append(button);
+		} else if (token.isMonster()) {
+			let button = $(`<button>Open Monster Stat Block</button>`);
+			button.on("click", function() {
+				open_monster_stat_block_with_id(token.options.monster, token.options.id);
+				// load_monster_stat(token.options.monster, token.options.id);
+			});
+			body.append(button);
+		}
+	}
+
+
+	let addButtonInternals = `<span class="material-icons">person-add</span>Add to Combat Tracker`;
+	let removeButtonInternals = `<span class="material-icons">person-remove</span>Remove From Combat Tracker`;
+	let button = $(`<button></button>`);
+	let inCombatStatuses = [...new Set(tokens.map(t => t.options.combat))];
+	if (inCombatStatuses.length === 1 && inCombatStatuses[0] === true) {
+		// they are all in the combat tracker. Make it a remove button
+		button.addClass("remove-from-ct");
+		button.html(removeButtonInternals);
+	} else {
+		// if any are not in the combat tracker, make it an add button.
+		button.addClass("add-to-ct");
+		button.html(addButtonInternals);
+	}
+	button.on("click", function(clickEvent) {
+		let clickedButton = $(clickEvent.currentTarget);
+		if (clickedButton.hasClass("remove-from-ct")) {
+			clickedButton.removeClass("remove-from-ct").addClass("add-to-ct");
+			clickedButton.html(addButtonInternals);
+			tokens.forEach(t => ct_remove_token(t, false));
+		} else {
+			clickedButton.removeClass("add-to-ct").addClass("remove-from-ct");
+			clickedButton.html(removeButtonInternals);
+			tokens.forEach(t => ct_add_token(t, false));
+		}
+		ct_persist();
+	});
+	body.append(button);
+
+
 	// name
 	let tokenNames = tokens.map(t => t.options.name);
 	let uniqueNames = [...new Set(tokenNames)];

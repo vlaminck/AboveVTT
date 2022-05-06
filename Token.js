@@ -1937,6 +1937,20 @@ function build_hide_show_item(tokenIds) {
 }
 
 function token_menu() {
+
+
+	if (window.DM) {
+		$("#tokens").on("contextmenu", ".VTTToken", function(event) {
+			// event.preventDefault();
+			// event.stopPropagation();
+
+			token_context_menu_expanded(window.CURRENTLY_SELECTED_TOKENS, event);
+		});
+		// return;
+	}
+
+
+
 	$.contextMenu({
 		selector: '.VTTToken',
 	  
@@ -1955,7 +1969,6 @@ function token_menu() {
 						}
 					}
 				}
-				token_context_menu_expanded(window.CURRENTLY_SELECTED_TOKENS, e);
 				ret = {
 					callback: multiple_callback,
 					items: {
