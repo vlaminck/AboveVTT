@@ -76,7 +76,6 @@ function scan_monster(target, stats, tokenId) {
 
 
 	$(target).find(".avtt-roll-button").click(clickHandler);
-	$(target).find(".avtt-roll-button").on("contextmenu", rightClickHandler);
 	add_ability_tracker_inputs(target, tokenId)
 	
 	console.groupEnd()
@@ -349,7 +348,7 @@ function display_roll_button_contextmenu(contextmenuEvent, isDamageRoll, rollBut
 		<div role="presentation" class="MuiPopover-root jss2" id="options-menu" style="position: fixed; z-index: 1300; inset: 0px;">
 			<div aria-hidden="true" style="z-index: -1; position: fixed; inset: 0px; background-color: transparent;"></div>
 			<div tabindex="0" data-test="sentinelStart"></div>
-			<div class="MuiPaper-root MuiPopover-paper MuiPaper-elevation8 MuiPaper-rounded" tabindex="-1" style="opacity: 1; transform: none; transition: opacity 306ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, transform 204ms cubic-bezier(0.4, 0, 0.2, 1) 0ms; transform-origin: 0px 348px;">
+			<div class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation8 MuiPopover-paper css-1dmzujt" tabindex="-1" style="opacity: 1; transform: none; transition: opacity 306ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, transform 204ms cubic-bezier(0.4, 0, 0.2, 1) 0ms; transform-origin: 0px 348px;">
 				<div class="MuiBox-root jss5 jss2">
 					<ul class="MuiList-root MuiList-padding MuiList-subheader">
 						<li class="jss3"></li>

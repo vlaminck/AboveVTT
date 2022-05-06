@@ -55,7 +55,7 @@ class DiceRoll {
     #diceRollType; // "To Hit", "Damage", etc. defaults to "roll"
     get rollType() { return this.#diceRollType }
     set rollType(newRollType) {
-        let alteredRollType = newRollType.trim().toLowerCase();
+        let alteredRollType = newRollType.trim().toLowerCase().replace("-"," ");
         const validRollTypes = ["to hit", "damage", "save", "check", undefined]; // undefined is in the list to allow clearing it
         if (validRollTypes.includes(alteredRollType)) {
             this.#diceRollType = alteredRollType;
