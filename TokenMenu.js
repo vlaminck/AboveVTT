@@ -2308,24 +2308,21 @@ function build_conditions_and_markers_flyout_menu(tokenIds) {
 	let tokens = tokenIds.map(id => window.TOKEN_OBJECTS[id]).filter(t => t !== undefined);
 	let body = $("<div></div>");
 	body.css({
-		width: "190px", // "370px", // once we add Markers, make this wide enough to contain them all
-		padding: "5px"
+		width: "380px", // once we add Markers, make this wide enough to contain them all
+		padding: "5px",
+		display: "flex",
+		"flex-direction": "row"
 	})
 
-	let conditionsList = $(`<ul></ul>`);
-	conditionsList.css("width", "180px");
-	body.append(conditionsList);
-
-	STANDARD_CONDITIONS.forEach(conditionName => {
-		//  single-active active-condition
+	const buildConditionItem = function(conditionName) {
 		let conditionItem = $(`
-			<li class="icon-condition ${determine_condition_item_classname(tokenIds, conditionName)} icon-${conditionName.toLowerCase()}">
+			<li class="${determine_condition_item_classname(tokenIds, conditionName)} icon-${conditionName.toLowerCase().replaceAll("(", "-").replaceAll(")", "")}">
 				<span>${conditionName}</span>
 			</li>
 		`);
-		conditionsList.append(conditionItem);
 		conditionItem.on("click", function (clickEvent) {
-			let deactivateAll = conditionItem.hasClass("some-active");
+			let clickedItem = $(clickEvent.currentTarget);
+			let deactivateAll = clickedItem.hasClass("some-active");
 			tokens.forEach(token => {
 				if (!token.isPlayer()) { // unfortunately, we can't set conditions on player tokens
 					if (deactivateAll || token.hasCondition(conditionName)) {
@@ -2336,9 +2333,28 @@ function build_conditions_and_markers_flyout_menu(tokenIds) {
 					token.place_sync_persist();
 				}
 			});
-			conditionItem.removeClass("single-active all-active some-active active-condition");
-			conditionItem.addClass(determine_condition_item_classname(tokenIds, conditionName));
+			clickedItem.removeClass("single-active all-active some-active active-condition");
+			clickedItem.addClass(determine_condition_item_classname(tokenIds, conditionName));
 		});
+		return conditionItem;
+	};
+
+	let conditionsList = $(`<ul></ul>`);
+	conditionsList.css("width", "180px");
+	body.append(conditionsList);
+	STANDARD_CONDITIONS.forEach(conditionName => {
+		let conditionItem = buildConditionItem(conditionName);
+		conditionItem.addClass("icon-condition");
+		conditionsList.append(conditionItem);
+	});
+
+	let markersList = $(`<ul></ul>`);
+	markersList.css("width", "185px");
+	body.append(markersList);
+	CUSTOM_CONDITIONS.forEach(conditionName => {
+		let conditionItem = buildConditionItem(conditionName);
+		conditionItem.addClass("markers-icon");
+		markersList.append(conditionItem);
 	});
 
 	return body;

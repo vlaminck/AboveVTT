@@ -1439,7 +1439,7 @@ body:not(.body-rpgcampaign-details) .sidebar__pane-content {
     -webkit-box-sizing: content-box;
     -moz-box-sizing: content-box;
     box-sizing: content-box;
-    padding: 0.2em 2em;
+    padding: 0.2em 0 0 2em;
     color: #2f2f2f;
     -webkit-user-select: none;
     -moz-user-select: none;
@@ -1447,7 +1447,10 @@ body:not(.body-rpgcampaign-details) .sidebar__pane-content {
     user-select: none;
     background-color: #fff;
 }
-#conditions-flyout li::before {
+#conditions-flyout li.markers-icon {
+    padding-left: 0;
+}
+#conditions-flyout li.icon-condition::before {
     position: absolute;
     top: 50%;
     left: 0;
@@ -1525,10 +1528,11 @@ body:not(.body-rpgcampaign-details) .sidebar__pane-content {
     width: 1.4em !important;
     margin-left: 0.2em;
 }
+.markers-icon:after,
 .icon-condition:after,
 .context-menu-icon-condition:after {
     float: right;
-    margin-right: -20px;
+    margin-right: 0px;
     font-family: "Material Icons", sans-serif;
     font-size: 20px;
     margin-top: -5px;
@@ -1625,55 +1629,53 @@ body:not(.body-rpgcampaign-details) .sidebar__pane-content {
 }
 .icon-advantage:before,
 .context-menu-icon-advantage:before {
-    background-image: url(../assets/conditons/advantage.png);
+    background-image: url(assets/conditons/advantage.png);
 }
 .icon-baned:before,
 .context-menu-icon-baned:before {
-    background-image: url(../assets/conditons/baned.png);
+    background-image: url(assets/conditons/baned.png);
 }
+.icon-bardic:before,
+.context-menu-icon-bardic:before,
 .icon-bardic-inspiration:before,
 .context-menu-icon-bardic-inspiration:before {
-    background-image: url(../assets/conditons/bardic_inspiration.png);
-}
-.icon-bardic-inspiration:before,
-.context-menu-icon-bardic-inspiration:before {
-    background-image: url(../assets/conditons/bardic_inspiration.png);
+    background-image: url(assets/conditons/bardic_inspiration.png);
 }
 .icon-blessed:before,
 .context-menu-icon-blessed:before {
-    background-image: url(../assets/conditons/blessed.png);
+    background-image: url(assets/conditons/blessed.png);
 }
 .icon-bloodied:before,
 .context-menu-icon-bloodied:before {
-    background-image: url(../assets/conditons/bloodied.png);
+    background-image: url(assets/conditons/bloodied.png);
 }
 .icon-concentration-reminder:before,
 .context-menu-icon-concentration-reminder:before {
-    background-image: url(../assets/conditons/concentration\(reminder\).png);
+    background-image: url(assets/conditons/concentration\(reminder\).png);
 }
 .icon-disadvantage:before,
 .context-menu-icon-disadvantage:before {
-    background-image: url(../assets/conditons/disadvantage.png);
+    background-image: url(assets/conditons/disadvantage.png);
 }
 .icon-flamed:before,
 .context-menu-icon-flamed:before {
-    background-image: url(../assets/conditons/flamed.png);
+    background-image: url(assets/conditons/flamed.png);
 }
 .icon-flying:before,
 .context-menu-icon-flying:before {
-    background-image: url(../assets/conditons/flying.png);
+    background-image: url(assets/conditons/flying.png);
 }
 .icon-hasted:before,
 .context-menu-icon-hasted:before {
-    background-image: url(../assets/conditons/hasted.png);
+    background-image: url(assets/conditons/hasted.png);
 }
 .icon-inspiration:before,
 .context-menu-icon-inspiration:before {
-    background-image: url(../assets/conditons/inspiration.png);
+    background-image: url(assets/conditons/inspiration.png);
 }
 .icon-rage:before,
 .context-menu-icon-rage:before {
-    background-image: url(../assets/conditons/rage.png);
+    background-image: url(assets/conditons/rage.png);
 }
 
 .aura-color button {
@@ -3212,6 +3214,18 @@ button.avtt-roll-button {
     transition: none;
 }
 
+.icon-concentration-reminder:before,
+.icon-inspiration:before,
+.icon-flying:before,
+.icon-flamed:before,
+.icon-rage:before,
+.icon-blessed:before,
+.icon-baned:before,
+.icon-bloodied:before,
+.icon-advantage:before,
+.icon-disadvantage:before,
+.icon-bardic-inspiration:before,
+.icon-hasted:before,
 .context-menu-icon-concentration-reminder:before,
 .context-menu-icon-inspiration:before,
 .context-menu-icon-flying:before,

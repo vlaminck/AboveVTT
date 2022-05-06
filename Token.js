@@ -679,9 +679,9 @@ class Token {
 			if (!this.options.custom_conditions.includes("Inspiration")){
 				this.options.custom_conditions.push("Inspiration")
 			}
-		}
-		else{
-			this.options.custom_conditions.pop("Inspiration")
+		} else{
+			array_remove_index_by_value(this.options.custom_conditions, "Inspiration");
+			array_remove_index_by_value(this.options.custom_conditions, "Inspiration");
 		}
 		
 		
