@@ -1730,57 +1730,41 @@ function context_menu_flyout(id, hoverEvent, buildFunction) {
 		$(`.context-menu-flyout`).remove(); // never duplicate
 
 		buildFunction(flyout);
-		$("body").append(flyout);
+		$("#tokenOptionsContainer").append(flyout);
 
-		let contextMenuCenter = (contextMenu.height() / 2) + contextMenu.position().top;
+		let contextMenuCenter = (contextMenu.height() / 2);
 		let flyoutHeight = flyout.height();
-		let flyoutTop = contextMenuCenter - (flyoutHeight / 2); // center alongside the contextmenu
-		let flyoutBottom = flyoutTop + flyoutHeight;
-
 		let diff = (contextMenu.height() - flyoutHeight);
+		let flyoutTop = contextMenuCenter - (flyoutHeight / 2); // center alongside the contextmenu
+
+
 		if (diff > 0) {
-			// the flyout is smaller than the contextmenu. Make sure it's alongside the hovered row
-			let rowElement = $(hoverEvent.currentTarget);
-			let hoveredRowPosition = rowElement.position();
-			if (hoveredRowPosition !== undefined) {
-				let hoveredRowTop = hoveredRowPosition.top + contextMenu.position().top;
-				let hoveredRowBottom = hoveredRowTop + rowElement.height();
-				if (hoveredRowTop < flyoutTop) {
-					// align to the top of the row
-					flyoutTop = hoveredRowTop;
-				} else if (hoveredRowBottom > flyoutBottom) {
-					// align to the bottom of the row
-					flyoutTop = hoveredRowBottom - flyoutHeight;
-				}
+			// the flyout is smaller than the contextmenu. Make sure it's alongside the hovered row			
+			// align to the top of the row
+			let buttonPosition = $(".flyout-from-menu-item:hover")[0].getBoundingClientRect().y - $("#tokenOptionsPopup")[0].getBoundingClientRect().y
+			if(buttonPosition < contextMenuCenter) {
+				flyoutTop =  buttonPosition - (flyoutHeight / 5)
 			}
-		}
+			else{
+				flyoutTop =  buttonPosition - (flyoutHeight / 1.2)
+			}				
+		}	
 
 		flyout.css({
-			left: contextMenu.position().left + contextMenu.width(),
-			top: flyoutTop, // ($(hoverEvent.currentTarget).position()?.top || 0) + contextMenu.position().top
+			left: contextMenu.width(),
+			top: flyoutTop,
 		});
-		flyout.hover(function (flyoutHoverEvent) {
-			if (flyoutHoverEvent.type === "mouseenter") {
-				$(flyoutHoverEvent.currentTarget).addClass("is-hovering");
-			}
-			if (flyoutHoverEvent.type === "mouseleave") {
-				$(flyoutHoverEvent.currentTarget).remove();
-			}
-		});
-	} else if (hoverEvent.type === "mouseleave") {
-		try {
-			clearTimeout(window.context_menu_flyout_timer);
-		} catch (e) {
-			console.debug("failed to clear window.context_menu_flyout_timer", window.context_menu_flyout_timer);
+		if ($(".context-menu-flyout")[0].getBoundingClientRect().top < 0) {
+			flyout.css("top", 0)
 		}
-		window.context_menu_flyout_timer = setTimeout(function() {
-			window.context_menu_flyout_timer = null;
-			let flyoutToCancel = $(`#${id}`);
-			if (!flyoutToCancel.hasClass("is-hovering")) {
-				flyoutToCancel.remove();
-			}
-		}, 500); // give them half a second to mouse over the flyout before removing it
-	}
+		else if($(".context-menu-flyout")[0].getBoundingClientRect().bottom > window.innerHeight-15) {
+			flyout.css({
+				top: 'unset',
+				bottom: 0
+			});
+		}
+		
+	} 
 }
 
 /**
@@ -1808,6 +1792,7 @@ function token_context_menu_expanded(tokenIds, e) {
 		tokenOptionsClickCloseDiv.remove();
 		$(".sp-container").spectrum("destroy");
 		$(".sp-container").remove();
+		$(`.context-menu-flyout`).remove(); 
 	});
 
 	let moveableTokenOptions = $("<div id='tokenOptionsPopup'></div>");
@@ -1823,13 +1808,13 @@ function token_context_menu_expanded(tokenIds, e) {
 	if (tokens.length === 1) {
 		let token = tokens[0];
 		if (token.isPlayer()) {
-			let button = $(`<button>Open Character Sheet</button>`);
+			let button = $(`<button>Open Character Sheet<span class="material-icons icon-view"></span></button>`);
 			button.on("click", function() {
 				open_player_sheet(token.options.id);
 			});
 			body.append(button);
 		} else if (token.isMonster()) {
-			let button = $(`<button>Open Monster Stat Block</button>`);
+			let button = $(`<button>Open Monster Stat Block<span class="material-icons icon-view"></span></button>`);
 			button.on("click", function() {
 				open_monster_stat_block_with_id(token.options.monster, token.options.id);
 				// load_monster_stat(token.options.monster, token.options.id);
@@ -1839,8 +1824,8 @@ function token_context_menu_expanded(tokenIds, e) {
 	}
 
 
-	let addButtonInternals = `<span class="material-icons">person-add</span>Add to Combat Tracker`;
-	let removeButtonInternals = `<span class="material-icons">person-remove</span>Remove From Combat Tracker`;
+	let addButtonInternals = `Add to Combat Tracker<span class="material-icons icon-person-add"></span>`;
+	let removeButtonInternals = `Remove From Combat Tracker<span class="material-icons icon-person-remove"></span>`;
 	let combatButton = $(`<button></button>`);
 	let inCombatStatuses = [...new Set(tokens.map(t => t.options.combat))];
 	if (inCombatStatuses.length === 1 && inCombatStatuses[0] === true) {
@@ -1868,7 +1853,7 @@ function token_context_menu_expanded(tokenIds, e) {
 	body.append(combatButton);
 
 
-	let conditionsRow = $(`<div class="token-image-modal-footer-select-wrapper"><div class="token-image-modal-footer-title">Conditions / Markers</div></div>`);
+	let conditionsRow = $(`<div class="token-image-modal-footer-select-wrapper flyout-from-menu-item"><div class="token-image-modal-footer-title">Conditions / Markers</div></div>`);
 	conditionsRow.hover(function (hoverEvent) {
 		context_menu_flyout("conditions-flyout", hoverEvent, function(flyout) {
 			flyout.append(build_conditions_and_markers_flyout_menu(tokenIds));
@@ -2059,7 +2044,7 @@ function token_context_menu_expanded(tokenIds, e) {
 	body.append(build_token_auras_inputs(tokens));
 
 	if(window.DM) {
-		let optionsRow = $(`<div class="token-image-modal-footer-select-wrapper"><div class="token-image-modal-footer-title">Options</div></div>`);
+		let optionsRow = $(`<div class="token-image-modal-footer-select-wrapper flyout-from-menu-item"><div class="token-image-modal-footer-title">Options</div></div>`);
 		optionsRow.hover(function (hoverEvent) {
 			context_menu_flyout("options-flyout", hoverEvent, function(flyout) {
 				flyout.append(build_options_flyout_menu(tokenIds));
@@ -2308,24 +2293,21 @@ function build_conditions_and_markers_flyout_menu(tokenIds) {
 	let tokens = tokenIds.map(id => window.TOKEN_OBJECTS[id]).filter(t => t !== undefined);
 	let body = $("<div></div>");
 	body.css({
-		width: "190px", // "370px", // once we add Markers, make this wide enough to contain them all
-		padding: "5px"
+		width: "380px", // once we add Markers, make this wide enough to contain them all
+		padding: "5px",
+		display: "flex",
+		"flex-direction": "row"
 	})
 
-	let conditionsList = $(`<ul></ul>`);
-	conditionsList.css("width", "180px");
-	body.append(conditionsList);
-
-	STANDARD_CONDITIONS.forEach(conditionName => {
-		//  single-active active-condition
+	const buildConditionItem = function(conditionName) {
 		let conditionItem = $(`
-			<li class="icon-condition ${determine_condition_item_classname(tokenIds, conditionName)} icon-${conditionName.toLowerCase()}">
+			<li class="${determine_condition_item_classname(tokenIds, conditionName)} icon-${conditionName.toLowerCase().replaceAll("(", "-").replaceAll(")", "")}">
 				<span>${conditionName}</span>
 			</li>
 		`);
-		conditionsList.append(conditionItem);
 		conditionItem.on("click", function (clickEvent) {
-			let deactivateAll = conditionItem.hasClass("some-active");
+			let clickedItem = $(clickEvent.currentTarget);
+			let deactivateAll = clickedItem.hasClass("some-active");
 			tokens.forEach(token => {
 				if (!token.isPlayer()) { // unfortunately, we can't set conditions on player tokens
 					if (deactivateAll || token.hasCondition(conditionName)) {
@@ -2336,9 +2318,28 @@ function build_conditions_and_markers_flyout_menu(tokenIds) {
 					token.place_sync_persist();
 				}
 			});
-			conditionItem.removeClass("single-active all-active some-active active-condition");
-			conditionItem.addClass(determine_condition_item_classname(tokenIds, conditionName));
+			clickedItem.removeClass("single-active all-active some-active active-condition");
+			clickedItem.addClass(determine_condition_item_classname(tokenIds, conditionName));
 		});
+		return conditionItem;
+	};
+
+	let conditionsList = $(`<ul></ul>`);
+	conditionsList.css("width", "180px");
+	body.append(conditionsList);
+	STANDARD_CONDITIONS.forEach(conditionName => {
+		let conditionItem = buildConditionItem(conditionName);
+		conditionItem.addClass("icon-condition");
+		conditionsList.append(conditionItem);
+	});
+
+	let markersList = $(`<ul></ul>`);
+	markersList.css("width", "185px");
+	body.append(markersList);
+	CUSTOM_CONDITIONS.forEach(conditionName => {
+		let conditionItem = buildConditionItem(conditionName);
+		conditionItem.addClass("markers-icon");
+		markersList.append(conditionItem);
 	});
 
 	return body;

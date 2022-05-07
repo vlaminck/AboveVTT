@@ -679,9 +679,9 @@ class Token {
 			if (!this.options.custom_conditions.includes("Inspiration")){
 				this.options.custom_conditions.push("Inspiration")
 			}
-		}
-		else{
-			this.options.custom_conditions.pop("Inspiration")
+		} else{
+			array_remove_index_by_value(this.options.custom_conditions, "Inspiration");
+			array_remove_index_by_value(this.options.custom_conditions, "Inspiration");
 		}
 		
 		
@@ -1944,7 +1944,7 @@ function token_menu() {
 			console.log("context_menu_flyout contextmenu event", event);
 			event.preventDefault();
 			event.stopPropagation();
-			if (window.CURRENTLY_SELECTED_TOKENS.length > 0) {
+			if ($(event.currentTarget).hasClass("tokenselected") && window.CURRENTLY_SELECTED_TOKENS.length > 0) {
 				token_context_menu_expanded(window.CURRENTLY_SELECTED_TOKENS, event);
 			} else {
 				token_context_menu_expanded([$(event.currentTarget).attr("data-id")], event);

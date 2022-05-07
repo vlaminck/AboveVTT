@@ -1439,7 +1439,7 @@ body:not(.body-rpgcampaign-details) .sidebar__pane-content {
     -webkit-box-sizing: content-box;
     -moz-box-sizing: content-box;
     box-sizing: content-box;
-    padding: 0.2em 2em;
+    padding: 0.2em 0 0 2em;
     color: #2f2f2f;
     -webkit-user-select: none;
     -moz-user-select: none;
@@ -1447,7 +1447,10 @@ body:not(.body-rpgcampaign-details) .sidebar__pane-content {
     user-select: none;
     background-color: #fff;
 }
-#conditions-flyout li::before {
+#conditions-flyout li.markers-icon {
+    padding-left: 0;
+}
+#conditions-flyout li.icon-condition::before {
     position: absolute;
     top: 50%;
     left: 0;
@@ -1470,12 +1473,18 @@ body:not(.body-rpgcampaign-details) .sidebar__pane-content {
     background-color: rgba(41, 128, 185) !important;
 }
 
-.icon-condition.material-icon:before,
-.context-menu-icon.material-icon:before {
+.icon-condition.material-icons:before,
+.context-menu-icon.material-icons:before {
     left: -8px !important;
     font-family: "Material Icons", sans-serif !important;
     font-size: 20px !important;
 }
+#tokenOptionsContainer .material-icons:before {
+    right: 8px;
+    position: absolute;
+    font-size: 20px;
+}
+
 .icon-edit:before,
 .context-menu-icon-edit:before {
     content: "\e3c9" !important;
@@ -1525,24 +1534,25 @@ body:not(.body-rpgcampaign-details) .sidebar__pane-content {
     width: 1.4em !important;
     margin-left: 0.2em;
 }
+.markers-icon:after,
 .icon-condition:after,
 .context-menu-icon-condition:after {
     float: right;
-    margin-right: -20px;
+    margin-right: 0px;
     font-family: "Material Icons", sans-serif;
     font-size: 20px;
     margin-top: -5px;
     margin-bottom: -10px;
 }
-.icon-condition.single-active:after,
+[class^="icon"].single-active:after,
 .context-menu-icon-condition.single-active:after {
     content: "\e876";
 }
-.icon-condition.all-active:after,
+[class^="icon"].all-active:after,
 .context-menu-icon-condition.all-active:after {
     content: "\e6b1";
 }
-.icon-condition.some-active:after,
+[class^="icon"].some-active:after,
 .context-menu-icon-condition.some-active:after {
     content: "\f1c2";
 }
@@ -1625,55 +1635,53 @@ body:not(.body-rpgcampaign-details) .sidebar__pane-content {
 }
 .icon-advantage:before,
 .context-menu-icon-advantage:before {
-    background-image: url(../assets/conditons/advantage.png);
+    background-image: url(assets/conditons/advantage.png);
 }
 .icon-baned:before,
 .context-menu-icon-baned:before {
-    background-image: url(../assets/conditons/baned.png);
+    background-image: url(assets/conditons/baned.png);
 }
+.icon-bardic:before,
+.context-menu-icon-bardic:before,
 .icon-bardic-inspiration:before,
 .context-menu-icon-bardic-inspiration:before {
-    background-image: url(../assets/conditons/bardic_inspiration.png);
-}
-.icon-bardic-inspiration:before,
-.context-menu-icon-bardic-inspiration:before {
-    background-image: url(../assets/conditons/bardic_inspiration.png);
+    background-image: url(assets/conditons/bardic_inspiration.png);
 }
 .icon-blessed:before,
 .context-menu-icon-blessed:before {
-    background-image: url(../assets/conditons/blessed.png);
+    background-image: url(assets/conditons/blessed.png);
 }
 .icon-bloodied:before,
 .context-menu-icon-bloodied:before {
-    background-image: url(../assets/conditons/bloodied.png);
+    background-image: url(assets/conditons/bloodied.png);
 }
 .icon-concentration-reminder:before,
 .context-menu-icon-concentration-reminder:before {
-    background-image: url(../assets/conditons/concentration\(reminder\).png);
+    background-image: url(assets/conditons/concentration\(reminder\).png);
 }
 .icon-disadvantage:before,
 .context-menu-icon-disadvantage:before {
-    background-image: url(../assets/conditons/disadvantage.png);
+    background-image: url(assets/conditons/disadvantage.png);
 }
 .icon-flamed:before,
 .context-menu-icon-flamed:before {
-    background-image: url(../assets/conditons/flamed.png);
+    background-image: url(assets/conditons/flamed.png);
 }
 .icon-flying:before,
 .context-menu-icon-flying:before {
-    background-image: url(../assets/conditons/flying.png);
+    background-image: url(assets/conditons/flying.png);
 }
 .icon-hasted:before,
 .context-menu-icon-hasted:before {
-    background-image: url(../assets/conditons/hasted.png);
+    background-image: url(assets/conditons/hasted.png);
 }
 .icon-inspiration:before,
 .context-menu-icon-inspiration:before {
-    background-image: url(../assets/conditons/inspiration.png);
+    background-image: url(assets/conditons/inspiration.png);
 }
 .icon-rage:before,
 .context-menu-icon-rage:before {
-    background-image: url(../assets/conditons/rage.png);
+    background-image: url(assets/conditons/rage.png);
 }
 
 .aura-color button {
@@ -2716,7 +2724,6 @@ button.avtt-roll-button {
     background: #fff;
     border-radius: 10px;
     width: 300px;
-    overflow: hidden;
     max-height: 100%;
 }
 
@@ -3190,6 +3197,76 @@ button.avtt-roll-button {
 .image-scale-input-range {
     width: 100%;
 }
+.flyout-from-menu-item,
+#tokenOptionsContainer>button  {
+    line-height: 24px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-top: 2px;
+}
+
+#tokenOptionsContainer>button {
+    background: none;
+    font-size: 10px;
+    display: flex;
+    flex-direction: row;
+    width: 100%;    
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    height: 24px;
+    color: #738694;
+}
+#tokenOptionsContainer .material-icons{
+    color: #738694;
+}
+#tokenOptionsContainer>button:hover .material-icons,
+#tokenOptionsContainer>button:hover {
+    color: #ddd;
+}
+#tokenOptionsContainer button:hover {
+    background-color: rgba(41, 128, 185);
+    color: #ddd;
+}
+
+.flyout-from-menu-item:hover {
+    background-color: rgba(41, 128, 185);
+}
+
+.flyout-from-menu-item:hover > .token-image-modal-footer-title {
+    color: #ddd;
+}
+
+.flyout-from-menu-item:after {
+    position: relative;
+    content: '';
+    right: 5px;
+    top: 7px;
+    width: 0; 
+    height: 0; 
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent; 
+    border-left: 5px solid #738694;
+}
+.flyout-from-menu-item:hover:after {
+    border-left: 5px solid #ddd;
+}
+
+.context-menu-flyout{
+    visibility: hidden;
+    transition: visibility 0s;
+    transition-delay: 500ms;
+}
+
+.flyout-from-menu-item:hover ~ .context-menu-flyout,
+.context-menu-flyout:hover {
+    visibility: visible;
+    transition-delay: 0ms;
+}
+
+
+
+
 
 #prewiz, 
 #wizard_popup{
@@ -3212,6 +3289,18 @@ button.avtt-roll-button {
     transition: none;
 }
 
+.icon-concentration-reminder:before,
+.icon-inspiration:before,
+.icon-flying:before,
+.icon-flamed:before,
+.icon-rage:before,
+.icon-blessed:before,
+.icon-baned:before,
+.icon-bloodied:before,
+.icon-advantage:before,
+.icon-disadvantage:before,
+.icon-bardic-inspiration:before,
+.icon-hasted:before,
 .context-menu-icon-concentration-reminder:before,
 .context-menu-icon-inspiration:before,
 .context-menu-icon-flying:before,
