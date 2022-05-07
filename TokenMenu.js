@@ -2316,23 +2316,25 @@ function build_conditions_and_markers_flyout_menu(tokenIds) {
 	})
 
 	const buildConditionItem = function(conditionName) {
-		let conditionItem = $(`
-			<li class="${determine_condition_item_classname(tokenIds, conditionName)} icon-${conditionName.toLowerCase().replaceAll("(", "-").replaceAll(")", "")}">
-				<span>${conditionName}</span>
-			</li>
-		`);
+		let conditionItem = $(`<li class="${determine_condition_item_classname(tokenIds, conditionName)} icon-${conditionName.toLowerCase().replaceAll("(", "-").replaceAll(")", "").replaceAll(" ", "-")}"></li>`);
+		if (conditionName.startsWith("#")) {
+			let colorItem = $(`<span class="color-condition"></span>`);
+			conditionItem.append(colorItem);
+			colorItem.css("background-color", conditionName);
+		} else {
+			conditionItem.append(`<span>${conditionName}</span>`);
+		}
+
 		conditionItem.on("click", function (clickEvent) {
 			let clickedItem = $(clickEvent.currentTarget);
 			let deactivateAll = clickedItem.hasClass("some-active");
 			tokens.forEach(token => {
-				if (!token.isPlayer()) { // unfortunately, we can't set conditions on player tokens
-					if (deactivateAll || token.hasCondition(conditionName)) {
-						token.removeCondition(conditionName)
-					} else {
-						token.addCondition(conditionName)
-					}
-					token.place_sync_persist();
+				if (deactivateAll || token.hasCondition(conditionName)) {
+					token.removeCondition(conditionName)
+				} else {
+					token.addCondition(conditionName)
 				}
+				token.place_sync_persist();
 			});
 			clickedItem.removeClass("single-active all-active some-active active-condition");
 			clickedItem.addClass(determine_condition_item_classname(tokenIds, conditionName));
@@ -2357,6 +2359,12 @@ function build_conditions_and_markers_flyout_menu(tokenIds) {
 		conditionItem.addClass("markers-icon");
 		markersList.append(conditionItem);
 	});
+
+	let removeAllItem = $(`<li class="icon-condition icon-close-red material-icon"><span>Remove All</span></li>`);
+	removeAllItem.on("click", function () {
+		$(".active-condition").click(); // anything that is active should be deactivated.
+	});
+	conditionsList.prepend(removeAllItem);
 
 	return body;
 }

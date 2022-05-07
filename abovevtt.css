@@ -1448,7 +1448,13 @@ body:not(.body-rpgcampaign-details) .sidebar__pane-content {
     background-color: #fff;
 }
 #conditions-flyout li.markers-icon {
-    padding-left: 0;
+    padding-left: 0.2em;
+    margin: 0.2em 0;
+}
+#conditions-flyout li .color-condition {
+    width: 75%;
+    height: 75%;
+    position: absolute;
 }
 #conditions-flyout li.icon-condition::before {
     position: absolute;
@@ -1538,14 +1544,17 @@ body:not(.body-rpgcampaign-details) .sidebar__pane-content {
     margin-top: -5px;
     margin-bottom: -10px;
 }
+.markers-icon.single-active:after,
 .icon-condition.single-active:after,
 .context-menu-icon-condition.single-active:after {
     content: "\e876";
 }
+.markers-icon.all-active:after,
 .icon-condition.all-active:after,
 .context-menu-icon-condition.all-active:after {
     content: "\e6b1";
 }
+.markers-icon.some-active:after,
 .icon-condition.some-active:after,
 .context-menu-icon-condition.some-active:after {
     content: "\f1c2";
