@@ -1448,6 +1448,7 @@ body:not(.body-rpgcampaign-details) .sidebar__pane-content {
     background-color: #fff;
 }
 #conditions-flyout li.markers-icon {
+
     padding-left: 0.2em;
     margin: 0.2em 0;
 }
@@ -1479,12 +1480,18 @@ body:not(.body-rpgcampaign-details) .sidebar__pane-content {
     background-color: rgba(41, 128, 185) !important;
 }
 
-.icon-condition.material-icon:before,
-.context-menu-icon.material-icon:before {
+.icon-condition.material-icons:before,
+.context-menu-icon.material-icons:before {
     left: -8px !important;
     font-family: "Material Icons", sans-serif !important;
     font-size: 20px !important;
 }
+#tokenOptionsContainer .material-icons:before {
+    right: 8px;
+    position: absolute;
+    font-size: 20px;
+}
+
 .icon-edit:before,
 .context-menu-icon-edit:before {
     content: "\e3c9" !important;
@@ -1544,6 +1551,7 @@ body:not(.body-rpgcampaign-details) .sidebar__pane-content {
     margin-top: -5px;
     margin-bottom: -10px;
 }
+
 .markers-icon.single-active:after,
 .icon-condition.single-active:after,
 .context-menu-icon-condition.single-active:after {
@@ -2727,7 +2735,6 @@ button.avtt-roll-button {
     background: #fff;
     border-radius: 10px;
     width: 300px;
-    overflow: hidden;
     max-height: 100%;
 }
 
@@ -3201,6 +3208,76 @@ button.avtt-roll-button {
 .image-scale-input-range {
     width: 100%;
 }
+.flyout-from-menu-item,
+#tokenOptionsContainer>button  {
+    line-height: 24px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-top: 2px;
+}
+
+#tokenOptionsContainer>button {
+    background: none;
+    font-size: 10px;
+    display: flex;
+    flex-direction: row;
+    width: 100%;    
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    height: 24px;
+    color: #738694;
+}
+#tokenOptionsContainer .material-icons{
+    color: #738694;
+}
+#tokenOptionsContainer>button:hover .material-icons,
+#tokenOptionsContainer>button:hover {
+    color: #ddd;
+}
+#tokenOptionsContainer button:hover {
+    background-color: rgba(41, 128, 185);
+    color: #ddd;
+}
+
+.flyout-from-menu-item:hover {
+    background-color: rgba(41, 128, 185);
+}
+
+.flyout-from-menu-item:hover > .token-image-modal-footer-title {
+    color: #ddd;
+}
+
+.flyout-from-menu-item:after {
+    position: relative;
+    content: '';
+    right: 5px;
+    top: 7px;
+    width: 0; 
+    height: 0; 
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent; 
+    border-left: 5px solid #738694;
+}
+.flyout-from-menu-item:hover:after {
+    border-left: 5px solid #ddd;
+}
+
+.context-menu-flyout{
+    visibility: hidden;
+    transition: visibility 0s;
+    transition-delay: 500ms;
+}
+
+.flyout-from-menu-item:hover ~ .context-menu-flyout,
+.context-menu-flyout:hover {
+    visibility: visible;
+    transition-delay: 0ms;
+}
+
+
+
+
 
 #prewiz, 
 #wizard_popup{
