@@ -1725,6 +1725,12 @@ function context_menu_flyout(id, hoverEvent, buildFunction) {
 		return;
 	}
 
+	try {
+		clearTimeout(window.context_menu_flyout_timer);
+	} catch (e) {
+		console.debug("failed to clear window.context_menu_flyout_timer", window.context_menu_flyout_timer);
+	}
+
 	if (hoverEvent.type === "mouseenter") {
 		let flyout = $(`<div id='${id}' class='context-menu-flyout'></div>`);
 		$(`.context-menu-flyout`).remove(); // never duplicate
@@ -1768,11 +1774,6 @@ function context_menu_flyout(id, hoverEvent, buildFunction) {
 			}
 		});
 	} else if (hoverEvent.type === "mouseleave") {
-		try {
-			clearTimeout(window.context_menu_flyout_timer);
-		} catch (e) {
-			console.debug("failed to clear window.context_menu_flyout_timer", window.context_menu_flyout_timer);
-		}
 		window.context_menu_flyout_timer = setTimeout(function() {
 			window.context_menu_flyout_timer = null;
 			let flyoutToCancel = $(`#${id}`);
