@@ -1,5 +1,4 @@
 
-
 function gamelog_send_to_text() {
     // TODO: track characters page in window.sendTo so we know what they have set even if the gamelog is not on the screen
     let expectedButtonText = $(".glc-game-log .tss-l9t796-SendToLabel").parent().find("button").text();
@@ -13,11 +12,14 @@ function gamelog_send_to_text() {
 }
 
 function standard_dice_context_menu(modifierString = "", action = undefined, rollType = undefined, name = undefined, avatarUrl = undefined, entityType = undefined, entityId = undefined) {
+    if (typeof modifierString !== "string") {
+        modifierString = "";
+    }
     let sendToText = gamelog_send_to_text();
-    return new DiceContextMenu("1d20")
+    return new DiceContextMenu()
         .section("SEND TO:", s => s
-            .row("Everyone", svg_everyone(), sendToText === "Self")
-            .row("Self", svg_self(), sendToText === "Everyone")
+            .row("Everyone", svg_everyone(), sendToText === "Everyone")
+            .row("Self", svg_self(), sendToText === "Self")
         )
         .section("ROLL WITH:", s => s
             .row("Advantage", svg_advantage(), false)
@@ -25,26 +27,65 @@ function standard_dice_context_menu(modifierString = "", action = undefined, rol
             .row("Disadvantage", svg_disadvantage(), false)
         )
         .onRollClick(dcm => {
+
+            let rollWithIndex = dcm.checkedRowIndex(1);
+
             let diceRoll;
-            let rollWithRow = dcm.sections[1].rows.find(r => r.isChecked === true);
-            if (rollWithRow?.title === "Advantage") {
+            if (rollWithIndex === 0) { // advantage
                 diceRoll = new DiceRoll(`2d20kh1${modifierString}`);
-            } else if (rollWithRow?.title === "Disadvantage") {
-                diceRoll = new DiceRoll(`2d20kl1${modifierString}`);
-            } else {
-                // flat roll
+            } else if (rollWithIndex === 1) {
                 diceRoll = new DiceRoll(`1d20${modifierString}`);
+            } else if (rollWithIndex === 2) { // disadvantage
+                diceRoll = new DiceRoll(`2d20kl1${modifierString}`);
+            } else { // not possible
+                console.warn("DiceContextMenu unexpectedly gave an invalid row index for section 1! rollWithIndex: ", rollWithIndex, ", dcm: ", dcm);
             }
 
-            let sendToRow = dcm.sections[0].rows.find(r => r.isChecked === true);
-            if (sendToRow.title === "Self") {
-                // TODO: send to self
+            diceRoll.sendToOverride = dcm.checkedRow(0).title;
+            diceRoll.action = action;
+            diceRoll.rollType = rollType;
+            diceRoll.name = name;
+            diceRoll.avatarUrl = avatarUrl;
+            diceRoll.entityType = entityType;
+            diceRoll.entityId = entityId;
 
-            } else {
-                // TODO: send to everyone
+            window.diceRoller.roll(diceRoll);
+        });
+}
 
+function damage_dice_context_menu(diceExpression, modifierString = "", action = undefined, rollType = undefined, name = undefined, avatarUrl = undefined, entityType = undefined, entityId = undefined) {
+    if (typeof modifierString !== "string") {
+        modifierString = "";
+    }
+    let sendToText = gamelog_send_to_text();
+    return new DiceContextMenu()
+        .section("SEND TO:", s => s
+            .row("Everyone", svg_everyone(), sendToText === "Self")
+            .row("Self", svg_self(), sendToText === "Everyone")
+        )
+        .section("ROLL AS:", s => s
+            .row("Crit Damage", svg_advantage(), false)
+            .row("Flat Roll", svg_flat(), true)
+        )
+        .onRollClick(dcm => {
+
+            let rollAsIndex = dcm.checkedRowIndex(1);
+
+            let diceRoll;
+            if (rollAsIndex === 0) {
+                // crit damage
+                let expressionParts = diceExpression.split("d");
+                let numberOfDice = parseInt(expressionParts[0]) * 2;
+                diceRoll = new DiceRoll(`${numberOfDice}d${expressionParts[1]}${modifierString}`)
+            } else if (rollAsIndex === 1) {
+                // flat roll
+                diceRoll = new DiceRoll(`${diceExpression}${modifierString}`);
+            } else { // not possible
+                console.warn("DiceContextMenu unexpectedly gave an invalid row index for section 1! rollAsIndex: ", rollAsIndex, ", dcm: ", dcm);
             }
 
+
+            diceRoll.sendToOverride = dcm.checkedRow(0).title;
             diceRoll.action = action;
             diceRoll.rollType = rollType;
             diceRoll.name = name;
@@ -120,6 +161,14 @@ class DiceContextMenu {
             console.warn("onRollClick was not set");
         }
     }
+
+    checkedRowIndex(sectionIndex) {
+        return this.sections[sectionIndex].checkedIndex();
+    }
+
+    checkedRow(sectionIndex) {
+        return this.sections[sectionIndex].checkedRow();
+    }
 }
 
 class DiceContextMenuSection {
@@ -147,6 +196,12 @@ class DiceContextMenuSection {
             row.isChecked = (index == row.index); // explicitly not using `===` because this is often comparing a number and a string
         });
     }
+    checkedIndex() {
+        return this.rows.findIndex(r => r.isChecked === true);
+    }
+    checkedRow() {
+        return this.rows[this.checkedIndex()];
+    }
 }
 
 class DiceContextMenuRow {
@@ -161,7 +216,7 @@ class DiceContextMenuRow {
         let rowHtml = $(`
             <div class="dcm-row" role="button" tabIndex="0" data-index="${this.index}" data-section-index="${this.sectionIndex}">
                 <div class="dcm-row-icon">
-                    ${this.iconHtml}
+                    ${this.iconHtml || ''}
                 </div>
                 <div class="dcm-row-title">
                     <span>${this.title}</span>
