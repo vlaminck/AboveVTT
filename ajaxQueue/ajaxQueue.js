@@ -28,7 +28,7 @@ class AjaxQueueTask {
 
   perform() {
     $.ajax(this.options);
-  }
+  }e
 }
 
 class AjaxQueue {

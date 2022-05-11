@@ -80,7 +80,7 @@
 		"ScenesPanel.js",
 		"mousetrap.1.6.5.min.js",
 		"KeypressHandler.js",
-		"DiceContextMenu.js",
+		"DiceContextMenu/*",
 		"DiceRoller.js",
 		"ChatObserver.js",
 		"Main.js"

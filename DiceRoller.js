@@ -55,12 +55,17 @@ class DiceRoll {
     #diceRollType; // "To Hit", "Damage", etc. defaults to "roll"
     get rollType() { return this.#diceRollType }
     set rollType(newRollType) {
-        let alteredRollType = newRollType.trim().toLowerCase().replace("-", " ");
-        const validRollTypes = ["to hit", "damage", "save", "check", "heal", undefined]; // undefined is in the list to allow clearing it
-        if (validRollTypes.includes(alteredRollType)) {
-            this.#diceRollType = alteredRollType;
-        } else {
-            console.warn(`not setting rollType. Expected one of ${JSON.stringify(validRollTypes)}, but received "${newRollType}"`);
+        try {
+            let alteredRollType = newRollType.trim().toLowerCase().replace("-", " ");
+            const validRollTypes = ["to hit", "damage", "save", "check", "heal", undefined]; // undefined is in the list to allow clearing it
+            if (validRollTypes.includes(alteredRollType)) {
+                this.#diceRollType = alteredRollType;
+            } else {
+                console.warn(`not setting rollType. Expected one of ${JSON.stringify(validRollTypes)}, but received "${newRollType}"`);
+            }
+        } catch (error) {
+            console.warn("DiceRoll set rollType failed", error);
+            this.#diceRollType = undefined;
         }
     }
 
