@@ -82,7 +82,7 @@ class DiceRoll {
     #sendTo;     // "Self", "Everyone", undefined.
     get sendToOverride() { return this.#sendTo }
     set sendToOverride(newValue) {
-        if (["Self", "Everyone"].includes(newValue)) {
+        if (["Self", "Everyone", "DungeonMaster"].includes(newValue)) {
             this.#sendTo = newValue;
         } else {
             this.#sendTo = undefined;
@@ -300,14 +300,19 @@ class DiceRoller {
         }
 
         if ($(".dice-toolbar").hasClass("rollable")) {
+            console.log("diceRoll.sendToOverride", diceRoll.sendToOverride)
             if (diceRoll.sendToOverride === "Everyone") {
                 // expand the options and click the "Everyone" button
                 $(".dice-toolbar__target-menu-button").click();
-                $("#options-menu ul li ul div").first().click();
+                $("#options-menu ul > li > ul > div").eq(0).click();
             } else if (diceRoll.sendToOverride === "Self") {
                 // expand the options and click the "Self" button
                 $(".dice-toolbar__target-menu-button").click();
-                $("#options-menu ul li ul div").last().click();
+                $("#options-menu ul > li > ul > div").eq(1).click();
+            } else if (diceRoll.sendToOverride === "DungeonMaster") {
+                // expand the options and click the "Self" button
+                $(".dice-toolbar__target-menu-button").click();
+                $("#options-menu ul > li > ul > div").eq(2).click();
             } else {
                 // click the roll button which will use whatever the gamelog is set to roll to
                 $(".dice-toolbar__target").children().first().click();

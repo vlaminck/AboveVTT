@@ -15,12 +15,8 @@ function standard_dice_context_menu(modifierString = "", action = undefined, rol
     if (typeof modifierString !== "string") {
         modifierString = "";
     }
-    let sendToText = gamelog_send_to_text();
     return new DiceContextMenu()
-        .section("SEND TO:", s => s
-            .row("Everyone", svg_everyone(), sendToText === "Everyone")
-            .row("Self", svg_self(), sendToText === "Self")
-        )
+        .sendToSection()
         .section("ROLL WITH:", s => s
             .row("Advantage", svg_advantage(), false)
             .row("Flat (One Die)", svg_flat(), true)
@@ -41,13 +37,13 @@ function standard_dice_context_menu(modifierString = "", action = undefined, rol
                 console.warn("DiceContextMenu unexpectedly gave an invalid row index for section 1! rollWithIndex: ", rollWithIndex, ", dcm: ", dcm);
             }
 
-            diceRoll.sendToOverride = dcm.checkedRow(0).title;
             diceRoll.action = action;
             diceRoll.rollType = rollType;
             diceRoll.name = name;
             diceRoll.avatarUrl = avatarUrl;
             diceRoll.entityType = entityType;
             diceRoll.entityId = entityId;
+            diceRoll.sendToOverride = dcm.checkedRow(0).title.replace(/\s+/g, "");
 
             window.diceRoller.roll(diceRoll);
         });
@@ -57,15 +53,11 @@ function damage_dice_context_menu(diceExpression, modifierString = "", action = 
     if (typeof modifierString !== "string") {
         modifierString = "";
     }
-    let sendToText = gamelog_send_to_text();
     return new DiceContextMenu()
-        .section("SEND TO:", s => s
-            .row("Everyone", svg_everyone(), sendToText === "Self")
-            .row("Self", svg_self(), sendToText === "Everyone")
-        )
+        .sendToSection()
         .section("ROLL AS:", s => s
-            .row("Crit Damage", svg_advantage(), false)
-            .row("Flat Roll", svg_flat(), true)
+            .row("Crit Damage", "", false)
+            .row("Flat Roll", "", true)
         )
         .onRollClick(dcm => {
 
@@ -110,12 +102,23 @@ class DiceContextMenu {
         return this;
     }
 
+    sendToSection() {
+        let sendToText = gamelog_send_to_text();
+        return this.section("SEND TO:", s => {
+            s.row("Everyone", svg_everyone(), sendToText === "Everyone");
+            s.row("Self", svg_self(), sendToText === "Self");
+            if (!window.DM) {
+                s.row("Dungeon Master", svg_dm(), sendToText === "DungeonMaster");
+            }
+        })
+    }
+
     onRollClick(callback) {
         this.callback = callback;
         return this;
     }
 
-    build(top, left) {
+    build() {
         let html = $(`
         	<div role="presentation" class="dcm-backdrop">
                 <div class="dcm-container">
@@ -126,7 +129,6 @@ class DiceContextMenu {
         html.on("click", function (clickEvent) {
             $(".dcm-backdrop").remove();
         });
-        html.find(".dcm-container").css({ top: top, left: left });
         let sectionList = html.find("ul");
         this.sections.forEach(s => {
             let li = $(`<li></li>`);
@@ -147,6 +149,20 @@ class DiceContextMenu {
         $(".dcm-backdrop").remove();
         let html = this.build(top, left);
         $("body").append(html);
+
+        let container = html.find(".dcm-container");
+        if (top < 0) {
+            top = 0;
+        } else if (top >= (window.innerHeight - container.height())) {
+            top = (window.innerHeight - container.height());
+        }
+        if (left < 0) {
+            left = 0;
+        } else if (left >= (window.innerWidth - container.width())) {
+            left = (window.innerWidth - container.width());
+        }
+        html.find(".dcm-container").css({ top: top, left: left });
+
         window.dcm = this;
     }
 
@@ -242,7 +258,6 @@ class DiceContextMenuRow {
 function svg_checkmark() {
     return `<svg class="dcm-checkmark dcm-svg" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" d="M6.00025 16C5.74425 16 5.48825 15.902 5.29325 15.707L0.29325 10.707C-0.09775 10.316 -0.09775 9.68401 0.29325 9.29301C0.68425 8.90201 1.31625 8.90201 1.70725 9.29301L6.00025 13.586L16.2932 3.29301C16.6842 2.90201 17.3162 2.90201 17.7073 3.29301C18.0983 3.68401 18.0983 4.31601 17.7073 4.70701L6.70725 15.707C6.51225 15.902 6.25625 16 6.00025 16Z" fill="#1B9AF0"></path></svg>`;
 }
-
 function svg_everyone() {
     return `<svg class="dcm-svg" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M9 13.75c-2.34 0-7 1.17-7 3.5V19h14v-1.75c0-2.33-4.66-3.5-7-3.5zM4.34 17c.84-.58 2.87-1.25 4.66-1.25s3.82.67 4.66 1.25H4.34zM9 12c1.93 0 3.5-1.57 3.5-3.5S10.93 5 9 5 5.5 6.57 5.5 8.5 7.07 12 9 12zm0-5c.83 0 1.5.67 1.5 1.5S9.83 10 9 10s-1.5-.67-1.5-1.5S8.17 7 9 7zm7.04 6.81c1.16.84 1.96 1.96 1.96 3.44V19h4v-1.75c0-2.02-3.5-3.17-5.96-3.44zM15 12c1.93 0 3.5-1.57 3.5-3.5S16.93 5 15 5c-.54 0-1.04.13-1.5.35.63.89 1 1.98 1 3.15s-.37 2.26-1 3.15c.46.22.96.35 1.5.35z" fill="#A7B6C2"></path></svg>`;
 }
@@ -257,4 +272,7 @@ function svg_disadvantage() {
 }
 function svg_flat() {
     return `<svg class="dcm-svg" focusable="false" aria-hidden="true" viewBox="0 0 16 18"><path d="M8 0L0 4.28571V12.9714L8 17.2571L15.4286 13.2571L16 12.9143V4.28571L8 0ZM6.85714 4.74286L3.48571 9.77143L1.37143 5.2L6.85714 4.74286ZM4.57143 10.2857L8 5.08571L11.4286 10.2857H4.57143ZM12.4571 9.77143L9.14286 4.74286L14.5714 5.14286L12.4571 9.77143ZM8.57143 1.6L12.8 3.88571L8.57143 3.54286V1.6ZM7.42857 1.6V3.54286L3.2 3.88571L7.42857 1.6ZM1.14286 7.31429L2.68571 10.7429L1.14286 11.6571V7.31429ZM1.71429 12.6286L3.25714 11.7143L5.77143 14.8571L1.71429 12.6286ZM4.57143 11.4286H10.8571L8 15.7143L4.57143 11.4286ZM10.2286 14.8L12.7429 11.6571L14.2857 12.5714L10.2286 14.8ZM13.4286 10.8L13.3143 10.7429L14.8571 7.31429V11.6571L13.4286 10.8Z" fill="#8A9BA8"></path></svg>`;
+}
+function svg_dm() {
+    return `<svg class="dcm-svg" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" d="M3 17V7h4a2 2 0 012 2v6a2 2 0 01-2 2H3zm4-8H5v6h2V9zm4.586-1.414A2 2 0 0113 7h6a2 2 0 012 2v8h-2V9h-2v7h-2V9h-2v8h-2V9a2 2 0 01.586-1.414z" fill="#A7B6C2"></path></svg>`;
 }
