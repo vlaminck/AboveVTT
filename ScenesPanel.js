@@ -262,7 +262,14 @@ function edit_scene_dialog(scene_id) {
 	uuid_hidden.val(scene['uuid']);
 	form.append(uuid_hidden);
 
-	form.append(form_row('title', 'Scene Title'))
+	const scene_title = form_row('title', 'Scene Title')
+	//Legacy, put all old scenes in nav menu 
+	if (typeof(scene.navigation) == 'undefined'){
+		scene.navigation = false;
+	}
+	scene_title.append(form_toggle("navigation", "Keep in Scene Dropdown?", scene.navigation, handle_basic_form_toggle_click))
+	form.append(scene_title)
+
 	const playerMapRow = form_row('player_map', 'Player Map', null, true)
 	const dmMapRow = form_row('dm_map', 'Dm Map', null, true)
 	
@@ -891,98 +898,103 @@ function refresh_scenes() {
 		let scene_id = i;
 		var scene = window.ScenesHandler.scenes[i];
 		var newobj = $("<div class='scene' data-scene-index='"+i+"'/>");
+		
+		if (scene.navigation == 1 || (window.CURRENT_SCENE_DATA && (window.CURRENT_SCENE_DATA.id==window.ScenesHandler.scenes[scene_id].id)) || window.PLAYER_SCENE_ID == scene.id){
+			var newobj = $("<div class='scene' data-scene-index='"+i+"'/>");
 
+			// Adds a background to the title of the scene... this looks okay, but could be tricky ensuring the text actually shows up on every map.
+			// Also maybe there's a way to load a lower res image? to not bog things down on a little cosmetics. 
+			title = $("<div class='scene_title' style='text-align:center; background:url("+scene.player_map+"); background-size: cover;'/>");
+			title.html(scene.title);
+			if ( (i == window.ScenesHandler.current_scene_id)   && (!window.CLOUD))
+				newobj.addClass('active_scene');
 
-		title = $("<div class='scene_title' style='text-align:center;'/>");
-		title.html(scene.title);
+			newobj.append(title);
+			controls = $("<div/>");
+			if(window.CLOUD){
+				let switch_players=$("<button class='player_scenes_button'>PLAYERS</button>");
 
-		if ( (i == window.ScenesHandler.current_scene_id)   && (!window.CLOUD))
-			newobj.addClass('active_scene');
-		newobj.append(title);
-		controls = $("<div/>");
-		if(window.CLOUD){
-			let switch_players=$("<button class='player_scenes_button'>PLAYERS</button>");
+				if(window.PLAYER_SCENE_ID==window.ScenesHandler.scenes[scene_id].id){
+					console.log("players are here!");
+					switch_players.addClass("selected");
+				}
 
-			if(window.PLAYER_SCENE_ID==window.ScenesHandler.scenes[scene_id].id){
-				console.log("players are here!");
-				switch_players.addClass("selected");
-			}
-
-			switch_players.click(function(){
-				let msg={
-					sceneId:window.ScenesHandler.scenes[scene_id].id,
-				};
-				window.PLAYER_SCENE_ID=window.ScenesHandler.scenes[scene_id].id;
-				$(".player_scenes_button.selected").removeClass("selected");
-				$(this).addClass("selected");
-				window.MB.sendMessage("custom/myVTT/switch_scene",msg);
-				add_zoom_to_storage()
-			});
-			
-			let switch_dm=$("<button class='dm_scenes_button'>DM</button>");
-			if(window.CURRENT_SCENE_DATA && (window.CURRENT_SCENE_DATA.id==window.ScenesHandler.scenes[scene_id].id)){
-				switch_dm.addClass("selected");
-			}
-			switch_dm.click(function(){
-				$(".dm_scenes_button.selected").removeClass("selected");
-				let msg={
-					sceneId:window.ScenesHandler.scenes[scene_id].id,
-					switch_dm: true
-				};
-				$(this).addClass("selected");
-				window.MB.sendMessage("custom/myVTT/switch_scene",msg);
-				add_zoom_to_storage()
-			});
-			if(scene.player_map){
-				switch_players.removeAttr("disabled");
-				switch_dm.removeAttr("disabled");
+				switch_players.click(function(){
+					let msg={
+						sceneId:window.ScenesHandler.scenes[scene_id].id,
+					};
+					window.PLAYER_SCENE_ID=window.ScenesHandler.scenes[scene_id].id;
+					$(".player_scenes_button.selected").removeClass("selected");
+					$(this).addClass("selected");
+					window.MB.sendMessage("custom/myVTT/switch_scene",msg);
+					add_zoom_to_storage()
+				});
+				
+				let switch_dm=$("<button class='dm_scenes_button'>DM</button>");
+				if(window.CURRENT_SCENE_DATA && (window.CURRENT_SCENE_DATA.id==window.ScenesHandler.scenes[scene_id].id)){
+					switch_dm.addClass("selected");
+				}
+				switch_dm.click(function(){
+					$(".dm_scenes_button.selected").removeClass("selected");
+					let msg={
+						sceneId:window.ScenesHandler.scenes[scene_id].id,
+						switch_dm: true
+					};
+					$(this).addClass("selected");
+					window.MB.sendMessage("custom/myVTT/switch_scene",msg);
+					add_zoom_to_storage()
+				});
+				if(scene.player_map){
+					switch_players.removeAttr("disabled");
+					switch_dm.removeAttr("disabled");
+				}
+				else{
+					switch_players.attr("disabled","true");
+					switch_dm.attr("disabled","true");
+				}
+				
+				controls.append(switch_players);
+				controls.append(switch_dm);
 			}
 			else{
-				switch_players.attr("disabled","true");
-				switch_dm.attr("disabled","true");
+				switch_button = $("<button>SWITCH</button>");
+				if(scene.player_map)
+					switch_button.removeAttr("disabled");
+				else
+					switch_button.attr("disabled","true");
+					
+				switch_button.click(function() {
+					window.ScenesHandler.switch_scene(scene_id);
+					$("#scene_selector_toggle").click();
+					refresh_scenes();
+				});
+				controls.append(switch_button);
 			}
-			
-			controls.append(switch_players);
-			controls.append(switch_dm);
-		}
-		else{
-			switch_button = $("<button>SWITCH</button>");
-			if(scene.player_map)
-				switch_button.removeAttr("disabled");
-			else
-				switch_button.attr("disabled","true");
-				
-			switch_button.click(function() {
-				window.ScenesHandler.switch_scene(scene_id);
-				$("#scene_selector_toggle").click();
-				refresh_scenes();
+			edit_button = $("<button><img height=10 src='"+window.EXTENSION_PATH+"assets/icons/edit.svg'></button>");
+			edit_button.click(function() {
+				edit_scene_dialog(scene_id);
 			});
-			controls.append(switch_button);
-		}
-		edit_button = $("<button><img height=10 src='"+window.EXTENSION_PATH+"assets/icons/edit.svg'></button>");
-		edit_button.click(function() {
-			edit_scene_dialog(scene_id);
-		});
-		controls.append(edit_button);
-		delete_button=$("<button><img height=10 src='"+window.EXTENSION_PATH+"assets/icons/delete.svg'></button>");
-		delete_button.click(function() {
-			r = confirm("Are you sure that you want to delete this scene?");
-			if (r == true) {
-				if(window.CLOUD){
-					window.MB.sendMessage("custom/myVTT/delete_scene",{id:window.ScenesHandler.scenes[scene_id].id})
+			controls.append(edit_button);
+			delete_button=$("<button><img height=10 src='"+window.EXTENSION_PATH+"assets/icons/delete.svg'></button>");
+			delete_button.click(function() {
+				r = confirm("Are you sure that you want to delete this scene?");
+				if (r == true) {
+					if(window.CLOUD){
+						window.MB.sendMessage("custom/myVTT/delete_scene",{id:window.ScenesHandler.scenes[scene_id].id})
+					}
+					window.ScenesHandler.scenes.splice(scene_id, 1);
+					if(!window.CLOUD){
+						window.ScenesHandler.persist();
+					}
+					refresh_scenes();
+					
 				}
-				window.ScenesHandler.scenes.splice(scene_id, 1);
-				if(!window.CLOUD){
-					window.ScenesHandler.persist();
-				}
-				refresh_scenes();
-				
-			}
-		});
-		controls.append(delete_button);
-		newobj.append(controls);
+			});
+			controls.append(delete_button);
+			newobj.append(controls);
 
-		$("#addscene").parent().before(newobj);	
+			$("#addscene").parent().before(newobj);	
+		}
 	}
 	if(!$("#scene_selector").hasClass("ui-sortable")) {
 		$("#scene_selector").sortable({
