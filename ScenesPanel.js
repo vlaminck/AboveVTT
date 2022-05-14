@@ -379,6 +379,7 @@ function edit_scene_dialog(scene_id) {
 		$("#edit_dialog").remove();
 		$("#scene_selector").removeAttr("disabled");
 		$("#scene_selector_toggle").click();
+		did_update_scenes();
 	});
 
 	let grid_5 = function() {
@@ -1398,15 +1399,56 @@ function mega_importer(DDB = false) {
 
 
 
-
+function default_scene_data() {
+	return {
+		id: uuid(),
+		title: "New Scene",
+		dm_map: "",
+		player_map: "",
+		scale: "100",
+		dm_map_usable: "0",
+		player_map_is_video: "0",
+		dm_map_is_video: "0",
+		fog_of_war: "1",
+		tokens: {},
+		fpsq: 5,
+		upsq: 'ft',
+		hpps: 60,
+		vpps: 60,
+		offsetx: 0,
+		offsety: 0,
+		grid: 0,
+		snap: 0,
+		reveals: [[0, 0, 0, 0, 2, 0]], // SPECIAL MESSAGE TO REVEAL EVERYTHING
+		order: Date.now()
+	};
+}
 
 function init_scenes_panel() {
 	console.log("init_scenes_panel");
 
 	scenesPanel.updateHeader("Scenes");
+	let addButtonsWrapper = $(`<div class="scenes-panel-add-buttons-wrapper"></div>`);
+	let addSceneButton = $(`<button>Add Scene</button>`);
+	let addFolderButton = $(`<button>Add Folder</button>`);
+	addSceneButton.on("click", function (clickEvent) {
+		create_scene_inside(SidebarListItem.PathScenes);
+	});
+	addFolderButton.on("click", function (clickEvent) {
+		let numberOfNewFolders = window.sceneListFolders.filter(i => i.fullPath().startsWith("/New Folder") && i.isRootFolder()).length
+		let newFolderName = "New Folder";
+		if (numberOfNewFolders > 0) {
+			newFolderName = `${newFolderName} ${numberOfNewFolders}`
+		}
+		let newFolderItem = SidebarListItem.Folder(SidebarListItem.PathScenes, newFolderName, true);
+		window.sceneListFolders.push(newFolderItem);
+		did_update_scenes();
+	});
+	addButtonsWrapper.append(addSceneButton);
+	addButtonsWrapper.append(addFolderButton);
+	scenesPanel.header.append(addButtonsWrapper);
 
 	// register_scene_row_context_menu();          // context menu for each row
-
 
 	did_update_scenes();
 }
@@ -1418,28 +1460,32 @@ function did_update_scenes() {
 
 function rebuild_scene_items_list() {
 	console.group("rebuild_scene_items_list");
-	window.sceneListItems = window.ScenesHandler.scenes.map(s => SidebarListItem.Scene(s, s.folderPath));
+	window.sceneListItems = window.ScenesHandler.scenes.map(s => SidebarListItem.Scene(s));
 	// TODO: read scene folders from localStorage?
 	if (window.sceneListFolders === undefined) {
-		// we only want to do this once. If they create empty folders, we need to hold them in memory so they can add scenes to them
 		window.sceneListFolders = [];
-		window.sceneListItems.forEach(item => {
-			if (item.folderPath !== SidebarListItem.PathRoot && !window.sceneListFolders.find(fi => fi.fullPath() !== item.folderPath)) {
-				let parts = item.folderPath.split("/");
-				let folderName = parts[parts.length - 1];
-				let folderPath = sanitize_folder_path(parts.slice(0, parts.length - 1).join("/"));
-				window.sceneListFolders.push(SidebarListItem.Folder(folderPath, folderName, true));
-			}
-		});
 	}
+	window.sceneListItems.forEach(item => {
+		if (item.folderPath !== SidebarListItem.PathRoot) { // anything else to do here to avoid duplication?
+			let parts = item.folderPath.split("/");
+			let folderName = parts[parts.length - 1];
+			let folderPath = sanitize_folder_path(parts.slice(0, parts.length - 1).join("/"));
+			let folderItem = SidebarListItem.Folder(folderPath, folderName, true);
+			window.sceneListFolders.push(folderItem);
+		}
+	});
 	console.groupEnd();
 }
 
 function redraw_scene_list() {
 	console.group("redraw_scene_list");
-	let list = $(`<div class="scenes-list"></div>`);
+	// this is similar to the structure of a SidebarListItem.Folder row.
+	// since we don't have root folders like the tokensPanel does, we want to treat the entire list like a subfolder
+	// this will allow us to reuse all the folder traversing functions that the tokensPanel uses
+	let list = $(`<div><div class="folder-item-list"></div></div>`);
 	scenesPanel.body.empty();
 	scenesPanel.body.append(list);
+	set_full_path(list, SidebarListItem.PathScenes);
 
 	// first let's add all folders because we need the folder to exist in order to add items into it
 	window.sceneListFolders
@@ -1447,11 +1493,7 @@ function redraw_scene_list() {
 		.forEach(item => {
 			let row = build_sidebar_list_row(item);
 			console.debug("appending item", item);
-			if (item.folderPath === SidebarListItem.PathRoot) {
-				list.append(row);
-			} else {
-				find_html_row_from_path(item.folderPath, list).find(` > .folder-token-list`).append(row);
-			}
+			find_html_row_from_path(item.folderPath, scenesPanel.body).find(` > .folder-item-list`).append(row);
 		});
 
 	// now let's add all the other items
@@ -1460,12 +1502,54 @@ function redraw_scene_list() {
 		.forEach(item => {
 			let row = build_sidebar_list_row(item);
 			console.debug("appending item", item);
-			if (item.folderPath === SidebarListItem.PathRoot) {
-				list.append(row);
-			} else {
-				find_html_row_from_path(item.folderPath, list).find(` > .folder-token-list`).append(row);
-			}
+			find_html_row_from_path(item.folderPath, scenesPanel.body).find(` > .folder-item-list`).append(row);
 		});
 
 	console.groupEnd();
+}
+
+function create_scene_inside(fullPath) {
+
+	let newSceneName = "New Scene";
+	let newSceneCount = window.sceneListItems.filter(item => item.folderPath === fullPath && item.name.startsWith(newSceneName)).length;
+	if (newSceneCount > 0) {
+		newSceneName = `${newSceneName} ${newSceneCount}`;
+	}
+
+	let sceneData = default_scene_data();
+	sceneData.title = newSceneName;
+	sceneData.folderPath = fullPath.replace(SidebarListItem.PathScenes, "");
+
+	window.ScenesHandler.scenes.push(sceneData);
+	window.ScenesHandler.persist_scene(window.ScenesHandler.scenes.length - 1,true);
+	edit_scene_dialog(window.ScenesHandler.scenes.length - 1);
+	did_update_scenes();
+
+}
+
+function create_scene_folder_inside(fullPath) {
+	let newFolderName = "New Folder";
+	let adjustedPath = sanitize_folder_path(fullPath.replace(SidebarListItem.PathScenes, ""));
+	let numberOfNewFolders = window.sceneListFolders.filter(i => i.folderPath === adjustedPath && i.name.startsWith(newFolderName)).length;
+	if (numberOfNewFolders > 0) {
+		newFolderName = `${newFolderName} ${numberOfNewFolders}`
+	}
+	let newFolderFullPath = sanitize_folder_path(`${SidebarListItem.PathScenes}/${adjustedPath}`);
+	let newFolderItem = SidebarListItem.Folder(newFolderFullPath, newFolderName, true);
+	window.sceneListFolders.push(newFolderItem);
+	did_update_scenes();
+	display_folder_configure_modal(newFolderItem);
+}
+
+function rename_scene_folder(item, newName, alertUser) {
+	if (!item.isTypeFolder() || !item.folderPath.startsWith(SidebarListItem.PathScenes)) {
+		console.warn("rename_folder called with an incorrect item type", item);
+		if (alertUser !== false) {
+			alert("An unexpected error occurred");
+		}
+		return;
+	}
+
+	// TODO: This
+
 }

@@ -336,7 +336,7 @@ function inject_monster_tokens(searchTerm, skip) {
                 let previousSkip = parseInt($(loadMoreClickEvent.currentTarget).attr("data-skip"));
                 inject_monster_tokens(searchTerm, previousSkip + 10);
             });
-            monsterFolder.find(`> .folder-token-list`).append(loadMoreButton);
+            monsterFolder.find(`> .folder-item-list`).append(loadMoreButton);
         }
     });
 }
@@ -347,7 +347,7 @@ function inject_monster_list_items(listItems) {
         console.warn("inject_monster_list_items failed to find the monsters folder");
         return;
     }
-    let list = monsterFolder.find(`> .folder-token-list`);
+    let list = monsterFolder.find(`> .folder-item-list`);
     for (let i = 0; i < listItems.length; i++) {
         let item = listItems[i];
         let row = build_sidebar_list_row(item);
@@ -439,7 +439,7 @@ function redraw_token_list(searchTerm) {
         .forEach(item => {
             let row = build_sidebar_list_row(item);
             console.debug("appending item", item);
-            find_html_row_from_path(item.folderPath, list).find(` > .folder-token-list`).append(row);
+            find_html_row_from_path(item.folderPath, list).find(` > .folder-item-list`).append(row);
         });
 
     // now let's add all the other items
@@ -458,7 +458,7 @@ function redraw_token_list(searchTerm) {
                 enable_draggable_token_creation(row);
             }
             console.debug("appending item", item);
-            find_html_row_from_path(item.folderPath, list).find(` > .folder-token-list`).append(row);
+            find_html_row_from_path(item.folderPath, list).find(` > .folder-item-list`).append(row);
         });
 
     update_pc_token_rows();
@@ -985,9 +985,9 @@ function my_token_path_exists(folderPath) {
  * Creates a "My Tokens" folder within another "My Tokens" folder
  * @param listItem {SidebarListItem} The folder to create a new folder within
  */
-function create_folder_inside(listItem) {
+function create_mytoken_folder_inside(listItem) {
     if (!listItem.isTypeFolder() || !listItem.fullPath().startsWith(SidebarListItem.PathMyTokens)) {
-        console.warn("create_folder_inside called with an incorrect item type", listItem);
+        console.warn("create_mytoken_folder_inside called with an incorrect item type", listItem);
         return;
     }
 
@@ -1002,7 +1002,7 @@ function create_folder_inside(listItem) {
     mytokensfolders.push(newFolder);
     let newFolderFullPath = sanitize_folder_path(`${SidebarListItem.PathMyTokens}${newFolder.folderPath}/${newFolder.name}`);
     did_change_mytokens_items();
-    expand_all_folders_up_to(newFolderFullPath);
+    expand_all_folders_up_to(newFolderFullPath, tokensPanel.body);
     let newListItem = window.tokenListItems.find(i => i.fullPath() === newFolderFullPath);
     display_folder_configure_modal(newListItem);
 }
@@ -1014,7 +1014,7 @@ function create_folder_inside(listItem) {
  * @param alertUser {boolean} whether or not to alert the user if an error occurs. The most common error is naming conflicts
  * @returns {string|undefined} the path of the newly created folder; undefined if the folder could not be created.
  */
-function rename_folder(item, newName, alertUser = true) {
+function rename_mytoken_folder(item, newName, alertUser = true) {
     if (!item.isTypeFolder() || !item.folderPath.startsWith(SidebarListItem.PathMyTokens)) {
         console.warn("rename_folder called with an incorrect item type", item);
         if (alertUser !== false) {
@@ -1109,7 +1109,7 @@ function delete_folder_and_delete_children(listItem) {
 
     did_change_mytokens_items();
     let oneLevelUp = sanitize_folder_path(listItem.folderPath);
-    expand_all_folders_up_to(oneLevelUp);
+    expand_all_folders_up_to(oneLevelUp, tokensPanel.body);
 
     console.groupEnd();
 }
@@ -1159,7 +1159,7 @@ function delete_folder_and_move_children_up_one_level(listItem) {
     console.debug("after moving mytokensfolders", mytokensfolders);
 
     did_change_mytokens_items();
-    expand_all_folders_up_to(oneLevelUp);
+    expand_all_folders_up_to(oneLevelUp, tokensPanel.body);
 
     console.groupEnd();
 }
@@ -1624,7 +1624,7 @@ function update_token_folders_remembered_state() {
 }
 
 function fetch_encounter_monsters_if_necessary(clickedRow, clickedItem) {
-    if (clickedItem.isTypeEncounter() && clickedRow.find(".folder-token-list").is(":empty") && !clickedItem.activelyFetchingMonsters && clickedItem.encounterId !== undefined) {
+    if (clickedItem.isTypeEncounter() && clickedRow.find(".folder-item-list").is(":empty") && !clickedItem.activelyFetchingMonsters && clickedItem.encounterId !== undefined) {
         fetch_and_inject_encounter_monsters(clickedRow, clickedItem);
     }
 }
@@ -1672,7 +1672,7 @@ function inject_encounter_monsters() {
         let monsterItems = encounter_monster_items[encounterId];
         let encounter = window.EncounterHandler.encounters[encounterId];
         let encounterRow = tokensPanel.body.find(`[data-encounter-id='${encounterId}']`);
-        let encounterMonsterList = encounterRow.find(`> .folder-token-list`);
+        let encounterMonsterList = encounterRow.find(`> .folder-item-list`);
         if (encounter?.groups === undefined || encounter.groups === null || encounterMonsterList.length === 0 || encounterRow.length === 0 || monsterItems === undefined) {
             continue;
         }

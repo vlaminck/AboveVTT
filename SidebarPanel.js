@@ -348,12 +348,12 @@ class SidebarListItem {
   static TypeScene = "scene";
 
   static PathRoot = "/";
-  // paths within the tokens panel
   static PathPlayers = "/Players";
   static PathMonsters = "/Monsters";
   static PathMyTokens = "/My Tokens";
   static PathAboveVTT = "/AboveVTT Tokens";
   static PathEncounters = "/Encounters";
+  static PathScenes = "/Scenes";
 
   // folder names within the tokens panel
   static NamePlayers = "Players";
@@ -469,7 +469,8 @@ class SidebarListItem {
     if ((typeof sceneData.title == 'string') && sceneData.title.length > 0) {
       name = sceneData.title;
     }
-    let item = new SidebarListItem(name, sceneData.player_map, SidebarListItem.TypeScene, sanitize_folder_path(sceneData.folderPath));
+    let scenePath = sceneData.folderPath || "";
+    let item = new SidebarListItem(name, sceneData.player_map, SidebarListItem.TypeScene, sanitize_folder_path(`${SidebarListItem.PathScenes}/${scenePath}`));
     console.debug(`SidebarListItem.Scene ${item.fullPath()}`);
     item.sceneId = sceneData.id;
     return item;
@@ -548,7 +549,7 @@ class SidebarListItem {
   canEdit() {
     switch (this.type) {
       case SidebarListItem.TypeFolder:
-        return this.folderPath.startsWith(SidebarListItem.PathMyTokens);
+        return this.folderPath.startsWith(SidebarListItem.PathMyTokens) || this.folderPath.startsWith(SidebarListItem.PathScenes);
       case SidebarListItem.TypeMyToken:
       case SidebarListItem.TypePC:
       case SidebarListItem.TypeMonster:
@@ -566,7 +567,7 @@ class SidebarListItem {
     switch (this.type) {
       case SidebarListItem.TypeFolder:
         // TODO: allow deleting scenes folders
-        return this.folderPath.startsWith(SidebarListItem.PathMyTokens);
+        return this.folderPath.startsWith(SidebarListItem.PathMyTokens) || this.folderPath.startsWith(SidebarListItem.PathScenes);
       case SidebarListItem.TypeMyToken:
       case SidebarListItem.TypeScene:
         return true;
@@ -582,6 +583,10 @@ class SidebarListItem {
   /** @returns {number} how deeply nested is this object */
   folderDepth() {
     return this.fullPath().split("/").length;
+  }
+  isRootFolder() {
+    // "/foo".split("/").length === 2; if the logic in folderDepth() changes, make sure this changes, too
+    return this.folderDepth() === 2;
   }
 
   /** @returns {string} the name of the folder that contains this item. Returns an empty string if the item is not in any folder */
@@ -655,15 +660,30 @@ function find_sidebar_list_item(html) {
  * @returns {SidebarListItem|undefined} SidebarListItem if found, else undefined
  */
 function find_sidebar_list_item_from_path(fullPath) {
-  let foundItem = tokens_rootfolders.find(item => item.fullPath() === fullPath);
+
+  const matchingPath = function(item) { return item.fullPath() === fullPath };
+
+  let foundItem;
+  if (fullPath.startsWith(SidebarListItem.PathScenes)) {
+    foundItem = window.sceneListItems.find(matchingPath);
+    if (foundItem === undefined) {
+      foundItem = window.sceneListFolders.find(matchingPath);
+    }
+    if (foundItem !== undefined) {
+      return foundItem;
+    }
+  }
+
+  // check all the tokens items
+  foundItem = tokens_rootfolders.find(matchingPath);
   if (foundItem === undefined) {
-    foundItem = window.tokenListItems.find(item => item.fullPath() === fullPath);
+    foundItem = window.tokenListItems.find(matchingPath);
   }
   if (foundItem === undefined) {
-    foundItem = window.monsterListItems.find(item => item.fullPath() === fullPath);
+    foundItem = window.monsterListItems.find(matchingPath);
   }
   if (foundItem === undefined) {
-    foundItem = Object.values(cached_monster_items).find(item => item.fullPath() === fullPath);
+    foundItem = Object.values(cached_monster_items).find(matchingPath);
   }
   if (foundItem === undefined) {
     console.warn(`find_sidebar_list_item found nothing at path: ${fullPath}`);
@@ -805,7 +825,7 @@ function build_sidebar_list_row(listItem) {
     case SidebarListItem.TypeEncounter: // explicitly allowing encounter to fall through because we want them to be treated like folders
     case SidebarListItem.TypeFolder:
       subtitle.hide();
-      row.append(`<div class="folder-token-list"></div>`);
+      row.append(`<div class="folder-item-list"></div>`);
       row.addClass("folder");
       console.log(`folder.collapsed: ${listItem.collapsed}`, listItem);
       if (listItem.collapsed === true) {
@@ -815,7 +835,7 @@ function build_sidebar_list_row(listItem) {
         // add buttons for creating subfolders and tokens
         let addFolder = $(`<button class="token-row-button" title="Create New Folder"><span class="material-icons">create_new_folder</span></button>`);
         rowItem.append(addFolder);
-        addFolder.on("click", function(clickEvent) {
+        addFolder.on("click", function (clickEvent) {
           clickEvent.stopPropagation();
           let clickedRow = $(clickEvent.target).closest(".list-item-identifier");
           let clickedItem = find_sidebar_list_item(clickedRow);
@@ -823,10 +843,27 @@ function build_sidebar_list_row(listItem) {
         });
         let addToken = $(`<button class="token-row-button" title="Create New Token"><span class="material-icons">person_add_alt_1</span></button>`);
         rowItem.append(addToken);
-        addToken.on("click", function(clickEvent) {
+        addToken.on("click", function (clickEvent) {
           let clickedRow = $(clickEvent.target).closest(".list-item-identifier");
           let clickedItem = find_sidebar_list_item(clickedRow);
           create_token_inside(clickedItem);
+        });
+      } else if (listItem.fullPath().startsWith(SidebarListItem.PathScenes)) {
+        // add buttons for creating subfolders and tokens
+        let addFolder = $(`<button class="token-row-button" title="Create New Folder"><span class="material-icons">create_new_folder</span></button>`);
+        rowItem.append(addFolder);
+        addFolder.on("click", function (clickEvent) {
+          clickEvent.stopPropagation();
+          let clickedRow = $(clickEvent.target).closest(".list-item-identifier");
+          let clickedItem = find_sidebar_list_item(clickedRow);
+          create_folder_inside(clickedItem);
+        });
+        let addScene = $(`<button class="token-row-button" title="Create New Token"><span class="material-icons">add_photo_alternate</span></button>`);
+        rowItem.append(addScene);
+        addScene.on("click", function (clickEvent) {
+          let clickedRow = $(clickEvent.target).closest(".list-item-identifier");
+          let clickedItem = find_sidebar_list_item(clickedRow);
+          create_scene_inside(clickedItem.fullPath());
         });
       } else if (listItem.fullPath() === SidebarListItem.PathMonsters) {
         // add monster filter button on the root monsters folder
@@ -1083,6 +1120,21 @@ function did_click_add_button(clickEvent) {
   update_pc_token_rows();
 }
 
+function create_folder_inside(listItem) {
+  if (!listItem.isTypeFolder()) {
+    console.warn("create_folder_inside called with an incorrect item type", listItem);
+    return;
+  }
+
+  if (listItem.fullPath().startsWith(SidebarListItem.PathMyTokens)) {
+    create_mytoken_folder_inside(listItem);
+  } else if (listItem.fullPath().startsWith(SidebarListItem.PathScenes)) {
+    create_scene_folder_inside(listItem.fullPath());
+  } else {
+    console.warn("create_folder_inside called with an incorrect item type", listItem);
+  }
+}
+
 /**
  * Displays a SidebarPanel as a modal that allows the user to configure a folder
  * @param listItem {SidebarListItem} the item to configure
@@ -1096,6 +1148,12 @@ function display_folder_configure_modal(listItem) {
   let sidebarId = "folder-configuration-modal";
   let sidebarModal = new SidebarPanel(sidebarId, true);
   let listItemFullPath = listItem.fullPath();
+  let container;
+  if (listItemFullPath.startsWith(SidebarListItem.PathScenes)) {
+    container = scenesPanel.body;
+  } else {
+    container = tokensPanel.body;
+  }
 
   display_sidebar_modal(sidebarModal);
 
@@ -1113,7 +1171,7 @@ function display_folder_configure_modal(listItem) {
           $(input).select();
         } else {
           close_sidebar_modal();
-          expand_all_folders_up_to(updateFullPath);
+          expand_all_folders_up_to(updateFullPath, container);
         }
       }
   ));
@@ -1126,7 +1184,7 @@ function display_folder_configure_modal(listItem) {
     let foundItem = find_sidebar_list_item($(event.currentTarget));
     delete_folder_and_move_children_up_one_level(foundItem);
     close_sidebar_modal();
-    expand_all_folders_up_to(fullPath);
+    expand_all_folders_up_to(fullPath, container);
   });
   let deleteFolderAndChildrenButton = $(`<button class="token-image-modal-remove-all-button" title="Delete this folder and everything in it">Delete folder and<br />everything in it</button>`);
   set_full_path(deleteFolderAndChildrenButton, listItemFullPath);
@@ -1136,10 +1194,29 @@ function display_folder_configure_modal(listItem) {
     let foundItem = find_sidebar_list_item($(event.currentTarget));
     delete_folder_and_delete_children(foundItem);
     close_sidebar_modal();
-    expand_all_folders_up_to(fullPath);
+    expand_all_folders_up_to(fullPath, container);
   });
 
   sidebarModal.body.find(`input[name="folderName"]`).select();
+}
+
+function rename_folder(item, newName, alertUser = true) {
+  if (!item.isTypeFolder()) {
+    console.warn("rename_folder called with an incorrect item type", item);
+    if (alertUser !== false) {
+      alert("An unexpected error occurred");
+    }
+    return;
+  }
+
+  if (item.folderPath.startsWith(SidebarListItem.PathMyTokens)) {
+    return rename_mytoken_folder(item, newName, alertUser);
+  } else if (item.folderPath.startsWith(SidebarListItem.PathScenes)) {
+    return rename_scene_folder(item, newName, alertUser);
+  } else if (alertUser !== false) {
+    alert("An unexpected error occurred");
+  }
+
 }
 
 /**
@@ -1176,14 +1253,15 @@ function delete_item(listItem) {
 /**
  * removes the .collapsed class from all folders leading up to the secified path
  * @param fullPath {string} the path to expand
+ * @param container {jQuery} the element that contains the folder structer. EX: tokensPanel.body
  */
-function expand_all_folders_up_to(fullPath) {
+function expand_all_folders_up_to(fullPath, container) {
 
   console.group("expand_all_folders_up_to");
   if (!fullPath.startsWith(SidebarListItem.PathMyTokens)) {
     let myTokensPath = sanitize_folder_path(SidebarListItem.PathMyTokens + fullPath);
     console.log(`fullPath: ${fullPath}, myTokensPath: ${myTokensPath}`);
-    let folderElement = find_html_row_from_path(myTokensPath, tokensPanel.body);
+    let folderElement = find_html_row_from_path(myTokensPath, container);
     console.log(folderElement);
     let parents = folderElement.parents(".collapsed")
     console.log(parents);
@@ -1191,7 +1269,7 @@ function expand_all_folders_up_to(fullPath) {
     console.log(parents);
   } else {
     console.log(`fullPath: ${fullPath}`);
-    let folderElement = find_html_row_from_path(fullPath, tokensPanel.body);
+    let folderElement = find_html_row_from_path(fullPath, container);
     console.log(folderElement);
     let parents = folderElement.parents(".collapsed")
     console.log(parents);

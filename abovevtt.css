@@ -2284,19 +2284,19 @@ h5.token-image-modal-footer-title:after {
 .tokens-panel-row.folder.collapsed {
     background-color: #fff;
 }
-.encounter .folder-token-list,
-.folder .folder-token-list {
+.encounter .folder-item-list,
+.folder .folder-item-list {
     padding-left: 1em;
     padding-top: 0.3em;
     cursor: default;
 }
-.encounter .folder-token-list:empty:before,
-.folder .folder-token-list:empty:before {
+.encounter .folder-item-list:empty:before,
+.folder .folder-item-list:empty:before {
     content: "This folder is empty";
     color: #738694;
 }
-.encounter.collapsed .folder-token-list,
-.folder.collapsed .folder-token-list {
+.encounter.collapsed .folder-item-list,
+.folder.collapsed .folder-item-list {
     display: none;
 }
 .encounter > .tokens-panel-row-item > .token-row-button,
@@ -2502,8 +2502,8 @@ h5.token-image-modal-footer-title:after {
 .tokens-panel-row.folder > .tokens-panel-row-item {
     height: 30px; /* folders are shorter than everything else */
 }
-.tokens-panel-row.encounter > .folder-token-list > .encounter-monster-group.grouped,
-.tokens-panel-row.folder > .folder-token-list > .encounter-monster-group.grouped {
+.tokens-panel-row.encounter > .folder-item-list > .encounter-monster-group.grouped,
+.tokens-panel-row.folder > .folder-item-list > .encounter-monster-group.grouped {
     border: 2px dashed #1b9af0;
     border-radius: 3px;
     padding: 0px 2px;
