@@ -1397,3 +1397,75 @@ function mega_importer(DDB = false) {
 
 
 
+
+
+
+function init_scenes_panel() {
+	console.log("init_scenes_panel");
+
+	scenesPanel.updateHeader("Scenes");
+
+	// register_scene_row_context_menu();          // context menu for each row
+
+
+	did_update_scenes();
+}
+
+function did_update_scenes() {
+	rebuild_scene_items_list();
+	redraw_scene_list();
+}
+
+function rebuild_scene_items_list() {
+	console.group("rebuild_scene_items_list");
+	window.sceneListItems = window.ScenesHandler.scenes.map(s => SidebarListItem.Scene(s, s.folderPath));
+	// TODO: read scene folders from localStorage?
+	if (window.sceneListFolders === undefined) {
+		// we only want to do this once. If they create empty folders, we need to hold them in memory so they can add scenes to them
+		window.sceneListFolders = [];
+		window.sceneListItems.forEach(item => {
+			if (item.folderPath !== SidebarListItem.PathRoot && !window.sceneListFolders.find(fi => fi.fullPath() !== item.folderPath)) {
+				let parts = item.folderPath.split("/");
+				let folderName = parts[parts.length - 1];
+				let folderPath = sanitize_folder_path(parts.slice(0, parts.length - 1).join("/"));
+				window.sceneListFolders.push(SidebarListItem.Folder(folderPath, folderName, true));
+			}
+		});
+	}
+	console.groupEnd();
+}
+
+function redraw_scene_list() {
+	console.group("redraw_scene_list");
+	let list = $(`<div class="scenes-list"></div>`);
+	scenesPanel.body.empty();
+	scenesPanel.body.append(list);
+
+	// first let's add all folders because we need the folder to exist in order to add items into it
+	window.sceneListFolders
+		.sort(SidebarListItem.folderDepthComparator)
+		.forEach(item => {
+			let row = build_sidebar_list_row(item);
+			console.debug("appending item", item);
+			if (item.folderPath === SidebarListItem.PathRoot) {
+				list.append(row);
+			} else {
+				find_html_row_from_path(item.folderPath, list).find(` > .folder-token-list`).append(row);
+			}
+		});
+
+	// now let's add all the other items
+	window.sceneListItems
+		.sort(SidebarListItem.sortComparator)
+		.forEach(item => {
+			let row = build_sidebar_list_row(item);
+			console.debug("appending item", item);
+			if (item.folderPath === SidebarListItem.PathRoot) {
+				list.append(row);
+			} else {
+				find_html_row_from_path(item.folderPath, list).find(` > .folder-token-list`).append(row);
+			}
+		});
+
+	console.groupEnd();
+}

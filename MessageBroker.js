@@ -420,6 +420,7 @@ class MessageBroker {
 					window.ScenesHandler.scenes=msg.data;
 					window.PLAYER_SCENE_ID=msg.playersSceneId;
 					refresh_scenes();
+					did_update_scenes();
 				}
 			}
 

@@ -936,7 +936,7 @@ function register_token_row_context_menu() {
  * @param listItem {SidebarListItem} the item to configure
  */
 function display_token_item_configuration_modal(listItem) {
-    switch (listItem.type) {
+    switch (listItem?.type) {
         case SidebarListItem.TypeEncounter:
             // TODO: support editing in an iframe on the page?
             window.open(`https://www.dndbeyond.com/encounters/${listItem.encounterId}/edit`, '_blank');
@@ -956,6 +956,15 @@ function display_token_item_configuration_modal(listItem) {
         case SidebarListItem.TypePC:
         case SidebarListItem.TypeMonster:
             display_token_configuration_modal(listItem);
+            break;
+        case SidebarListItem.TypeScene:
+            let index = window.ScenesHandler.scenes.findIndex(s => s.id === listItem.sceneId);
+            if (index > 0) {
+                edit_scene_dialog(index);
+            } else {
+                console.error("Failed to find scene index for scene with id", listItem.sceneId);
+                alert("An unexpected error occurred");
+            }
             break;
         default:
             console.warn("display_token_item_configuration_modal not supported for listItem", listItem);

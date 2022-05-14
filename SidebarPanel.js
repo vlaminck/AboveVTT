@@ -11,6 +11,12 @@ function init_sidebar_tabs() {
     tokensPanel = new SidebarPanel("tokens-panel", false);
     sidebarContent.append(tokensPanel.build());
     init_tokens_panel();
+
+    $("#scenes-panel").remove();
+    scenesPanel = new SidebarPanel("scenes-panel", false);
+    sidebarContent.append(scenesPanel.build());
+    init_scenes_panel();
+
   } else {
     $("#players-panel").remove();
     playersPanel = new SidebarPanel("players-panel", false);
@@ -332,20 +338,24 @@ function build_toggle_input(name, labelText, enabled, enabledHoverText, disabled
  */
 class SidebarListItem {
 
+  // the types of items that are supported
   static TypeFolder = "folder";
   static TypeMyToken = "myToken";
   static TypePC = "pc";
   static TypeMonster = "monster";
   static TypeBuiltinToken = "builtinToken";
   static TypeEncounter = "encounter";
+  static TypeScene = "scene";
 
   static PathRoot = "/";
+  // paths within the tokens panel
   static PathPlayers = "/Players";
   static PathMonsters = "/Monsters";
   static PathMyTokens = "/My Tokens";
   static PathAboveVTT = "/AboveVTT Tokens";
   static PathEncounters = "/Encounters";
 
+  // folder names within the tokens panel
   static NamePlayers = "Players";
   static NameMonsters = "Monsters";
   static NameMyTokens = "My Tokens";
@@ -454,6 +464,17 @@ class SidebarListItem {
     return item;
   }
 
+  static Scene(sceneData) {
+    let name = "Untitled Scene";
+    if ((typeof sceneData.title == 'string') && sceneData.title.length > 0) {
+      name = sceneData.title;
+    }
+    let item = new SidebarListItem(name, sceneData.player_map, SidebarListItem.TypeScene, sanitize_folder_path(sceneData.folderPath));
+    console.debug(`SidebarListItem.Scene ${item.fullPath()}`);
+    item.sceneId = sceneData.id;
+    return item;
+  }
+
   /**
    * A comparator for sorting by folder, then alphabetically.
    * @param lhs {SidebarListItem}
@@ -505,8 +526,11 @@ class SidebarListItem {
   /** @returns {boolean} whether or not this item represents a Builtin Token */
   isTypeBuiltinToken() { return this.type === SidebarListItem.TypeBuiltinToken }
 
-  /** @returns {boolean} whether or not this item represents an encounter */
+  /** @returns {boolean} whether or not this item represents an Encounter */
   isTypeEncounter() { return this.type === SidebarListItem.TypeEncounter }
+
+  /** @returns {boolean} whether or not this item represents a Scene */
+  isTypeScene() { return this.type === SidebarListItem.TypeScene }
 
   /** @returns {boolean} whether or not this item is listed in the tokens panel */
   isTokensPanelItem() {
@@ -529,6 +553,7 @@ class SidebarListItem {
       case SidebarListItem.TypePC:
       case SidebarListItem.TypeMonster:
       case SidebarListItem.TypeEncounter:
+      case SidebarListItem.TypeScene:
         return true;
       case SidebarListItem.TypeBuiltinToken:
       default:
@@ -540,8 +565,10 @@ class SidebarListItem {
   canDelete() {
     switch (this.type) {
       case SidebarListItem.TypeFolder:
+        // TODO: allow deleting scenes folders
         return this.folderPath.startsWith(SidebarListItem.PathMyTokens);
       case SidebarListItem.TypeMyToken:
+      case SidebarListItem.TypeScene:
         return true;
       case SidebarListItem.TypePC:
       case SidebarListItem.TypeMonster:
@@ -572,6 +599,9 @@ class SidebarListItem {
  * @returns {string} the sanitized path
  */
 function sanitize_folder_path(dirtyPath) {
+  if (dirtyPath === undefined) {
+    return SidebarListItem.PathRoot;
+  }
   let cleanPath = dirtyPath.replaceAll("///", "/").replaceAll("//", "/");
   // remove trailing slashes before adding one at the beginning. Otherwise, we return an empty string
   if (cleanPath.endsWith("/")) {
@@ -594,7 +624,15 @@ function find_sidebar_list_item(html) {
 
   let encounterId = html.attr("data-encounter-id");
   if (encounterId !== undefined && encounterId !== null && encounterId !== "") {
-    let foundItem = window.tokenListItems.find(item => item.isTypeEncounter() && item.encounterId === encounterId);
+    foundItem = window.tokenListItems.find(item => item.isTypeEncounter() && item.encounterId === encounterId);
+    if (foundItem !== undefined) {
+      return foundItem;
+    }
+  }
+
+  let sceneId = html.attr("data-scene-id")
+  if (typeof sceneId === "string" && sceneId.length > 0) {
+    foundItem = window.sceneListItems.find(item => item.sceneId == sceneId);
     if (foundItem !== undefined) {
       return foundItem;
     }
@@ -604,10 +642,11 @@ function find_sidebar_list_item(html) {
   if (html.attr("data-monster") !== undefined) {
     // explicitly using '==' instead of '===' to allow (33253 == '33253') to return true
     foundItem = window.monsterListItems.find(item => item.monsterData.id == html.attr("data-monster"));
+    if (foundItem !== undefined) {
+      return foundItem;
+    }
   }
-  if (foundItem !== undefined) {
-    return foundItem;
-  }
+
   return find_sidebar_list_item_from_path(fullPath);
 }
 
@@ -752,7 +791,7 @@ function build_sidebar_list_row(listItem) {
   let subtitle = $(`<div class="tokens-panel-row-details-subtitle"></div>`);
   details.append(subtitle);
 
-  if (!listItem.isTypeFolder()) {
+  if (!listItem.isTypeFolder() && !listItem.isTypeScene()) {
     let addButton = $(`
         <button class="token-row-button token-row-add" title="Add Token to Scene">
             <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M7.2 10.8V18h3.6v-7.2H18V7.2h-7.2V0H7.2v7.2H0v3.6h7.2z"></path></svg>
@@ -915,6 +954,32 @@ function build_sidebar_list_row(listItem) {
       subtitle.hide();
       // TODO: Style specifically for Builtin
       row.css("cursor", "default");
+      break;
+    case SidebarListItem.TypeScene:
+      row.attr("data-scene-id", listItem.sceneId);
+      let switch_dm=$("<button class='dm_scenes_button'>DM</button>");
+      if(window.CURRENT_SCENE_DATA && window.CURRENT_SCENE_DATA.id === listItem.sceneId){
+        switch_dm.addClass("selected");
+      }
+      switch_dm.on("click", function(clickEvent) {
+        $(".dm_scenes_button.selected").removeClass("selected");
+        $(clickEvent.currentTarget).addClass("selected");
+        window.MB.sendMessage("custom/myVTT/switch_scene", { sceneId: listItem.sceneId, switch_dm: true });
+        add_zoom_to_storage();
+      });
+      let switch_players=$("<button class='player_scenes_button'>PLAYERS</button>");
+      if(window.PLAYER_SCENE_ID === listItem.sceneId){
+        switch_players.addClass("selected");
+      }
+      switch_players.on("click", function(clickEvent) {
+        window.PLAYER_SCENE_ID = listItem.sceneId;
+        $(".player_scenes_button.selected").removeClass("selected");
+        $(clickEvent.currentTarget).addClass("selected");
+        window.MB.sendMessage("custom/myVTT/switch_scene", { sceneId: listItem.sceneId });
+        add_zoom_to_storage()
+      });
+      subtitle.append(switch_dm);
+      subtitle.append(switch_players);
       break;
   }
 
