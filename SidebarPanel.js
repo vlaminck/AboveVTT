@@ -420,25 +420,35 @@ function build_dropdown_input(name, labelText, currentValue, options, changeHand
     changeHandler = function(){};
   }
   
-  let wrapper = $(`<div id='tokenWrapper__${name}' class="token-image-modal-footer-title">${labelText}</div>`);
+  let wrapper = $(`<div class="token-image-modal-footer-select-wrapper sidebar-hover-text" data-hover=""></div>`);
+  let label = $(`<div id='tokenWrapper__${name}' class="token-image-modal-footer-title">${labelText}</div>`)
   let tokenSelect = $(`<select id="tokenSelect__${name}" class='token-select-dropdown'></select>`)
 
   for(let i=0; i<options.length; i++){
-    tokenSelect.append(options[i]);
+    tokenSelect.append($(`<option value='${options[i].value}'>${options[i].label}</option>`));
+    if(currentValue == options[i].value){
+      wrapper.attr('data-hover', options[i].description);
+    }
   }
   tokenSelect.val(currentValue);
 
   tokenSelect.change(function(clickEvent) {
-    changeHandler(name, $(`#tokenSelect__${name} option:selected`).val());
+    let newValue = $(`#tokenSelect__${name} option:selected`).val();
+    changeHandler(name, newValue);
+    for(let i=0; i<options.length; i++){   
+      if(newValue == options[i].value){
+        wrapper.attr('data-hover', options[i].description);
+      }
+    }
     if(name == "tokenStyleSelect"){
       $(`#tokenWrapper__tokenBaseStyleSelect`).hide();
-      if($(`#tokenSelect__${name} option:selected`).val() == 4 || $(`#tokenSelect__${name} option:selected`).val() == 5){
-         $(`#tokenWrapper__tokenBaseStyleSelect`).show();
+      if(newValue == 'Virtual Mini Circle' || newValue == 'Virtual Mini Square'){
+       $(`#tokenWrapper__tokenBaseStyleSelect`).show();
       }
     }
   });
-  
-  wrapper.append(tokenSelect);
+  wrapper.append(label);
+  label.append(tokenSelect);
 
   return wrapper;
 }

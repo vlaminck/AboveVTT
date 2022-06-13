@@ -4,11 +4,11 @@ const token_setting_options = [
 		type: 'dropdown',
 		label: 'Token Style',
 		options: [
-			$(`<option value='1'>Circle</option>`), 
-			$(`<option value='2'>Square</option>`), 
-			$(`<option value='3'>No Constraint</option>`), 
-			$(`<option value='4'>Virtual Mini Circle</option>`), 
-			$(`<option value='5'>Virtual Mini Square</option>`)
+    	{ label: 'Circle', value: 'Circle', description: 'The token is round, we set legacyaspectratio to true and square to false' },
+    	{ label: 'Square', value: 'Square', description: 'The token is a square, we set legacyaspectratio to true and square to true' },
+    	{ label: 'No Constraint', value: 'No Constraint', description: 'The token will show up as it is naturally largest side being equal to token size, we set legacyaspectratio to false and square to true. Borders/HP Aura is a drop shadow to fit the shape of the token.' },
+    	{ label: 'Virtual Mini Circle', value: 'Virtual Mini Circle', description: 'The token will show up as it is naturally largest side being equal to token size, we set legacyaspectratio to false and square to true. We also add a virtual token base to this Style. Borders/HP Aura show up in the base of the token.' },
+    	{ label: 'Virtual Mini Square', value: 'Virtual Mini Square', description: 'The token will show up as it is naturally largest side being equal to token size, we set legacyaspectratio to false and square to true. We also add a virtual token base to this Style. Borders/HP Aura show up in the base of the token.' },
  		]
 	},
 	{
@@ -16,12 +16,12 @@ const token_setting_options = [
 		type: 'dropdown',
 		label: 'Token Base Style',
 		options: [
-			$(`<option value='1'>Default</option>`), 
-			$(`<option value='2'>Grass</option>`), 
-			$(`<option value='3'>Tile</option>`), 
-			$(`<option value='4'>Sand</option>`), 
-			$(`<option value='5'>Rock</option>`),
-			$(`<option value='6'>Water</option>`)
+		{ label: 'Default', value: 'Default', description: 'A default dark semi-opaque plastic base.'},
+		{ label: 'Grass', value: 'Grass', description: 'A grass covered base.'},
+		{ label: 'Tile', value: 'Tile', description: 'A tile base.'},
+		{ label: 'Sand', value: 'Sand', description: 'A sand covered base.'},
+		{ label: 'Rock', value: 'Rock', description: 'A rock base.'},
+		{ label: 'Water', value: 'Water', description: 'A water base.'},
  		]
 	},
 	{
