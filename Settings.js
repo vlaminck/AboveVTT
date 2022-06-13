@@ -7,8 +7,8 @@ const token_setting_options = [
     	{ label: 'Circle', value: 'Circle', description: 'The token is round, we set legacyaspectratio to true and square to false' },
     	{ label: 'Square', value: 'Square', description: 'The token is a square, we set legacyaspectratio to true and square to true' },
     	{ label: 'No Constraint', value: 'No Constraint', description: 'The token will show up as it is naturally largest side being equal to token size, we set legacyaspectratio to false and square to true. Borders/HP Aura is a drop shadow to fit the shape of the token.' },
-    	{ label: 'Virtual Mini Circle', value: 'Virtual Mini Circle', description: 'The token will show up as it is naturally largest side being equal to token size, we set legacyaspectratio to false and square to true. We also add a virtual token base to this Style. Borders/HP Aura show up in the base of the token.' },
-    	{ label: 'Virtual Mini Square', value: 'Virtual Mini Square', description: 'The token will show up as it is naturally largest side being equal to token size, we set legacyaspectratio to false and square to true. We also add a virtual token base to this Style. Borders/HP Aura show up in the base of the token.' },
+    	{ label: 'Virtual Mini Circle', value: 'Virtual Mini Circle', description: 'The token will show up as it is naturally. The largest side being equal to token size, we set legacyaspectratio to false and square to true. We also add a virtual token base to this Style. Borders/HP Aura show up in the base of the token.' },
+    	{ label: 'Virtual Mini Square', value: 'Virtual Mini Square', description: 'The token will show up as it is naturally. The largest side being equal to token size, we set legacyaspectratio to false and square to true. We also add a virtual token base to this Style. Borders/HP Aura show up in the base of the token.' },
  		]
 	},
 	{
