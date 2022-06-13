@@ -395,8 +395,10 @@ class Token {
 			token.css('--token-temp-hp', "transparent");
 		} 
 		else {
-			tokenWidth = tokenWidth - 10;
-			tokenHeight = tokenHeight - 10;
+			if(this.options.tokenStyleSelect == 1 || this.options.tokenStyleSelect == 2){
+				tokenWidth = tokenWidth - 6;
+				tokenHeight = tokenHeight - 6;
+			}
 			token.css('--token-hp-aura-color', tokenHpAuraColor);
 			if(tokenData.temp_hp) {
 				token.css('--token-temp-hp', "#4444ffbd");
@@ -410,8 +412,10 @@ class Token {
 			$("token:before").css('--token-border-color', 'transparent');
 		} 
 		else {
-			tokenWidth = tokenWidth - 4;
-			tokenHeight = tokenHeight - 4;
+			if(this.options.tokenStyleSelect == 1 || this.options.tokenStyleSelect == 2){
+				tokenWidth = tokenWidth - 1;
+				tokenHeight = tokenHeight - 1;
+			}
 			token.css('--token-border-color', this.options.color);
 			$("token:before").css('--token-border-color', this.options.color);
 			$("#combat_area tr[data-target='" + this.options.id + "'] img[class*='Avatar']").css("border-color", this.options.color);
@@ -1013,6 +1017,8 @@ class Token {
 			
 			setTokenAuras(old, this.options);
 
+			setTokenBase(old, this.options);
+			
 			if(!(this.options.square) && !(old.find("img").hasClass('token-round'))){
 				old.find("img").addClass("token-round");
 			}
@@ -1155,6 +1161,8 @@ class Token {
 
 			
 			setTokenAuras(tok, this.options);
+
+			setTokenBase(tok, this.options);
 
 			let click = {
 				x: 0,
@@ -1914,6 +1922,111 @@ function setTokenAuras (token, options) {
 	}
 }
 
+
+function setTokenBase(token, options) {
+	if(options.tokenStyleSelect == 1 || options.tokenStyleSelect == 2 || options.tokenStyleSelect == 3){
+		$(`.token[data-id='${options.id}']>.base`).remove();
+	}
+	$(`.token[data-id='${options.id}']>.base`).remove();
+	let base = $(`<div class='base'></div>`);
+	if(options.size < 150){
+		$(base).toggleClass("large-or-smaller-base", true);
+	}
+	else{
+		$(base).toggleClass("large-or-smaller-base", false);
+	}
+
+	if(options.tokenStyleSelect == 4){
+		base.toggleClass('square', false);
+		base.toggleClass('circle', true);		
+	}
+	if (options.tokenStyleSelect == 5){
+		base.toggleClass('square', true);
+		base.toggleClass('circle', false);
+	}
+	if(options.tokenStyleSelect !== 3){
+		token.children("img").toggleClass("freeform", false);
+	}
+	
+	if(options.tokenStyleSelect == 1){
+		//Circle
+		options.square = false;
+		options.legacyaspectratio = true;
+		token.children("img").css("border-radius", "50%")
+		token.children("img").removeClass("preserve-aspect-ratio");
+	}
+	else if(options.tokenStyleSelect == 2){
+		//Square
+		options.square = true;
+		options.legacyaspectratio = true;
+		token.children("img").css("border-radius", "0");
+		token.children("img").removeClass("preserve-aspect-ratio");
+	}
+	else if(options.tokenStyleSelect == 3){
+		//Freeform
+		options.square = true;
+		options.legacyaspectratio = false;
+		token.children("img").css("border-radius", "0");
+		token.children("img").addClass("preserve-aspect-ratio");
+		token.children("img").toggleClass("freeform", true);
+	}
+	else if(options.tokenStyleSelect == 4){
+		$(`.token[data-id='${options.id}']`).prepend(base);
+		//Virtual Mini Circle
+		options.square = true;
+		options.legacyaspectratio = false;
+		token.children("img").css("border-radius", "0");
+		token.children("img").addClass("preserve-aspect-ratio");
+	}
+	else if(options.tokenStyleSelect == 5){
+		$(`.token[data-id='${options.id}']`).prepend(base);
+		//Virtual Mini Square
+		options.square = true;
+		options.legacyaspectratio = false;
+		token.children("img").css("border-radius", "0");
+		token.children("img").addClass("preserve-aspect-ratio");
+	}
+
+	if(options.tokenStyleSelect == 5 || options.tokenStyleSelect == 4){
+		if(options.disableborder == true){
+			token.children(".base").toggleClass("noborder", true);
+		}
+		else{
+			token.children(".base").toggleClass("noborder", false);
+		}
+
+		if(options.disableaura == true){
+			token.children(".base").toggleClass("nohpaura", true);
+		}
+		else{
+			token.children(".base").toggleClass("nohpaura", false);
+		}
+	}
+
+	
+	token.children(".base").toggleClass("grass-base", false);
+	token.children(".base").toggleClass("rock-base", false);
+	token.children(".base").toggleClass("tile-base", false);
+	token.children(".base").toggleClass("sand-base", false);
+	token.children(".base").toggleClass("water-base", false);
+	if(options.tokenBaseStyleSelect == 2){
+		token.children(".base").toggleClass("grass-base", true);
+	}
+	else if(options.tokenBaseStyleSelect == 3){
+		token.children(".base").toggleClass("tile-base", true);
+	}
+	else if(options.tokenBaseStyleSelect == 4){
+		token.children(".base").toggleClass("sand-base", true);
+	}
+	else if(options.tokenBaseStyleSelect == 5){
+		token.children(".base").toggleClass("rock-base", true);
+	}
+	else if(options.tokenBaseStyleSelect == 6){
+		token.children(".base").toggleClass("water-base", true);
+	}
+			
+}
+
 function get_custom_monster_images(monsterId) {
 	if (monsterId == undefined) {
 		return [];
@@ -1928,43 +2041,39 @@ function get_custom_monster_images(monsterId) {
 	return customImages;
 }
 
-function get_random_custom_monster_image(monsterId) {
-	let customImgs = get_custom_monster_images(monsterId);
-	let randomIndex = getRandomInt(0, customImgs.length);
-	return customImgs[randomIndex];
+
+function get_custom_monster_images(monsterId) {
+	return find_token_customization(SidebarListItem.TypeMonster, monsterId)?.tokenOptions?.alternativeImages || [];
 }
 
 function add_custom_monster_image_mapping(monsterId, imgsrc) {
-	if (monsterId == undefined) {
-		return;
-	}
-	var customImages = get_custom_monster_images(monsterId);
-	customImages.push(parse_img(imgsrc));
-	window.CUSTOM_TOKEN_IMAGE_MAP[monsterId] = customImages;
-	save_custom_monster_image_mapping();
+	let customization = find_or_create_token_customization(SidebarListItem.TypeMonster, monsterId);
+	customization.addAlternativeImage(imgsrc);
+	persist_token_customization(customization);
 }
 
-function remove_custom_monster_image(monsterId, index) {
-	var customImages = get_custom_monster_images(monsterId);;
-	if (customImages.length > index) {
-		window.CUSTOM_TOKEN_IMAGE_MAP[monsterId].splice(index, 1);
-	}
-	save_custom_monster_image_mapping();
+function remove_custom_monster_image(monsterId, imgsrc) {
+	let customization = find_or_create_token_customization(SidebarListItem.TypeMonster, monsterId);
+	customization.removeAlternativeImage(imgsrc);
+	persist_token_customization(customization);
 }
 
 function remove_all_custom_monster_images(monsterId) {
-	delete window.CUSTOM_TOKEN_IMAGE_MAP[monsterId];
-	save_custom_monster_image_mapping();
+	let customization = find_or_create_token_customization(SidebarListItem.TypeMonster, monsterId);
+	customization.removeAllAlternativeImages();
+	persist_token_customization(customization);
 }
 
+// deprecated, but still required for migrations
 function load_custom_monster_image_mapping() {
 	window.CUSTOM_TOKEN_IMAGE_MAP = {};
 	let customMappingData = localStorage.getItem('CustomDefaultTokenMapping');
-	if(customMappingData != null){
+	if(customMappingData != null) {
 		window.CUSTOM_TOKEN_IMAGE_MAP = $.parseJSON(customMappingData);
 	}
 }
 
+// deprecated, but still required for migrations
 function save_custom_monster_image_mapping() {
 	let customMappingData = JSON.stringify(window.CUSTOM_TOKEN_IMAGE_MAP);
 	localStorage.setItem("CustomDefaultTokenMapping", customMappingData);
@@ -1977,7 +2086,7 @@ function copy_to_clipboard(text) {
 	$temp.val(text).select();
 	document.execCommand("copy");
 	$temp.remove();
-};
+}
 
 const radToDeg = 180 / Math.PI;
 
