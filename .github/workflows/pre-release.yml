@@ -7,9 +7,12 @@ jobs:
   pre_release_job:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v3
       - name: testing pre-release action
         run: echo this is the pre-release action
       - name: tagName
         run: echo tag name is ${{github.ref_name}}
+      - name: checkout
+        run: git checkout HEAD^
       - name: make zip
         run: git archive -o AboveVTT-${{github.ref_name}}.zip HEAD
