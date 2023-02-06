@@ -8,4 +8,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: testing pre-release action
-        run: echo this is pre-release action
+        run: echo this is the pre-release action
+      - name: tagName
+        run: echo 'tag name is ${{github.ref_name}}'
