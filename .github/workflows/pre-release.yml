@@ -10,4 +10,6 @@ jobs:
       - name: testing pre-release action
         run: echo this is the pre-release action
       - name: tagName
-        run: echo 'tag name is ${{github.ref_name}}'
+        run: echo tag name is ${{github.ref_name}}
+      - name: make zip
+        run: git archive -o AboveVTT-${{github.ref_name}}.zip HEAD
