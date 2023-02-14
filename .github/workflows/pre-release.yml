@@ -10,6 +10,12 @@ jobs:
         with:
           node-version: '14'
       - run: npm install node-jq --save
-      - run: oldVersion=$(cat manifest.json | jq -r .version) && echo $oldVersion
-      - run: oldVersionName=$(cat manifest.json | jq -r .version_name) && echo $oldVersionName
-      - run: if [[ "$oldVersionName" = "$oldVersion"* ]] && echo "$oldVersionName starts with $oldVersion"
+      - run: |
+          oldVersion=$(cat manifest.json | jq -r .version) && echo $oldVersion
+          oldVersionName=$(cat manifest.json | jq -r .version_name) && echo $oldVersionName
+          if [[ "$oldVersionName" = "$oldVersion"* ]];
+          then
+            echo "$oldVersionName starts with $oldVersion"
+          else
+            echo "$oldVersionName does not start with $oldVersion"
+          fi
