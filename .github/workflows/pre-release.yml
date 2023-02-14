@@ -30,14 +30,14 @@ jobs:
             echo "new version_name is ${oldVersion}-beta1"
           fi
           echo newVersionName: $newVersionName
-          variable=$newVersionName; jq --arg variable "$variable" '.version_name = $variable' manifest.json > tmp && mv tmp manifest.json
-      - run: |
-          cat manifest.json
-          rm -rf node_modules
-          rm package-lock.json
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git add manifest.json
-          git commit -am "update manifest version_name to $newVersionName"
-          branchName=$(git rev-parse --abbrev-ref HEAD) && echo branchName
-          git push --set-upstream origin $(branchName)
+#          variable=$newVersionName; jq --arg variable "$variable" '.version_name = $variable' manifest.json > tmp && mv tmp manifest.json
+#          cat manifest.json
+#          rm -rf node_modules
+#          rm package-lock.json
+#          git config user.name github-actions
+#          git config user.email github-actions@github.com
+#          git add manifest.json
+#          git commit -am "update manifest version_name to $newVersionName"
+#          branchName=$(git rev-parse --abbrev-ref HEAD) && echo branchName
+#          git push --set-upstream origin $(branchName)
+  
