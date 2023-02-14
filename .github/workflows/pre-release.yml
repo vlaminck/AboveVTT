@@ -11,6 +11,7 @@ jobs:
           node-version: '14'
       - run: npm install node-jq --save
       - run: |
+          echo read and update variable
           oldVersion=$(cat manifest.json | jq -r .version) && echo $oldVersion
           oldVersionName=$(cat manifest.json | jq -r .version_name) && echo $oldVersionName
           if [[ "$oldVersionName" = "$oldVersion"* ]];
@@ -26,4 +27,6 @@ jobs:
             newVersionName="${oldVersion}-beta1"
             echo "new version_name is ${oldVersion}-beta1"
           fi
+      - run: |
           echo newVersionName: $newVersionName
+          
