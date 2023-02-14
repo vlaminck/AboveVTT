@@ -16,6 +16,9 @@ jobs:
           if [[ "$oldVersionName" = "$oldVersion"* ]];
           then
             echo "$oldVersionName starts with $oldVersion"
+            betaNumber=${versionName##*$version-beta}
+            echo betaNumber: $betaNumber
           else
             echo "$oldVersionName does not start with $oldVersion"
+            echo "new version_name is ${oldVersion}-beta1"
           fi
