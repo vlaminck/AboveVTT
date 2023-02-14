@@ -35,7 +35,7 @@ jobs:
           git config user.name github-actions
           git config user.email github-actions@github.com
           git add manifest.json
-          git commit -am "update manifest version_name to $newVersionName"
+          git commit -m "update manifest version_name to $newVersionName"
           branchName=$(git rev-parse --abbrev-ref HEAD) && echo branchName
           git push --set-upstream origin $(branchName)
 
