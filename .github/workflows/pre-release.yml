@@ -39,6 +39,7 @@ jobs:
           git diff
           git add manifest.json
           git commit -am "update manifest version_name to $newVersionName"
+          git rev-parse --abbrev-ref HEAD
           branchName=$(git rev-parse --abbrev-ref HEAD) && echo branchName
           git push --set-upstream origin $(branchName)
 
