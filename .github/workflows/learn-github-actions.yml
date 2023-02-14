@@ -10,4 +10,5 @@ jobs:
         with:
           node-version: '14'
       - run: npm install node-jq --save
-      - run: cat manifest.json | jq -r .version
+      - run: oldVersion=$(cat manifest.json | jq -r .version) && echo $oldVersion
+      - run: oldVersionName=$(cat manifest.json | jq -r .version_name) && echo $oldVersionName
