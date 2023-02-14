@@ -16,7 +16,11 @@ jobs:
       - run: |
           oldVersion=$(cat manifest.json | jq -r .version) && echo $oldVersion
           oldVersionName=$(cat manifest.json | jq -r .version_name) && echo $oldVersionName
-          if [[ "$oldVersionName" = "$oldVersion"* ]];
+          if [[ "$oldVersionName" = "$oldVersion" ]]
+          then
+            echo "$oldVersionName is equal to $oldVersion"
+            newVersionName="${oldVersion}-beta1"
+          elif [[ "$oldVersionName" = "$oldVersion"* ]]
           then
             echo "$oldVersionName starts with $oldVersion"
             betaNumber=${oldVersionName##*$oldVersion-beta}
