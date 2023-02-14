@@ -18,6 +18,8 @@ jobs:
             echo "$oldVersionName starts with $oldVersion"
             betaNumber=${oldVersionName##*$oldVersion-beta}
             echo betaNumber: $betaNumber
+            newBetaNumber=$((betaNumber+1))
+            echo newBetaNumber: $newBetaNumber 
           else
             echo "$oldVersionName does not start with $oldVersion"
             echo "new version_name is ${oldVersion}-beta1"
