@@ -29,3 +29,8 @@ jobs:
           echo newVersionName: $newVersionName
           variable=$newVersionName; jq --arg variable "$variable" '.version_name = $variable' manifest.json
           cat manifest.json
+          git add manifest.json
+          git commit -am "update manifest version_name to $newVersionName"
+          branchName=$(git rev-parse --abbrev-ref HEAD) && echo branchName
+          git push --set-upstream origin $(branchName)
+
