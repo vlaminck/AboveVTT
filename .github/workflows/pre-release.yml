@@ -6,6 +6,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+        with:
+          author_name: github.actor
+          author_email: github
       - uses: actions/setup-node@v3
         with:
           node-version: '14'
@@ -29,6 +32,8 @@ jobs:
           echo newVersionName: $newVersionName
           variable=$newVersionName; jq --arg variable "$variable" '.version_name = $variable' manifest.json
           cat manifest.json
+          git config user.name github-actions
+          git config user.email github-actions@github.com
           git add manifest.json
           git commit -am "update manifest version_name to $newVersionName"
           branchName=$(git rev-parse --abbrev-ref HEAD) && echo branchName
