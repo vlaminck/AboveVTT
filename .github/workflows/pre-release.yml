@@ -1,5 +1,5 @@
-name: learn-github-actions
-run-name: ${{ github.actor }} is learning GitHub Actions
+name: pre-release
+run-name: ${{ github.actor }} is publishing a pre-release
 on: [push]
 jobs:
   update-manifest:
@@ -12,3 +12,4 @@ jobs:
       - run: npm install node-jq --save
       - run: oldVersion=$(cat manifest.json | jq -r .version) && echo $oldVersion
       - run: oldVersionName=$(cat manifest.json | jq -r .version_name) && echo $oldVersionName
+      - run: if [[ "$oldVersionName" = "$oldVersion"* ]] && echo "$oldVersionName starts with $oldVersion"
