@@ -27,5 +27,5 @@ jobs:
             echo "new version_name is ${oldVersion}-beta1"
           fi
           echo newVersionName: $newVersionName
-          jq --arg variable "$newVersionName" '.version_name = $newVersionName' manifest.json
+          variable=$newVersionName; jq --arg variable "$variable" '.version_name = $variable' manifest.json
           cat manifest.json
