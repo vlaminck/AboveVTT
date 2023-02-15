@@ -1,6 +1,6 @@
 name: pre-release
-run-name: ${{ github.actor }} is publishing a pre-release
-on: [workflow_dispatch]
+run-name: ${{ github.actor }} is publishing a pre-release build
+on: [push]
 jobs:
   update-manifest:
     runs-on: ubuntu-latest
@@ -13,7 +13,8 @@ jobs:
         with:
           node-version: '14'
       - run: npm install node-jq --save
-      - run: |
+      - name: "determine version number"
+        run: |
           oldVersion=$(cat manifest.json | jq -r .version) && echo $oldVersion
           oldVersionName=$(cat manifest.json | jq -r .version_name) && echo $oldVersionName
           if [[ "$oldVersionName" = "$oldVersion" ]]
@@ -36,14 +37,26 @@ jobs:
             echo "$oldVersionName does not start with $oldVersion"
             exit 1
           fi
-          echo newVersionName: $newVersionName
-          variable=$newVersionName; jq --arg variable "$variable" '.version_name = $variable' manifest.json > tmp && mv tmp manifest.json
-          cat manifest.json
-          rm -rf node_modules
-          rm package-lock.json
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git add manifest.json
-          git commit -am "update manifest version_name to $newVersionName"
-          branchName=$(git rev-parse --abbrev-ref HEAD) && echo branchName
-          git push --set-upstream origin $(branchName)
+          echo "newVersionName: $newVersionName" >> $GITHUB_ENV
+      - name: "test log variables"
+        run: |
+          echo "newVersionName: $newVersionName"
+#          variable=$newVersionName; jq --arg variable "$variable" '.version_name = $variable' manifest.json > tmp && mv tmp manifest.json
+#          cat manifest.json
+#          rm -rf node_modules
+#          rm package-lock.json
+#          git config user.name github-actions
+#          git config user.email github-actions@github.com
+#          git add manifest.json
+#          git commit -am "update manifest version_name to $newVersionName"
+#          branchName=$(git rev-parse --abbrev-ref HEAD) && echo branchName
+#          git push --set-upstream origin $(branchName)
+#      - uses: "marvinpinto/action-automatic-releases@latest"
+#        with:
+#          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+#          automatic_release_tag: "latest"
+#          prerelease: true
+#          title: "Development Build"
+#          files: |
+#            LICENSE
+#            *.zip
