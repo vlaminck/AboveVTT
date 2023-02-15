@@ -67,5 +67,5 @@ jobs:
           prerelease: true
           title: "${{env.next_version_name}}"
           files: |
+            *.zip
             LICENSE
-            "AboveVTT-${{env.next_version_name}}.zip"
