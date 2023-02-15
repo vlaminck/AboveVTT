@@ -13,7 +13,7 @@ jobs:
         with:
           node-version: '14'
       - run: npm install node-jq --save
-      - name: "parse and update manifest"
+      - name: "determine next version_name"
         run: |
           oldVersion=$(cat manifest.json | jq -r .version) && echo $oldVersion
           oldVersionName=$(cat manifest.json | jq -r .version_name) && echo $oldVersionName
@@ -39,26 +39,33 @@ jobs:
           fi
           echo "next_version_name=${newVersionName}"
           echo "next_version_name=${newVersionName}" >> $GITHUB_ENV
-      - name: "echo variables"
+      - name: "update manifest"
         run: |
-          echo next_version_name=${{ env.next_version_name }}
-
-#          variable=$newVersionName; jq --arg variable "$variable" '.version_name = $variable' manifest.json > tmp && mv tmp manifest.json
-#          cat manifest.json
-#          rm -rf node_modules
-#          rm package-lock.json
-#          git config user.name github-actions
-#          git config user.email github-actions@github.com
-#          git add manifest.json
-#          git commit -am "update manifest version_name to $newVersionName"
-#          branchName=$(git rev-parse --abbrev-ref HEAD) && echo branchName
-#          git push --set-upstream origin $(branchName)
+          echo setting manifest.version_name: ${{env.next_version_name}}
+          variable=${{env.next_version_name}}; jq --arg variable "$variable" '.version_name = $variable' manifest.json > tmp && mv tmp manifest.json
+      - name: "commit and push changes"
+        run: |
+          rm -rf node_modules
+          rm package-lock.json
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add manifest.json
+          git commit -am "update manifest version_name to ${{env.next_version_name}}
+          branchName=$(git rev-parse --abbrev-ref HEAD) && echo $branchName
+          git push --set-upstream origin $(branchName)
+      - name: "build the zip"
+        run: |
+          git archive -o "AboveVTT-${{secrets.GITHUB_TOKEN}}.zip" HEAD
+      - name: "see if we have access to the zip"
+        run: |
+          ls -la
+          ls "AboveVTT-${{secrets.GITHUB_TOKEN}}.zip"
 #      - uses: "marvinpinto/action-automatic-releases@latest"
 #        with:
 #          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-#          automatic_release_tag: "latest"
+#          automatic_release_tag: "${{env.next_version_name}}"
 #          prerelease: true
-#          title: "Development Build"
+#          title: "${{env.next_version_name}}"
 #          files: |
 #            LICENSE
 #            *.zip
