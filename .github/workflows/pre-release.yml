@@ -40,7 +40,7 @@ jobs:
           echo "newVersionName: $newVersionName" >> $GITHUB_ENV
       - name: "test log variables"
         run: |
-          echo "newVersionName: $newVersionName"
+          echo "newVersionName: $newVersionName" 
 #          variable=$newVersionName; jq --arg variable "$variable" '.version_name = $variable' manifest.json > tmp && mv tmp manifest.json
 #          cat manifest.json
 #          rm -rf node_modules
