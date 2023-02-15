@@ -40,7 +40,7 @@ jobs:
           echo "next_version_name=${newVersionName}"
           echo "next_version_name=${newVersionName}" >> $GITHUB_ENV
       - name: "echo variables"
-      - run: |
+        run: |
           echo next_version_name=${{ env.next_version_name }}
 
 #          variable=$newVersionName; jq --arg variable "$variable" '.version_name = $variable' manifest.json > tmp && mv tmp manifest.json
