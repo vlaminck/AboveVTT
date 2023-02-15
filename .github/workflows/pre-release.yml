@@ -1,6 +1,6 @@
 name: pre-release
 run-name: ${{ github.actor }} is publishing a pre-release build
-on: [push]
+on: [workflow_dispatch]
 jobs:
   update-manifest:
     runs-on: ubuntu-latest
