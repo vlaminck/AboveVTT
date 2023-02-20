@@ -61,13 +61,7 @@ class ChatObserver {
 
     #parseSlashCommand(text) {
         let diceRoll = DiceRoll.fromSlashCommand(text);
-        let didSend = window.diceRoller.roll(diceRoll);
-        if (didSend === false) {
-            // it was too complex so try to send it through rpgDiceRoller
-            let expression = text.replace(diceRollCommandRegex, "").match(allowedExpressionCharactersRegex)?.[0];
-            didSend = send_rpg_dice_to_ddb(expression, window.pc.name, window.pc.image, rollType, undefined, action);
-        }
-        return didSend;
+        return window.diceRoller.roll(diceRoll);
     }
 
     #sendChatMessage(text) {

@@ -251,7 +251,7 @@ class DiceRoller {
     /// PUBLIC FUNCTIONS
 
     /**
-     * Attempts to parse the expression, and roll DDB dice.
+     * Attempts to roll DDB dice.
      * If dice are rolled, the results will be processed to make sure the expression is properly calculated.
      * @param diceRoll {DiceRoll} the dice expression to parse and roll. EG: 1d20+4
      * @returns {boolean} whether or not dice were rolled
@@ -261,6 +261,19 @@ class DiceRoller {
             if (diceRoll === undefined || diceRoll.expression === undefined || diceRoll.expression.length === 0) {
                 console.warn("DiceRoller.parseAndRoll received an invalid diceRoll object", diceRoll);
                 return false;
+            }
+
+            if (is_abovevtt_page() && get_avtt_setting_value("bypassDdbDice")) {
+                const sentAsDiceRoll = send_rpg_dice_to_ddb(
+                  diceRoll.expression,
+                  diceRoll.name ? diceRoll.name : window.PLAYER_NAME,
+                  diceRoll.avatarUrl ? diceRoll.avatarUrl : window.PLAYER_IMG,
+                  diceRoll.rollType,
+                  diceRoll.action,
+                  diceRoll.sendToOverride
+                );
+                if (sentAsDiceRoll === true) return true;
+                return send_rpg_dice_output_as_chat_message(diceRoll.expression, diceRoll.sendToOverride === "DungeonMaster");
             }
 
             if (this.#waitingForRoll) {
@@ -288,7 +301,7 @@ class DiceRoller {
             console.groupEnd();
             return true;
         } catch (error) {
-            console.warn("failed to parse and send expression as DDB roll; expression: ", expression, error);
+            console.warn("failed to parse and send expression as DDB roll; expression: ", diceRoll, error);
             this.#resetVariables();
             console.groupEnd();
             return false;
@@ -360,6 +373,30 @@ class DiceRoller {
     #wrappedDispatch(message) {
         console.group("DiceRoller.#wrappedDispatch");
         if (!this.#waitingForRoll) {
+            if (is_abovevtt_page() && get_avtt_setting_value("bypassDdbDice")) {
+                var successfullyHijackedRoll = false;
+                message.data.rolls.forEach(r => {
+                    console.log("hijack this expression", r.diceNotationStr);
+                    successfullyHijackedRoll = true;
+                    const button = $()
+
+
+                });
+                if (successfullyHijackedRoll) {
+                    return;
+                }
+
+                // const sentAsDiceRoll = send_rpg_dice_to_ddb(
+                //   diceRoll.expression,
+                //   diceRoll.name ? diceRoll.name : window.PLAYER_NAME,
+                //   diceRoll.avatarUrl ? diceRoll.avatarUrl : window.PLAYER_IMG,
+                //   diceRoll.rollType,
+                //   diceRoll.action,
+                //   diceRoll.sendToOverride
+                // );
+                // if (sentAsDiceRoll === true) return true;
+                // return send_rpg_dice_output_as_chat_message(diceRoll.expression, diceRoll.sendToOverride === "DungeonMaster");
+            }
             console.debug("not capturing: ", message);
             this.ddbDispatch(message);
         } else if (message.eventType === "dice/roll/pending") {
@@ -643,4 +680,250 @@ function replaceModifiersInSlashCommand(slashCommandText) {
 
     console.log("replaceModifiersInSlashCommand changed", slashCommandText, "to", modifiedCommand);
     return modifiedCommand;
+}
+
+/**
+ * Attempts to convert the output of an rpgDiceRoller DiceRoll to the DDB format.
+ * If the conversion is successful, it will be sent over the websocket, and this will return true.
+ * If the conversion fails for any reason, nothing will be sent, and this will return false,
+ * @param {String} expression the dice rolling expression; ex: 1d20+4
+ * @param {String|undefined} displayName
+ * @param {String|undefined} imgUrl
+ * @param {String|undefined} rollType
+ * @param {String|undefined} actionType
+ * @param {String|undefined} sendTo
+ * @returns {Boolean} true if we were able to convert and attempted to send; else false */
+function send_rpg_dice_to_ddb(expression, displayName, imgUrl, rollType, actionType, sendTo = "Everyone") {
+
+    console.group("send_rpg_dice_to_ddb");
+
+    console.log("with values", expression, displayName, imgUrl, rollType, actionType, sendTo)
+
+
+    try {
+        expression = expression.replace(/\s+/g, ''); // remove all whitespace
+
+        const supportedDieTypes = ["d4", "d6", "d8", "d10", "d12", "d20", "d100"];
+
+        let roll = new rpgDiceRoller.DiceRoll(expression);
+
+        // rpgDiceRoller doesn't give us the notation of each roll so we're going to do our best to find and match them as we go
+        var choppedExpression = expression;
+        let notationList = [];
+        for (let i = 0; i < roll.rolls.length; i++) {
+            let currentRoll = roll.rolls[i];
+            if (typeof currentRoll === "string") {
+                let idx = choppedExpression.indexOf(currentRoll);
+                let previousNotation = choppedExpression.slice(0, idx);
+                notationList.push(previousNotation);
+                notationList.push(currentRoll);
+                choppedExpression = choppedExpression.slice(idx + currentRoll.length);
+            }
+        }
+        console.log("chopped expression", choppedExpression)
+        notationList.push(choppedExpression); // our last notation will still be here so add it to the list
+
+        if (roll.rolls.length !== notationList.length) {
+            console.warn(`Failed to convert expression to DDB roll; expression ${expression}`);
+            console.groupEnd()
+            return false;
+        }
+
+        let convertedDice = [];       // a list of objects in the format that DDB expects
+        let allValues = [];           // all the rolled values
+        let convertedExpression = []; // a list of strings that we'll concat for a string representation of the final math being done
+        let constantsTotal = 0;       // all the constants added together
+        for (let i = 0; i < roll.rolls.length; i++) {
+            let currentRoll = roll.rolls[i];
+            if (typeof currentRoll === "object") {
+                let currentNotation = notationList[i];
+                let currentDieType = supportedDieTypes.find(dt => currentNotation.includes(dt)); // we do it this way instead of splitting the string so we can easily clean up things like d20kh1, etc. It's less clever, but it avoids any parsing errors
+                if (!supportedDieTypes.includes(currentDieType)) {
+                    console.warn(`found an unsupported dieType ${currentNotation}`);
+                    console.groupEnd()
+                    return false;
+                }
+                if (currentNotation.includes("kh") || currentNotation.includes("kl")) {
+                    let cleanerString = currentRoll.toString()
+                      .replace("[", "(")    // swap square brackets with parenthesis
+                      .replace("]", ")")    // swap square brackets with parenthesis
+                      .replace("d", "")     // remove all drop notations
+                      .replace(/\s+/g, ''); // remove all whitespace
+                    convertedExpression.push(cleanerString);
+                } else {
+                    convertedExpression.push(currentRoll.value);
+                }
+                let dice = currentRoll.rolls.map(d => {
+                    allValues.push(d.value);
+                    console.groupEnd()
+                    return { dieType: currentDieType, dieValue: d.value };
+                });
+
+                convertedDice.push({
+                    "dice": dice,
+                    "count": dice.length,
+                    "dieType": currentDieType,
+                    "operation": 0
+                })
+            } else if (typeof currentRoll === "string") {
+                convertedExpression.push(currentRoll);
+            } else if (typeof currentRoll === "number") {
+                convertedExpression.push(currentRoll);
+                if (i > 0) {
+                    if (convertedExpression[i-1] === "-") {
+                        constantsTotal -= currentRoll;
+                    } else if (convertedExpression[i-1] === "+") {
+                        constantsTotal += currentRoll;
+                    } else {
+                        console.warn(`found an unexpected symbol ${convertedExpression[i-1]}`);
+                        console.groupEnd()
+                        return false;
+                    }
+                } else {
+                    constantsTotal += currentRoll;
+                }
+            }
+        }
+        let ddbJson = {
+            id: uuid(),
+            dateTime: `${Date.now()}`,
+            gameId: window.MB.gameid,
+            userId: window.MB.userid,
+            source: "web",
+            persist: true,
+            messageScope: sendTo === "Everyone" ?  "gameId" : "userId",
+            messageTarget: sendTo === "Everyone" ?  window.MB.gameid : window.MB.userid,
+            entityId: window.MB.userid,
+            entityType: "user",
+            eventType: "dice/roll/fulfilled",
+            data: {
+                action: actionType ? actionType : "custom",
+                setId: window.mydice.data.setId,
+                context: {
+                    entityId: window.MB.userid,
+                    entityType: "user",
+                    messageScope: sendTo === "Everyone" ?  "gameId" : "userId",
+                    messageTarget: sendTo === "Everyone" ?  window.MB.gameid : window.MB.userid,
+                    name: displayName ? displayName : window.PLAYER_NAME,
+                    avatarUrl: imgUrl ? imgUrl : window.PLAYER_IMG
+                },
+                rollId: uuid(),
+                rolls: [
+                    {
+                        diceNotation: {
+                            set: convertedDice,
+                            constant: constantsTotal
+                        },
+                        diceNotationStr: expression,
+                        rollType: rollType ? rollType : "roll",
+                        rollKind: expression.includes("kh") ? "advantage" : expression.includes("kl") ? "disadvantage" : "",
+                        result: {
+                            constant: constantsTotal,
+                            values: allValues,
+                            total: roll.total,
+                            text: convertedExpression.join("")
+                        }
+                    }
+                ]
+            }
+        };
+        if (window.MB.ws.readyState === window.MB.ws.OPEN) {
+            window.MB.ws.send(JSON.stringify(ddbJson));
+            console.groupEnd()
+            return true;
+        } else { // TRY TO RECOVER
+            get_cobalt_token(function(token) {
+                window.MB.loadWS(token, function() {
+                    window.MB.ws.send(JSON.stringify(ddbJson));
+                });
+            });
+            console.groupEnd()
+            return true; // we can't guarantee that this actually worked, unfortunately
+        }
+    } catch (error) {
+        console.warn(`failed to send expression as DDB roll; expression = ${expression}`, error);
+        console.groupEnd()
+        return false;
+    }
+}
+
+/** Attempts to inject a chat message using the raw rpgDiceRoller output
+ * @param {string} output rpgDiceRoller.DiceRoll.output
+ * @param {boolean} sendToDmOnly true if this should only go to the dm, else false
+ * @return {boolean} true if we tried to send the message, else false */
+function send_rpg_dice_output_as_chat_message(expression, sendToDmOnly) {
+    try {
+        let roll = new rpgDiceRoller.DiceRoll(expression);
+        if (typeof output !== "string" || output.length === 0) return false;
+        const data = {
+            player: window.PLAYER_NAME,
+            img: window.PLAYER_IMG,
+            text: roll.output,
+            dmonly: sendToDmOnly === true,
+            id: window.DM ? `li_${new Date().getTime()}` : undefined
+        };
+        window.MB.inject_chat(data);
+        return true;
+    } catch (error) {
+        console.warn(`send_rpg_dice_as_chat_message failed to send rpgDice result as chat`, output, error);
+        return false;
+    }
+}
+
+function hijack_ddb_dice_buttons() {
+    $(".integrated-dice__container:not(.avtt-roll-formula-button)").click(function(e) {
+        let hijacked = roll_hijacked_button($(e.currentTarget));
+        if (hijacked) {
+            console.debug("hijack_ddb_dice_buttons successfully hijacked", e.currentTarget.outerHTML);
+            e.stopPropagation();
+        }
+    });
+}
+
+function roll_hijacked_button(button) {
+    try {
+        if (!button || button.length === 0) return;
+
+        let expression;
+
+        if (button.find(".ddbc-damage__value").length >= 1) {
+            // hijack the damage roll
+            expression = button.find(".ddbc-damage__value").text();
+        } else if (button.find(".ddbc-signed-number").length >= 1) {
+            const modifier = button.find(".ddbc-signed-number").attr("aria-label");
+            expression = `1d20${modifier}`;
+        } else {
+            console.warn("roll_hijacked_button does not know how to handle", button[0].outerHTML);
+            return false;
+        }
+
+        let displayName;
+        let imgurl;
+        let rollType;
+        let actionType;
+        let sendTo;
+
+        button.parent()[0].classList.forEach(c => {
+            console.log(c, typeof c);
+            if (c.includes("saving-throw")) {
+                rollType = "save";
+            } else if (c.includes("skill") || c.includes("ability")) {
+                // make sure we check for saving throws before we check for ability
+                rollType = "check";
+            } else if (c.includes("damage")) {
+                rollType = "damage";
+            } else if (c.includes("tohit")) {
+                rollType = "to hit";
+            } else if (c.includes("initiative")) {
+                rollType = "roll";
+                actionType = "initiative";
+            }
+        });
+
+        console.log("roll_hijacked_button", expression);
+        return send_rpg_dice_to_ddb(expression, displayName, imgurl, rollType, actionType);
+    } catch (error) {
+        console.warn("roll_hijacked_button failed to parse", button);
+        return false;
+    }
 }

@@ -245,6 +245,16 @@ function avtt_settings() {
 			defaultValue: false
 		},
 		{
+			name: 'bypassDdbDice',
+			label: 'Bypass DDB Dice if possible',
+			type: 'toggle',
+			options: [
+				{ value: true, label: "Bypass DDB Dice", description: `It's not always possible to bypass DDB dice, but this will bypass them if possible.` },
+				{ value: false, label: "Use DDB Dice", description: `DDB Dice are awesome and you're using them just like everyone should :)` }
+			],
+			defaultValue: false
+		},
+		{
 			name: "peerStreaming",
 			label: "Allow Streaming Cursor/Ruler",
 			type: "toggle",

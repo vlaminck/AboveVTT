@@ -2203,6 +2203,7 @@ function init_things() {
 
 		hide_player_sheet();
 		init_character_page_sidebar();
+		hijack_ddb_dice_buttons();
 
 		$(window).off("resize").on("resize", function() {
 			if(window.showPanel == undefined){
@@ -2638,48 +2639,7 @@ Disadvantage: 2d20kl1 (keep lowest)&#xa;&#xa;<br/>
 		const rollButton = $(`<button class="roll-button">Roll</button>`);
 		$("body").append(rollButton);
 		rollButton.on("click", function (e) {
-
-			if ($(".dice-toolbar").hasClass("rollable")) {
-				let theirRollButton = $(".dice-toolbar__target").children().first();
-				if (theirRollButton.length > 0) {
-					// we found a DDB dice roll button. Click it and move on
-					theirRollButton.click();
-					return;
-				}
-			}
-
-			const rollExpression = [];
-			$(".dice-roller > div img[data-count]").each(function() {
-				rollExpression.push($(this).attr("data-count") + $(this).attr("alt"));
-			});
-
-			let sendToDM = window.DM || false;
-			let sentAsDDB = send_rpg_dice_to_ddb(rollExpression.join("+"), sendToDM);
-			if (!sentAsDDB) {
-				const roll = new rpgDiceRoller.DiceRoll(rollExpression.join("+"));
-				const text = roll.output;
-				const uuid = new Date().getTime();
-				const data = {
-					player: window.PLAYER_NAME,
-					img: window.PLAYER_IMG,
-					text: text,
-					dmonly: sendToDM,
-					id: window.DM ? `li_${uuid}` : undefined
-				};
-				window.MB.inject_chat(data);
-
-				if (window.DM) { // THIS STOPPED WORKING SINCE INJECT_CHAT
-					$("#" + uuid).on("click", () => {
-						const newData = {...data, dmonly: false, id: undefined, text: text};
-						window.MB.inject_chat(newData);
-						$(this).remove();
-					});
-				}
-			}
-
-			$(".roll-button").removeClass("show");
-			$(".dice-roller > div img[data-count]").removeAttr("data-count");
-			$(".dice-roller > div span").remove();
+			$(".dice-toolbar__target").children().first().click();
 		});
 	}
 
@@ -3060,6 +3020,8 @@ function init_ui() {
 		alert("YOUR SCENES ARE BEING MIGRATED TO THE CLOUD IN 20 SECONDS. AFTER THIS MIGRATION YOU'LL FIND YOUR SCENES ON THE RIGHT PANEL.");
 		setTimeout(cloud_migration,20000);
 	}
+
+	hijack_ddb_dice_buttons();
 }
 
 const DRAW_COLORS = ["#D32F2F", "#FB8C00", "#FFEB3B", "#9CCC65", "#039BE5",
@@ -3628,182 +3590,6 @@ function init_my_dice_details(){
 			}
     	});
 	});
-}
-
-/**
- * Attempts to convert the output of an rpgDiceRoller DiceRoll to the DDB format.
- * If the conversion is successful, it will be sent over the websocket, and this will return true.
- * If the conversion fails for any reason, nothing will be sent, and this will return false,
- * @param {String} expression the dice rolling expression; ex: 1d20+4
- * @param {Boolean} toSelf    whether this is sent to self or everyone
- * @returns {Boolean}         true if we were able to convert and send; else false
- */
-// send_rpg_dice_to_ddb(expression, displayName, imgUrl, modifier, damageType, dmOnly)
-function send_rpg_dice_to_ddb(expression, displayName, imgUrl, rollType="roll", damageType, actionType="custom", sendTo="everyone") {
-
-	let diceRoll = new DiceRoll(expression);
-	diceRoll.action = actionType;
-	diceRoll.rollType = rollType;
-	diceRoll.name = displayName;
-	diceRoll.avatarUrl = imgUrl;
-	// diceRoll.entityId = monster.id;
-	// diceRoll.entityType = monsterData.id;
-
-	if (window.diceRoller.roll(diceRoll)) {
-		console.log("send_rpg_dice_to_ddb rolled via diceRoller");
-		return true;
-	}
-
-	console.group("send_rpg_dice_to_ddb")
-	console.log("with values", expression, displayName, imgUrl, rollType, damageType, actionType, sendTo)
-
-
-	try {
-		expression = expression.replace(/\s+/g, ''); // remove all whitespace
-
-		const supportedDieTypes = ["d4", "d6", "d8", "d10", "d12", "d20", "d100"];
-
-		let roll = new rpgDiceRoller.DiceRoll(expression);
-
-		// rpgDiceRoller doesn't give us the notation of each roll so we're going to do our best to find and match them as we go
-		var choppedExpression = expression;
-		let notationList = [];
-		for (let i = 0; i < roll.rolls.length; i++) {
-			let currentRoll = roll.rolls[i];
-			if (typeof currentRoll === "string") {
-				let idx = choppedExpression.indexOf(currentRoll);
-				let previousNotation = choppedExpression.slice(0, idx);
-				notationList.push(previousNotation);
-				notationList.push(currentRoll);
-				choppedExpression = choppedExpression.slice(idx + currentRoll.length);
-			}
-		}
-		console.log("chopped expression", choppedExpression)
-		notationList.push(choppedExpression); // our last notation will still be here so add it to the list
-
-		if (roll.rolls.length != notationList.length) {
-			console.warn(`Failed to convert expression to DDB roll; expression ${expression}`);
-			console.groupEnd()
-			return false;
-		}
-
-		let convertedDice = [];       // a list of objects in the format that DDB expects
-		let allValues = [];           // all the rolled values
-		let convertedExpression = []; // a list of strings that we'll concat for a string representation of the final math being done
-		let constantsTotal = 0;       // all the constants added together
-		for (let i = 0; i < roll.rolls.length; i++) {
-			let currentRoll = roll.rolls[i];
-			if (typeof currentRoll === "object") {
-				let currentNotation = notationList[i];
-				let currentDieType = supportedDieTypes.find(dt => currentNotation.includes(dt)); // we do it this way instead of splitting the string so we can easily clean up things like d20kh1, etc. It's less clever, but it avoids any parsing errors
-				if (!supportedDieTypes.includes(currentDieType)) {
-					console.warn(`found an unsupported dieType ${currentNotation}`);
-					console.groupEnd()
-					return false;
-				}
-				if (currentNotation.includes("kh") || currentNotation.includes("kl")) {
-					let cleanerString = currentRoll.toString()
-						.replace("[", "(")    // swap square brackets with parenthesis
-						.replace("]", ")")    // swap square brackets with parenthesis
-						.replace("d", "")     // remove all drop notations
-						.replace(/\s+/g, ''); // remove all whitespace
-					convertedExpression.push(cleanerString);
-				} else {
-					convertedExpression.push(currentRoll.value);
-				}
-				let dice = currentRoll.rolls.map(d => {
-					allValues.push(d.value);
-					console.groupEnd()
-					return { dieType: currentDieType, dieValue: d.value };
-				});
-
-				convertedDice.push({
-					"dice": dice,
-					"count": dice.length,
-					"dieType": currentDieType,
-					"operation": 0
-				})
-			} else if (typeof currentRoll === "string") {
-				convertedExpression.push(currentRoll);
-			} else if (typeof currentRoll === "number") {
-				convertedExpression.push(currentRoll);
-				if (i > 0) {
-					if (convertedExpression[i-1] == "-") {
-						constantsTotal -= currentRoll;
-					} else if (convertedExpression[i-1] == "+") {
-						constantsTotal += currentRoll;
-					} else {
-						console.warn(`found an unexpected symbol ${convertedExpression[i-1]}`);
-						console.groupEnd()
-						return false;
-					}
-				} else {
-					constantsTotal += currentRoll;
-				}
-			}
-		}
-		let ddbJson = {
-			id: uuid(),
-			dateTime: `${Date.now()}`,
-			gameId: window.MB.gameid,
-			userId: window.MB.userid,
-			source: "web",
-			persist: true,
-			messageScope: sendTo === "everyone" ?  "gameId" : "userId",
-			messageTarget: sendTo === "everyone" ?  window.MB.gameid : window.MB.userid,
-			entityId: window.MB.userid,
-			entityType: "user",
-			eventType: "dice/roll/fulfilled",
-			data: {
-				action: actionType,
-				setId: window.mydice.data.setId,
-				context: {
-					entityId: window.MB.userid,
-					entityType: "user",
-					messageScope: sendTo === "everyone" ?  "gameId" : "userId",
-					messageTarget: sendTo === "everyone" ?  window.MB.gameid : window.MB.userid,
-					name: displayName,
-					avatarUrl: imgUrl
-				},
-				rollId: uuid(),
-				rolls: [
-					{
-						diceNotation: {
-							set: convertedDice,
-							constant: constantsTotal
-						},
-						diceNotationStr: expression,
-						rollType: rollType,
-						rollKind: expression.includes("kh") ? "advantage" : expression.includes("kl") ? "disadvantage" : "",
-						result: {
-							constant: constantsTotal,
-							values: allValues,
-							total: roll.total,
-							text: convertedExpression.join("")
-						}
-					}
-				]
-			}
-		};
-		if (window.MB.ws.readyState == window.MB.ws.OPEN) {
-			window.MB.ws.send(JSON.stringify(ddbJson));
-			console.groupEnd()
-			return true;
-		} else { // TRY TO RECOVER
-			get_cobalt_token(function(token) {
-				window.MB.loadWS(token, function() {
-					// TODO, CONSIDER ADDING A SYNCMEUP / SCENE PAIR HERE
-					window.MB.ws.send(JSON.stringify(ddbJson));
-				});
-			});
-			console.groupEnd()
-			return true; // we can't guarantee that this actually worked, unfortunately
-		}
-	} catch (error) {
-		console.warn(`failed to send expression as DDB roll; expression = ${expression}`, error);
-		console.groupEnd()
-		return false;
-	}
 }
 
 /**
