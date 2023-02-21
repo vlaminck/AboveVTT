@@ -872,6 +872,7 @@ function send_rpg_dice_output_as_chat_message(expression, sendToDmOnly) {
 
 function hijack_ddb_dice_buttons() {
     $(".integrated-dice__container:not(.avtt-roll-formula-button)").click(function(e) {
+        if (!is_abovevtt_page() || get_avtt_setting_value("bypassDdbDice") !== true) return;
         let hijacked = roll_hijacked_button($(e.currentTarget));
         if (hijacked) {
             console.debug("hijack_ddb_dice_buttons successfully hijacked", e.currentTarget.outerHTML);
@@ -897,30 +898,46 @@ function roll_hijacked_button(button) {
             return false;
         }
 
-        let displayName;
-        let imgurl;
+        let displayName = window.PLAYER_NAME;
+        let imgurl = window.PLAYER_IMG;
         let rollType;
         let actionType;
         let sendTo;
 
-        button.parent()[0].classList.forEach(c => {
-            console.log(c, typeof c);
-            if (c.includes("saving-throw")) {
-                rollType = "save";
-            } else if (c.includes("skill") || c.includes("ability")) {
-                // make sure we check for saving throws before we check for ability
-                rollType = "check";
-            } else if (c.includes("damage")) {
-                rollType = "damage";
-            } else if (c.includes("tohit")) {
-                rollType = "to hit";
-            } else if (c.includes("initiative")) {
-                rollType = "roll";
-                actionType = "initiative";
-            }
-        });
+        const parent = button.parent();
+        if (parent.hasClass("ddbc-saving-throws-summary__ability-modifier")) {
+            rollType = "save";
+            actionType = parent.siblings(".ddbc-saving-throws-summary__ability-name").text();
+        } else if (parent.hasClass("ct-skills__col--modifier") || parent.hasClass("ddbc-ability-summary__primary")) {
+            rollType = "check";
+            actionType = parent.siblings(".ct-skills__col--skill").text();
+        } else if (parent.hasClass("ct-initiative-box__value")) {
+            rollType = "roll";
+            actionType = "initiative";
+        // } else if (parent.is('[class*="tohit"]')) {
+        //     console.log("tohit");
+        //     rollType = "to hit";
+        //     actionType = parent.parent().siblings(".ddbc-combat-attack__name").find(".ddbc-combat-attack__label").text();
+        }
 
-        console.log("roll_hijacked_button", expression);
+        // button.parent()[0].classList.forEach(c => {
+        //     console.log(c, typeof c);
+        //     if (c.includes("saving-throw")) {
+        //         rollType = "save";
+        //     } else if (c.includes("skill") || c.includes("ability")) {
+        //         // make sure we check for saving throws before we check for ability
+        //         rollType = "check";
+        //     } else if (c.includes("damage")) {
+        //         rollType = "damage";
+        //     } else if (c.includes("tohit")) {
+        //         rollType = "to hit";
+        //     } else if (c.includes("initiative")) {
+        //         rollType = "roll";
+        //         actionType = "initiative";
+        //     }
+        // });
+
+        console.log("roll_hijacked_button", expression, displayName, imgurl, rollType, actionType);
         return send_rpg_dice_to_ddb(expression, displayName, imgurl, rollType, actionType);
     } catch (error) {
         console.warn("roll_hijacked_button failed to parse", button);
