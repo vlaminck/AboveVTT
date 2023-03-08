@@ -30,7 +30,7 @@ jobs:
           echo ${{inputs.release_type}}
           echo ${{inputs.prerelease}}
           echo ${{inputs.version_name}}
-          if [[ "${{inputs.prerelease}}" == "production" ]]; then
+          if [[ "${{inputs.release_type}}" == "production" ]]; then
             echo production build
           else
             echo prerelease build
@@ -45,9 +45,9 @@ jobs:
           echo $release_json
           
           echo with space
-          echo $(echo ${{env.release_json}} | grep -o '"assets_url": "[^"]*' | grep -o '[^"]*$')
+          echo $(echo $release_json | grep -o '"assets_url": "[^"]*' | grep -o '[^"]*$')
           echo without space
-          echo $(echo ${{env.release_json}} | grep -o '"assets_url":"[^"]*' | grep -o '[^"]*$')
+          echo $(echo $release_json | grep -o '"assets_url":"[^"]*' | grep -o '[^"]*$')
           
           exit 1
       - name: "upload zip"
