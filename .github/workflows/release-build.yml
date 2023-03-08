@@ -3,6 +3,13 @@ run-name: ${{ github.actor }} is publishing version ${{ inputs.version_name }}
 on:
   workflow_dispatch:
     inputs:
+      release_type:
+        type: choice
+        description: prerelease or production?
+        options:
+          - prerelease
+          - production
+        default: prerelease
       prerelease:
         description: "Should this release be marked as a pre-release?"
         required: true
@@ -18,16 +25,42 @@ jobs:
         with:
           author_name: github.actor
           author_email: github
+      - name: "print choice variables"
+        run: |
+          echo ${{inputs.release_type}}
+          echo ${{inputs.prerelease}}
+          echo ${{inputs.version_name}}
+          if [[ "${{inputs.prerelease}}" == "production" ]]; then
+            echo production build
+          else
+            echo prerelease build
+          fi
       - name: "build zip"
         run: |
           git archive -o "AboveVTT-${{inputs.version_name}}.zip" HEAD
       - name: "publish release"
-        uses: "marvinpinto/action-automatic-releases@latest"
-        with:
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: "${{inputs.version_name}}"
-          prerelease: ${{ inputs.prerelease }}
-          title: "${{inputs.version_name}}"
-          files: |
-            *.zip
-            LICENSE
+        run: |
+          release=$(curl -X POST -H 'Authorization: Bearer ${{secrets.GITHUB_TOKEN}}' https://api.github.com/repos/${GITHUB_REPOSITORY}/releases -d '{"tag_name": "${{inputs.version_name}}","name":"${{inputs.version_name}}", "prerelease": true, "generate_release_notes": true }')
+          echo successfully created release
+          echo "release_json=${release}" >> $GITHUB_ENV
+      - name: "find assets_url"
+        run: |
+          assets_url=$(echo ${{env.release_json}} | grep -o '"assets_url": "[^"]*' | grep -o '[^"]*$')
+          if [ -z "$assets_url" ]; then
+            assets_url=$(echo ${{env.release_json}} | grep -o '"assets_url":"[^"]*' | grep -o '[^"]*$')
+          fi
+          if [ -z "$assets_url" ]; then
+            echo unable to find assets_url
+            echo ${{env.release_json}}
+            exit 1
+          fi
+          echo "assets_url=${assets_url}" >> $GITHUB_ENV
+      - name: "upload zip"
+        run: |
+          echo About to upload zip to ${{env.assets_url}}?name=AboveVTT-${{inputs.version_name}}.zip  
+          curl -L \
+            -X POST \
+            -H "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}"\
+            -H "Content-Type: application/octet-stream" \
+            ${{env.assets_url}}?name=AboveVTT-${{inputs.version_name}}.zip \
+            --data-binary "AboveVTT-${{inputs.version_name}}.zip"
