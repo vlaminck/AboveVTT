@@ -27,21 +27,17 @@ jobs:
           echo ${{inputs.prerelease}}
           echo ${{inputs.version_name}}
           if [[ "${{inputs.release_type}}" == "production" ]]; then
-            echo production build
+            echo "prerelease=false" >> $GITHUB_ENV
           else
-            echo prerelease build
+            echo "prerelease=true" >> $GITHUB_ENV
           fi
       - name: "build zip"
         run: |
           git archive -o "AboveVTT-${{inputs.version_name}}.zip" HEAD
       - name: "publish release"
         run: |
-          prerelease=true
-          if [[ "${{inputs.release_type}}" == "production" ]]; then
-            prerelease=false
-          fi
-          echo $prerelease
-          echo '{"tag_name": "${{inputs.version_name}}","name":"${{inputs.version_name}}", "prerelease": $prerelease, "generate_release_notes": true }'
+          echo ${{env.prerelease}}
+          echo '{"tag_name": "${{inputs.version_name}}","name":"${{inputs.version_name}}", "prerelease": ${{env.prerelease}}, "generate_release_notes": true }'
           release_json=$(curl -X POST -H 'Authorization: Bearer ${{secrets.GITHUB_TOKEN}}' https://api.github.com/repos/${GITHUB_REPOSITORY}/releases -d '{"tag_name": "${{inputs.version_name}}","name":"${{inputs.version_name}}", "prerelease": ${prerelease}, "generate_release_notes": true }')
           echo $release_json
           echo successfully created release
