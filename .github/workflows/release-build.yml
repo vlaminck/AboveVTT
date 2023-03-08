@@ -37,15 +37,17 @@ jobs:
       - name: "publish release"
         run: |
           release_json=$(curl -X POST -H 'Authorization: Bearer ${{secrets.GITHUB_TOKEN}}' https://api.github.com/repos/${GITHUB_REPOSITORY}/releases -d '{ "tag_name": "${{inputs.version_name}}", "name": "${{inputs.version_name}}", "prerelease": ${{env.prerelease}}, "generate_release_notes": true }')
-          assets_url=$(echo $release_json | grep -o '"assets_url": "[^"]*' | grep -o '[^"]*$')
-          echo "assets_url=${assets_url}" >> $GITHUB_ENV
-          echo env.assets_url: ${{env.assets_url}}
+          upload_url=$(echo $release_json | grep -o '"upload_url": "[^"]*' | grep -o '[^"]*$')
+          upload_url=${upload_url%\{*}
+          echo upload_url: $upload_url
+          echo "upload_url=${upload_url}" >> $GITHUB_ENV
       - name: "upload zip"
         run: |
-          echo About to upload zip to ${{env.assets_url}}?name=AboveVTT-${{inputs.version_name}}.zip  
           curl -L \
             -X POST \
-            -H "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}"\
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
             -H "Content-Type: application/octet-stream" \
-            ${{env.assets_url}}?name=AboveVTT-${{inputs.version_name}}.zip \
+            ${{env.upload_url}}?name=AboveVTT-${{inputs.version_name}}.zip \
             --data-binary "AboveVTT-${{inputs.version_name}}.zip"
