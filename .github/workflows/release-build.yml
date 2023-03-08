@@ -40,7 +40,9 @@ jobs:
           if [[ "${{inputs.release_type}}" == "production" ]]; then
             prerelease=false
           fi
+          echo '{"tag_name": "${{inputs.version_name}}","name":"${{inputs.version_name}}", "prerelease": ${prerelease}, "generate_release_notes": true }'
           release_json=$(curl -X POST -H 'Authorization: Bearer ${{secrets.GITHUB_TOKEN}}' https://api.github.com/repos/${GITHUB_REPOSITORY}/releases -d '{"tag_name": "${{inputs.version_name}}","name":"${{inputs.version_name}}", "prerelease": ${prerelease}, "generate_release_notes": true }')
+          echo $release_json
           echo successfully created release
           assets_url=$(echo $release_json | grep -o '"assets_url": "[^"]*' | grep -o '[^"]*$')
           echo assets_url: ${assets_url}
