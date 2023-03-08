@@ -40,21 +40,16 @@ jobs:
           git archive -o "AboveVTT-${{inputs.version_name}}.zip" HEAD
       - name: "publish release"
         run: |
-          release=$(curl -X POST -H 'Authorization: Bearer ${{secrets.GITHUB_TOKEN}}' https://api.github.com/repos/${GITHUB_REPOSITORY}/releases -d '{"tag_name": "${{inputs.version_name}}","name":"${{inputs.version_name}}", "prerelease": true, "generate_release_notes": true }')
+          release_json=$(curl -X POST -H 'Authorization: Bearer ${{secrets.GITHUB_TOKEN}}' https://api.github.com/repos/${GITHUB_REPOSITORY}/releases -d '{"tag_name": "${{inputs.version_name}}","name":"${{inputs.version_name}}", "prerelease": true, "generate_release_notes": true }')
           echo successfully created release
-          echo "release_json=${release}" >> $GITHUB_ENV
-      - name: "find assets_url"
-        run: |
-          assets_url=$(echo ${{env.release_json}} | grep -o '"assets_url": "[^"]*' | grep -o '[^"]*$')
-          if [ -z "$assets_url" ]; then
-            assets_url=$(echo ${{env.release_json}} | grep -o '"assets_url":"[^"]*' | grep -o '[^"]*$')
-          fi
-          if [ -z "$assets_url" ]; then
-            echo unable to find assets_url
-            echo ${{env.release_json}}
-            exit 1
-          fi
-          echo "assets_url=${assets_url}" >> $GITHUB_ENV
+          echo $release_json
+          
+          echo with space
+          echo $(echo ${{env.release_json}} | grep -o '"assets_url": "[^"]*' | grep -o '[^"]*$')
+          echo without space
+          echo $(echo ${{env.release_json}} | grep -o '"assets_url":"[^"]*' | grep -o '[^"]*$')
+          
+          exit 1
       - name: "upload zip"
         run: |
           echo About to upload zip to ${{env.assets_url}}?name=AboveVTT-${{inputs.version_name}}.zip  
