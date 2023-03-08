@@ -5,17 +5,13 @@ on:
     inputs:
       release_type:
         type: choice
-        description: prerelease or production?
+        description: "pre-release or production?"
         options:
           - prerelease
           - production
         default: prerelease
-      prerelease:
-        description: "Should this release be marked as a pre-release?"
-        required: true
-        default: true
       version_name:
-        description: "Something like 0.84 or 0.84-beta2"
+        description: "Version Name"
         required: true
 jobs:
   publish-release:
@@ -40,16 +36,15 @@ jobs:
           git archive -o "AboveVTT-${{inputs.version_name}}.zip" HEAD
       - name: "publish release"
         run: |
-          release_json=$(curl -X POST -H 'Authorization: Bearer ${{secrets.GITHUB_TOKEN}}' https://api.github.com/repos/${GITHUB_REPOSITORY}/releases -d '{"tag_name": "${{inputs.version_name}}","name":"${{inputs.version_name}}", "prerelease": true, "generate_release_notes": true }')
+          prerelease=true
+          if [[ "${{inputs.release_type}}" == "production" ]]; then
+            prerelease=false
+          fi
+          release_json=$(curl -X POST -H 'Authorization: Bearer ${{secrets.GITHUB_TOKEN}}' https://api.github.com/repos/${GITHUB_REPOSITORY}/releases -d '{"tag_name": "${{inputs.version_name}}","name":"${{inputs.version_name}}", "prerelease": ${prerelease}, "generate_release_notes": true }')
           echo successfully created release
-          echo $release_json
-          
-          echo with space
-          echo $(echo $release_json | grep -o '"assets_url": "[^"]*' | grep -o '[^"]*$')
-          echo without space
-          echo $(echo $release_json | grep -o '"assets_url":"[^"]*' | grep -o '[^"]*$')
-          
-          exit 1
+          assets_url=$(echo $release_json | grep -o '"assets_url": "[^"]*' | grep -o '[^"]*$')
+          echo assets_url: ${assets_url}
+          echo "assets_url=${assets_url}" >> $GITHUB_ENV
       - name: "upload zip"
         run: |
           echo About to upload zip to ${{env.assets_url}}?name=AboveVTT-${{inputs.version_name}}.zip  
