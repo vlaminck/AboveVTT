@@ -13,5 +13,4 @@ jobs:
         run: |
           echo "PR was merged!"
           echo "github.event.pull_request.number: ${{github.event.pull_request.number}}"
-          echo "github.event.pull_request ${{github.event.pull_request}}"
-          echo "github.event ${{github.event}}"
+          echo "toJSON(github) ${{${{ toJSON(github) }}"
