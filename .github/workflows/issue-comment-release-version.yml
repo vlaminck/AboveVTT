@@ -13,4 +13,7 @@ jobs:
         run: |
           echo "PR was merged!"
           echo "github.event.pull_request.number: ${{github.event.pull_request.number}}"
-          echo "toJSON(github) ${{${{ toJSON(github) }}"
+          echo "github.event.pull_request.issue_url: ${{github.event.pull_request.issue_url}}"
+          echo "github.event.pull_request._links: ${{github.event.pull_request._links}}"
+          echo "github.event.pull_request._links.issue: ${{github.event.pull_request._links.issue}}"
+          echo "github.event.pull_request._links.issue.href: ${{github.event.pull_request._links.issue.href}}"
