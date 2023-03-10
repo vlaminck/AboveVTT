@@ -11,8 +11,7 @@ jobs:
     steps:
       - name: ""
         run: |
-          echo PR was merged!
-          echo GITHUB_REF: |${GITHUB_REF}|${{GITHUB_REF}}|
-          echo github.event.pull_request.number: ${{github.event.pull_request.number}}
-          echo github.event.pull_request ${{github.event.pull_request}}
-          echo github.event ${{github.event}}
+          echo "PR was merged!"
+          echo "github.event.pull_request.number: ${{github.event.pull_request.number}}"
+          echo "github.event.pull_request ${{github.event.pull_request}}"
+          echo "github.event ${{github.event}}"
